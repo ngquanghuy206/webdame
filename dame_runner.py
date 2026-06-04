@@ -600,17 +600,24 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
 
             # ── 2. Nhập email + pass ──
             try:
+                # Chờ trang load xong hẳn
+                await page.wait_for_load_state("networkidle", timeout=15000)
+                await asyncio.sleep(1)
+
                 # Thử nhiều selector cho ô email
                 email_selectors = [
                     "#email",
                     "input[name='email']",
                     "input[type='email']",
                     "input[placeholder*='mail']",
+                    "input[placeholder*='số']",
+                    "input[placeholder*='phone']",
                 ]
                 email_filled = False
                 for sel in email_selectors:
                     try:
-                        await page.fill(sel, email, timeout=3000)
+                        await page.wait_for_selector(sel, timeout=5000)
+                        await page.fill(sel, email, timeout=5000)
                         email_filled = True
                         break
                     except:
