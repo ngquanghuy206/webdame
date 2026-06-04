@@ -18,7 +18,7 @@ except ImportError:
 # Auto-install Chromium nếu chưa có
 import subprocess as _sp2, sys as _sys2, threading as _threading
 
-_playwright_ready = threading.Event()
+_playwright_ready = _threading.Event()
 
 def _install_playwright_bg():
     try:
