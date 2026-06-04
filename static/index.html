@@ -555,13 +555,18 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
       <!-- ── BƯỚC 1: NHẬP COOKIE ── -->
       <div id="step1">
-        <div class="field-label" style="font-size:15px;margin-bottom:12px">🍪 Bước 1 — Nhập Cookie Facebook</div>
+        <div class="field-label" style="font-size:15px;margin-bottom:6px">🍪 Bước 1 — Nhập Cookie Facebook</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+          Hỗ trợ mọi format: <b>header string</b>, <b>JSON array</b> (Cookie-Editor), nhiều dòng.
+        </div>
         <textarea id="fb-cookie-input" class="field-input" rows="5"
-          placeholder="Dán cookie Facebook vào đây..."
-          style="resize:vertical;font-family:monospace;font-size:11.5px;line-height:1.6"></textarea>
+          placeholder="Dán cookie vào đây...&#10;VD: datr=xxx; c_user=yyy; xs=zzz&#10;Hoặc JSON từ extension Cookie-Editor"
+          style="resize:vertical;font-family:monospace;font-size:11.5px;line-height:1.6"
+          oninput="detectCookieFormat(this.value)"></textarea>
+        <div id="cookie-format-hint" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:16px"></div>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
           <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="pasteCookie()">📋 Dán</button>
-          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('fb-cookie-input').value='';hideBox('cookie-verify-box')">🗑 Xóa</button>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('fb-cookie-input').value='';hideBox('cookie-verify-box');document.getElementById('cookie-format-hint').textContent=''">🗑 Xóa</button>
         </div>
         <div id="cookie-verify-box" style="display:none;margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7"></div>
         <div class="btn-row" style="margin-top:14px">
@@ -1051,8 +1056,31 @@ function resetToStep2(){
 }
 
 // ── BƯỚC 1: XÁC NHẬN COOKIE ──
+function detectCookieFormat(val){
+  const hint = document.getElementById('cookie-format-hint');
+  if(!hint) return;
+  val = val.trim();
+  if(!val){ hint.textContent=''; return; }
+  if(val.startsWith('[')){
+    hint.textContent='✅ Phát hiện: JSON array (Cookie-Editor)';
+  } else if(val.startsWith('{')){
+    hint.textContent='✅ Phát hiện: JSON object';
+  } else if(val.includes('	')){
+    hint.textContent='✅ Phát hiện: Netscape format';
+  } else if(val.includes('c_user=') || val.includes('datr=') || val.includes('xs=')){
+    const keys = (val.match(/\w+=\S*/g)||[]).length;
+    hint.textContent=`✅ Phát hiện: Header string (~${keys} cookie)`;
+  } else {
+    hint.textContent='⚠️ Không rõ format — thử xác nhận xem sao';
+  }
+}
+
 async function pasteCookie(){
-  try{ const t=await navigator.clipboard.readText(); document.getElementById('fb-cookie-input').value=t; }
+  try{
+    const t=await navigator.clipboard.readText();
+    document.getElementById('fb-cookie-input').value=t;
+    detectCookieFormat(t);
+  }
   catch{ showToast('Ctrl+V để dán thủ công','#ff9100'); }
 }
 
