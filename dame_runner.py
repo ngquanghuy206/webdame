@@ -28,6 +28,7 @@ class DameSession:
         self.running   = False
         self.paused    = False
         self.stopped   = False
+        self.died      = False
         self.total     = 0
         self.loops     = 0
         self.log       = ""
@@ -331,100 +332,34 @@ async def get_target_name(cookie_str: str, target_url: str) -> dict:
         return {"ok": False, "name": "Lỗi lấy tên", "uid": "", "error": str(e)[:200]}
 
 # ══════════════════════════════════════
-# REPORT FLOW — 13 loại
+# DAME SCRIPT JS (inject vào browser)
 # ══════════════════════════════════════
-REPORT_FLOW = [
-    ("Violent · Terrorism",        ["Violent or graphic content","Bạo lực hoặc nội dung đồ họa"], ["Terrorism","Khủng bố"]),
-    ("Violent · Calling violence", ["Violent or graphic content","Bạo lực hoặc nội dung đồ họa"], ["Calling for violence","Kêu gọi bạo lực"]),
-    ("Violent · Organized crime",  ["Violent or graphic content","Bạo lực hoặc nội dung đồ họa"], ["Organized crime","Tội phạm có tổ chức"]),
-    ("Suicide · Eating disorder",  ["Suicide or self-injury","Tự tử hoặc tự làm hại bản thân"],   ["Eating disorder","Rối loạn ăn uống"]),
-    ("Scam · Fraud",               ["Scam, fraud or false news","Lừa đảo, gian lận hoặc tin giả"], ["Fraud or scam","Lừa đảo hoặc gian lận"]),
-    ("Scam · Spam",                ["Scam, fraud or false news","Lừa đảo, gian lận hoặc tin giả"], ["Spam","Tin rác"]),
-    ("Fake · Not real person",     ["Fake account","Tài khoản giả mạo"],                           ["Not a real person","Không phải người thật"]),
-    ("Bullying · Harassment",      ["Bullying or harassment","Bắt nạt hoặc quấy rối"],             ["Me","Tôi"]),
-    ("Adult · Prostitution",       ["Adult content","Nội dung người lớn"],                         ["Prostitution","Mại dâm"]),
-    ("Physical abuse",             ["Violence","Bạo lực"],                                         ["Physical abuse","Bạo hành thể chất"]),
-    ("Credible threat",            ["Violent or graphic content","Bạo lực hoặc nội dung đồ họa"], ["Credible threat","Đe dọa đáng tin cậy"]),
-    ("Something else",             ["Something else","Điều gì đó khác"],                           []),
-    ("Harassment · Other",         ["Bullying or harassment","Bắt nạt hoặc quấy rối"],             ["Someone else","Người khác"]),
-]
+import os as _os
 
-async def find_and_click(page: Page, texts: list, timeout_ms: int = 5000) -> bool:
-    deadline = time.time() + timeout_ms / 1000
-    sels = ['button','div[role="button"]','a[role="button"]','span[role="button"]',
-            'div[role="menuitem"]','li[role="menuitem"]','div[tabindex="0"]']
-    while time.time() < deadline:
-        for sel in sels:
-            try:
-                for el in await page.query_selector_all(sel):
-                    try:
-                        if not await el.is_visible(): continue
-                        txt = (await el.inner_text()).strip().lower()
-                        for kw in texts:
-                            if kw.lower() in txt:
-                                await el.scroll_into_view_if_needed()
-                                await el.click()
-                                return True
-                    except: continue
-            except: continue
-        await asyncio.sleep(0.15)
-    return False
-
-async def click_3dot_menu(page: Page) -> bool:
-    for lbl in ["Profile settings see more options","More options","More","See more"]:
-        try:
-            el = await page.query_selector(f'[aria-label="{lbl}"]')
-            if el and await el.is_visible():
-                await el.click(); return True
-        except: pass
-    try:
-        for el in await page.query_selector_all('div[aria-haspopup="menu"]'):
-            try:
-                if await el.is_visible():
-                    await el.click(); return True
-            except: pass
-    except: pass
-    return False
-
-async def do_one_report(page: Page, report: tuple, speed: str) -> bool:
-    c = cfg(speed)
-    rname, first_texts, second_texts = report
-    DAME_SESSION.add_log(f"▶ {rname}")
-
-    await click_3dot_menu(page)
-    await asyncio.sleep(c["click"] / 1000)
-
-    ok = await find_and_click(page, ["Report profile","Báo cáo trang cá nhân","Báo cáo","Report"], 5000)
-    if not ok:
-        DAME_SESSION.add_log(f"⚠ Bỏ qua {rname} (không tìm được nút Report)")
-        return False
-    await asyncio.sleep(c["action"] / 1000)
-
-    await find_and_click(page, ["Something about this profile","Có gì đó về trang cá nhân này"], 2500)
-    await asyncio.sleep(c["click"] / 1000)
-
-    if first_texts:
-        await find_and_click(page, first_texts, 5000)
-        await asyncio.sleep(c["action"] / 1000)
-
-    if second_texts:
-        await find_and_click(page, second_texts, 5000)
-        await asyncio.sleep(c["action"] / 1000)
-
-    for btns in [["Submit","Gửi","Gửi báo cáo"],["Next","Tiếp","Tiếp tục"],["Done","Xong","Close","Đóng"]]:
-        await find_and_click(page, btns, 4000)
-        await asyncio.sleep(c["done"] / 1000)
-
-    DAME_SESSION.total += 1
-    DAME_SESSION.add_log(f"✅ {rname} ✓ · tổng: {DAME_SESSION.total}")
-    return True
+def _load_dame_script() -> str:
+    """Đọc script JS từ file dame_script.js"""
+    paths = [
+        _os.path.join(_os.path.dirname(__file__), "static", "dame_script.js"),
+        _os.path.join(_os.path.dirname(__file__), "dame_script.js"),
+    ]
+    for p in paths:
+        if _os.path.exists(p):
+            with open(p, "r", encoding="utf-8") as f:
+                return f.read()
+    return ""
 
 # ══════════════════════════════════════
-# MAIN DAME LOOP
+# MAIN DAME LOOP — inject JS
 # ══════════════════════════════════════
 async def _dame_loop(cookie_str: str, target_url: str, speed: str):
     if not PLAYWRIGHT_OK:
         DAME_SESSION.add_log("❌ Playwright chưa cài!")
+        DAME_SESSION.stopped = True; DAME_SESSION.running = False
+        return
+
+    dame_js = _load_dame_script()
+    if not dame_js:
+        DAME_SESSION.add_log("❌ Không tìm thấy dame_script.js!")
         DAME_SESSION.stopped = True; DAME_SESSION.running = False
         return
 
@@ -440,8 +375,12 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 viewport={"width": 1280, "height": 800}
             )
+
+            # ── Inject script tự động vào mọi trang facebook ──
+            await ctx.add_init_script(dame_js)
+
             page = await ctx.new_page()
-            DAME_SESSION._page = page  # lưu ref để screenshot
+            DAME_SESSION._page = page
 
             # Bắt đầu vòng chụp screenshot nền
             screenshot_task = asyncio.create_task(_screenshot_loop())
@@ -452,7 +391,6 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
             if parsed_cookies:
                 await ctx.add_cookies(parsed_cookies)
             await page.goto("https://www.facebook.com", wait_until="domcontentloaded", timeout=25000)
-            # JS inject fallback để đảm bảo
             await page.evaluate(build_inject_js(cookie_str))
             await page.reload(wait_until="domcontentloaded", timeout=25000)
             await asyncio.sleep(2.5)
@@ -465,7 +403,7 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
 
             DAME_SESSION.add_log("✅ Login OK · Đang mở target...")
             await page.goto(target_url, wait_until="domcontentloaded", timeout=25000)
-            await asyncio.sleep(2.5)
+            await asyncio.sleep(3)
 
             if "login" in page.url:
                 DAME_SESSION.add_log("❌ Không mở được target!")
@@ -473,40 +411,62 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
                 screenshot_task.cancel()
                 await browser.close(); return
 
-            DAME_SESSION.add_log(f"🎯 Target OK: {page.url}")
-            c = cfg(speed)
-            loop_n = 0
+            DAME_SESSION.add_log(f"🎯 Target OK · Script đã inject · Đang chạy tự động...")
+
+            # ── Vòng lặp chính: chỉ detect die, reload nếu cần ──
+            die_keywords = [
+                "sorry, something went wrong",
+                "there's a technical problem",
+                "we're working on getting it fixed",
+                "something went wrong",
+                "this content isn't available",
+                "this page isn't available",
+            ]
 
             while not DAME_SESSION.stopped:
-                loop_n += 1
-                DAME_SESSION.loops = loop_n
-                DAME_SESSION.add_log(f"━━━ Vòng {loop_n} ━━━")
+                while DAME_SESSION.paused and not DAME_SESSION.stopped:
+                    await asyncio.sleep(0.5)
+                if DAME_SESSION.stopped: break
 
-                for report in REPORT_FLOW:
-                    if DAME_SESSION.stopped: break
-                    while DAME_SESSION.paused and not DAME_SESSION.stopped:
-                        await asyncio.sleep(0.5)
-                    if DAME_SESSION.stopped: break
+                await asyncio.sleep(5)
 
+                try:
+                    # Detect die
+                    body_text = (await page.inner_text("body")).lower()
+                    if any(k in body_text for k in die_keywords):
+                        DAME_SESSION.add_log("💀 Phát hiện ACC DIE!")
+                        # Chụp ảnh die
+                        die_sc = await page.screenshot(type="jpeg", quality=80, full_page=False)
+                        DAME_SESSION.screenshot_b64 = base64.b64encode(die_sc).decode()
+                        DAME_SESSION.died = True
+                        DAME_SESSION.running = False
+                        DAME_SESSION.stopped = True
+                        DAME_SESSION.add_log("📸 Đã chụp ảnh die · Dừng")
+                        break
+
+                    # Cập nhật total từ script nếu có
                     try:
-                        await page.goto(target_url, wait_until="domcontentloaded", timeout=20000)
-                        await asyncio.sleep(1.2)
+                        total = await page.evaluate("window._dameTotal || 0")
+                        if total: DAME_SESSION.total = int(total)
+                        loops = await page.evaluate("window._dameLoops || 0")
+                        if loops: DAME_SESSION.loops = int(loops)
                     except: pass
 
-                    try:
-                        await do_one_report(page, report, speed)
-                    except Exception as e:
-                        DAME_SESSION.add_log(f"⚠ {report[0]}: {str(e)[:60]}")
+                    # Nếu trang bị redirect ra khỏi target → reload
+                    if target_url.split("?")[0] not in page.url and "facebook.com" in page.url:
+                        DAME_SESSION.add_log("🔄 Reload về target...")
+                        await page.goto(target_url, wait_until="domcontentloaded", timeout=20000)
+                        await asyncio.sleep(2)
 
-                    await asyncio.sleep(c["inter"] / 1000)
-
-                if not DAME_SESSION.stopped:
-                    DAME_SESSION.add_log(f"🔄 Xong vòng {loop_n} · Tổng: {DAME_SESSION.total} báo cáo")
-                    await asyncio.sleep(c["loop"] / 1000)
+                except Exception as e:
+                    DAME_SESSION.add_log(f"⚠ Loop: {str(e)[:80]}")
 
             screenshot_task.cancel()
             await browser.close()
-            DAME_SESSION.add_log(f"⏹ Kết thúc · Tổng: {DAME_SESSION.total} báo cáo")
+            if DAME_SESSION.died:
+                DAME_SESSION.add_log(f"💀 Kết thúc — ACC DIE · Tổng: {DAME_SESSION.total}")
+            else:
+                DAME_SESSION.add_log(f"⏹ Kết thúc · Tổng: {DAME_SESSION.total}")
 
     except Exception as e:
         DAME_SESSION.add_log(f"❌ Lỗi: {str(e)[:120]}")
@@ -548,12 +508,14 @@ def get_status() -> dict:
         "running":  DAME_SESSION.running,
         "paused":   DAME_SESSION.paused,
         "stopped":  DAME_SESSION.stopped,
+        "died":     DAME_SESSION.died,
         "total":    DAME_SESSION.total,
         "loops":    DAME_SESSION.loops,
         "log":      DAME_SESSION.log,
         "logs":     DAME_SESSION.pop_logs(),
         "name":     DAME_SESSION.name,
         "uid":      DAME_SESSION.uid,
+        "die_screenshot": DAME_SESSION.screenshot_b64 if DAME_SESSION.died else "",
     }
 
 def get_screenshot() -> str:
@@ -625,50 +587,22 @@ async def _gemini_solve_captcha(page, ctx, browser, cap_id: str):
                 clicked = True
             except: pass
 
-        # Fallback: selector iframe (mở rộng cho Meta/Facebook captcha)
+        # Fallback: selector iframe
         if not clicked:
-            iframe_el = None
-            for iframe_sel in [
-                "iframe[src*='recaptcha']",
-                "iframe[src*='facebook.com/captcha']",
-                "iframe[src*='checkpoint']",
-                "iframe[title*='captcha']",
-                "iframe[title*='security']",
-                "iframe[title*='reCAPTCHA']",
-                "iframe[src*='api2/anchor']",
-                "iframe[src*='funcaptcha']",
-                "iframe[src*='arkoselabs']",
-            ]:
-                try:
-                    iframe_el = await page.query_selector(iframe_sel)
-                    if iframe_el:
-                        break
-                except: continue
-            if iframe_el:
-                try:
+            try:
+                iframe_el = await page.query_selector("iframe[src*='recaptcha']")
+                if iframe_el:
                     frame = await iframe_el.content_frame()
                     if frame:
-                        for cb_sel in ["#recaptcha-anchor", ".recaptcha-checkbox-border", "[role='checkbox']", "input[type='checkbox']"]:
-                            try:
-                                cb = await frame.query_selector(cb_sel)
-                                if cb:
-                                    await cb.click()
-                                    clicked = True
-                                    break
-                            except: continue
-                except: pass
+                        cb = await frame.query_selector("#recaptcha-anchor")
+                        if cb:
+                            await cb.click()
+                            clicked = True
+            except: pass
 
-        # Fallback: selector thô trên page
+        # Fallback: selector thô
         if not clicked:
-            for sel in [
-                ".recaptcha-checkbox",
-                "[aria-label*='robot']",
-                "[aria-label*='human']",
-                "[aria-label*='not a robot']",
-                "span.recaptcha-checkbox-border",
-                "[data-testid*='captcha']",
-                "button[type='submit'][id*='captcha']",
-            ]:
+            for sel in [".recaptcha-checkbox","[aria-label*='robot']","[aria-label*='human']","[aria-label*='not a robot']","span.recaptcha-checkbox-border"]:
                 try:
                     el = await page.query_selector(sel)
                     if el:
@@ -677,50 +611,20 @@ async def _gemini_solve_captcha(page, ctx, browser, cap_id: str):
                         break
                 except: continue
 
-        # Fallback: click tọa độ cố định vùng checkbox Meta (góc trái giữa màn hình)
-        if not clicked:
-            try:
-                vp = page.viewport_size or {"width": 1280, "height": 800}
-                # Thử 3 vị trí phổ biến của checkbox Meta captcha
-                for x_pct, y_pct in [(38, 18), (36, 18), (40, 18)]:
-                    x = int(vp["width"] * x_pct / 100)
-                    y = int(vp["height"] * y_pct / 100)
-                    await page.mouse.click(x, y)
-                    await asyncio.sleep(1)
-                clicked = True
-                _cap_update(cap_id, "🖱️ Đã thử click tọa độ fallback checkbox Meta...")
-            except: pass
+        # 3. Đợi xác nhận
+        _cap_update(cap_id, "✅ Đã click! Đang đợi xác nhận (5s)...")
+        await asyncio.sleep(5)
+        sc2 = await snap()
 
-        # 3. Đợi xác nhận — retry tối đa 3 lần nếu chưa tích
-        checked_ok = False
-        sc2 = ""
-        for attempt in range(3):
-            wait_sec = 5 if attempt == 0 else 4
-            _cap_update(cap_id, f"✅ Đã click! Đang đợi xác nhận ({wait_sec}s)... (lần {attempt+1}/3)")
-            await asyncio.sleep(wait_sec)
-            sc2 = await snap()
-
-            prompt2 = (
-                "Checkbox reCAPTCHA 'Toi khong phai la nguoi may' da duoc tich (hien dau check xanh) chua? "
-                'Tra ve JSON: {"checked": true} hoac {"checked": false}. Chi JSON.'
-            )
-            ai2 = await _ai_analyze_screenshot(sc2, prompt2)
-            check_data = parse_json(ai2.get("text", ""))
-            if check_data.get("checked"):
-                _cap_update(cap_id, "🎉 CAPTCHA xác nhận! Đang tiếp tục đăng nhập...", sc2)
-                checked_ok = True
-                break
-            else:
-                # Thử click lại tọa độ fallback
-                if attempt < 2:
-                    _cap_update(cap_id, f"⚠️ Chưa tích — thử click lại (lần {attempt+2}/3)...", sc2)
-                    try:
-                        vp = page.viewport_size or {"width": 1280, "height": 800}
-                        positions = [(38, 18), (36, 18), (40, 18)]
-                        x_pct, y_pct = positions[attempt % len(positions)]
-                        await page.mouse.click(int(vp["width"] * x_pct / 100), int(vp["height"] * y_pct / 100))
-                    except: pass
-        if not checked_ok:
+        prompt2 = (
+            "Checkbox reCAPTCHA 'Toi khong phai la nguoi may' da duoc tich (hien dau check xanh) chua? "
+            'Tra ve JSON: {"checked": true} hoac {"checked": false}. Chi JSON.'
+        )
+        ai2 = await _ai_analyze_screenshot(sc2, prompt2)
+        check_data = parse_json(ai2.get("text", ""))
+        if check_data.get("checked"):
+            _cap_update(cap_id, "🎉 CAPTCHA xác nhận! Đang tiếp tục đăng nhập...", sc2)
+        else:
             _cap_update(cap_id, "⚠️ Chưa chắc tích xong — vẫn thử tiếp...", sc2)
 
         # 4. Click nút Login
@@ -989,18 +893,7 @@ async def fb_login_by_pass(email: str, password: str, session_id: str = None, ot
                     await page.wait_for_load_state("networkidle", timeout=8000)
                 except: pass
                 await asyncio.sleep(2)
-                sc = await snap()
-
-                # ── Kiểm tra xem trang 2FA có captcha không ──
-                page_text_2fa = ""
-                try: page_text_2fa = (await page.inner_text("body")).lower()
-                except: pass
-                if any(k in page_text_2fa for k in ["captcha","robot","không phải là người máy","i'm not a robot","nguoi may","xác minh bảo mật","security check"]):
-                    cap_id = str(uuid.uuid4())
-                    _captcha_sessions[cap_id] = {"status": "solving", "result": None, "msg": "⏳ Đang khởi động...", "screenshot_b64": sc}
-                    asyncio.create_task(_gemini_solve_captcha(page, ctx, browser, cap_id))
-                    return {"status": "captcha_solving", "cap_id": cap_id, "message": "🤖 Đang giải CAPTCHA trên trang 2FA...", "screenshot_b64": sc}
-
+                sc = await snap()  # Chụp lại sau khi load xong
                 new_sid = str(uuid.uuid4())
                 _browser_sessions[new_sid] = {"browser": browser, "page": page, "ctx": ctx}
                 return {"status": "2fa", "message": "🔐 Tài khoản bật xác minh 2 bước. Nhập mã OTP:", "session_id": new_sid, "screenshot_b64": sc}
