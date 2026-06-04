@@ -1133,11 +1133,10 @@ async function doFbLoginPass(){
 
   try{
     if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='🔑 Đăng nhập'; return; }
-    const safeToken = (SESSION_TOKEN||'').replace(/[^\x20-\x7E]/g,'');
     const r = await fetch('/api/fb-login-pass',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+safeToken},
-      body: JSON.stringify({fb_email:email, fb_pass:pass})
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({fb_email:email, fb_pass:pass, _token: SESSION_TOKEN})
     });
     const d = await r.json();
 
@@ -1232,11 +1231,10 @@ async function stepVerifyCookie(){
 
   try{
     if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='✅ Xác nhận Cookie'; return; }
-    const safeToken = (SESSION_TOKEN||'').replace(/[^\x20-\x7E]/g,'');
     const r = await fetch('/api/verify-fb-cookie',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+safeToken},
-      body: JSON.stringify({cookie})
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({cookie, _token: SESSION_TOKEN})
     });
     const d = await r.json();
 
