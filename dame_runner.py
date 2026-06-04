@@ -620,7 +620,7 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
                 await asyncio.sleep(0.4)
 
                 # Thử nhiều selector cho ô password
-                for sel in ["#pass", "input[name='pass']", "input[type='password']"]:
+                for sel in ["#pass", "input[name='pass']", "input[type='password']", "input[placeholder='Mật khẩu']", "input[placeholder='Password']", "input[placeholder*='khẩu']"]:
                     try:
                         await page.fill(sel, password, timeout=3000)
                         break
