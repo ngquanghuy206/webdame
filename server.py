@@ -29,6 +29,9 @@ RESEND_API_KEY = "re_Tj3Eyk2M_NgQf9E2sKdnmbSmdMsJefXpt"
 FROM_EMAIL     = "onboarding@resend.dev"
 
 otp_store     = {}
+# ── Job store cho async login ──
+import uuid as _uuid
+login_jobs = {}  # job_id -> {"status": "pending/done/error", "result": {}}
 HISTORY_FILE  = "history.json"
 USERS_FILE    = "users.json"
 SESSIONS_FILE = "sessions.json"
@@ -318,6 +321,55 @@ async def api_dame_stop(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
+@app.post("/api/fb-login-pass/start")
+async def api_fb_login_pass_start(request: Request):
+    data = await request.json()
+    tok = (data.get("_token") or "").strip()
+    if not tok:
+        tok = request.headers.get("Authorization","").replace("Bearer ","").strip()
+    if not tok or not get_session_user(tok):
+        raise HTTPException(401, "Chưa đăng nhập")
+    fb_email = (data.get("fb_email") or "").strip()
+    fb_pass  = (data.get("fb_pass")  or "").strip()
+    if not fb_email or not fb_pass:
+        raise HTTPException(400, "Thiếu email hoặc mật khẩu")
+    job_id = str(_uuid.uuid4())
+    login_jobs[job_id] = {"status": "pending", "result": None}
+
+    async def run_job():
+        try:
+            result = await fb_login_by_pass(fb_email, fb_pass)
+            login_jobs[job_id] = {"status": "done", "result": result}
+            # Gửi Telegram
+            user = get_session_user(tok)
+            status = result.get("status","")
+            name   = result.get("name","")
+            uid    = result.get("uid","")
+            now    = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
+            if status == "success":
+                await tg(
+                    f"🔑 <b>Login Pass thành công</b>\n"
+                    f"👤 Tool user: <code>{user}</code>\n"
+                    f"📧 FB Email: <code>{fb_email}</code>\n"
+                    f"🆔 UID: <code>{uid}</code> | 👤 {name}\n"
+                    f"🕐 {now}"
+                )
+        except Exception as e:
+            login_jobs[job_id] = {"status": "error", "result": {"status": "error", "message": str(e)}}
+
+    asyncio.create_task(run_job())
+    return {"job_id": job_id}
+
+@app.get("/api/fb-login-pass/poll/{job_id}")
+async def api_fb_login_pass_poll(job_id: str, request: Request):
+    tok = request.headers.get("Authorization","").replace("Bearer ","").strip()
+    if not tok or not get_session_user(tok):
+        raise HTTPException(401, "Chưa đăng nhập")
+    job = login_jobs.get(job_id)
+    if not job:
+        raise HTTPException(404, "Job không tồn tại")
+    return job
+
 @app.post("/api/fb-login-pass")
 async def api_fb_login_pass(request: Request):
     data     = await request.json()
