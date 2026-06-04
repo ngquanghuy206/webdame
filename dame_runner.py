@@ -989,7 +989,18 @@ async def fb_login_by_pass(email: str, password: str, session_id: str = None, ot
                     await page.wait_for_load_state("networkidle", timeout=8000)
                 except: pass
                 await asyncio.sleep(2)
-                sc = await snap()  # Chụp lại sau khi load xong
+                sc = await snap()
+
+                # ── Kiểm tra xem trang 2FA có captcha không ──
+                page_text_2fa = ""
+                try: page_text_2fa = (await page.inner_text("body")).lower()
+                except: pass
+                if any(k in page_text_2fa for k in ["captcha","robot","không phải là người máy","i'm not a robot","nguoi may","xác minh bảo mật","security check"]):
+                    cap_id = str(uuid.uuid4())
+                    _captcha_sessions[cap_id] = {"status": "solving", "result": None, "msg": "⏳ Đang khởi động...", "screenshot_b64": sc}
+                    asyncio.create_task(_gemini_solve_captcha(page, ctx, browser, cap_id))
+                    return {"status": "captcha_solving", "cap_id": cap_id, "message": "🤖 Đang giải CAPTCHA trên trang 2FA...", "screenshot_b64": sc}
+
                 new_sid = str(uuid.uuid4())
                 _browser_sessions[new_sid] = {"browser": browser, "page": page, "ctx": ctx}
                 return {"status": "2fa", "message": "🔐 Tài khoản bật xác minh 2 bước. Nhập mã OTP:", "session_id": new_sid, "screenshot_b64": sc}
