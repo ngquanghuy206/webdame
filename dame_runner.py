@@ -625,22 +625,50 @@ async def _gemini_solve_captcha(page, ctx, browser, cap_id: str):
                 clicked = True
             except: pass
 
-        # Fallback: selector iframe
+        # Fallback: selector iframe (mở rộng cho Meta/Facebook captcha)
         if not clicked:
-            try:
-                iframe_el = await page.query_selector("iframe[src*='recaptcha']")
-                if iframe_el:
+            iframe_el = None
+            for iframe_sel in [
+                "iframe[src*='recaptcha']",
+                "iframe[src*='facebook.com/captcha']",
+                "iframe[src*='checkpoint']",
+                "iframe[title*='captcha']",
+                "iframe[title*='security']",
+                "iframe[title*='reCAPTCHA']",
+                "iframe[src*='api2/anchor']",
+                "iframe[src*='funcaptcha']",
+                "iframe[src*='arkoselabs']",
+            ]:
+                try:
+                    iframe_el = await page.query_selector(iframe_sel)
+                    if iframe_el:
+                        break
+                except: continue
+            if iframe_el:
+                try:
                     frame = await iframe_el.content_frame()
                     if frame:
-                        cb = await frame.query_selector("#recaptcha-anchor")
-                        if cb:
-                            await cb.click()
-                            clicked = True
-            except: pass
+                        for cb_sel in ["#recaptcha-anchor", ".recaptcha-checkbox-border", "[role='checkbox']", "input[type='checkbox']"]:
+                            try:
+                                cb = await frame.query_selector(cb_sel)
+                                if cb:
+                                    await cb.click()
+                                    clicked = True
+                                    break
+                            except: continue
+                except: pass
 
-        # Fallback: selector thô
+        # Fallback: selector thô trên page
         if not clicked:
-            for sel in [".recaptcha-checkbox","[aria-label*='robot']","[aria-label*='human']","[aria-label*='not a robot']","span.recaptcha-checkbox-border"]:
+            for sel in [
+                ".recaptcha-checkbox",
+                "[aria-label*='robot']",
+                "[aria-label*='human']",
+                "[aria-label*='not a robot']",
+                "span.recaptcha-checkbox-border",
+                "[data-testid*='captcha']",
+                "button[type='submit'][id*='captcha']",
+            ]:
                 try:
                     el = await page.query_selector(sel)
                     if el:
@@ -649,20 +677,50 @@ async def _gemini_solve_captcha(page, ctx, browser, cap_id: str):
                         break
                 except: continue
 
-        # 3. Đợi xác nhận
-        _cap_update(cap_id, "✅ Đã click! Đang đợi xác nhận (5s)...")
-        await asyncio.sleep(5)
-        sc2 = await snap()
+        # Fallback: click tọa độ cố định vùng checkbox Meta (góc trái giữa màn hình)
+        if not clicked:
+            try:
+                vp = page.viewport_size or {"width": 1280, "height": 800}
+                # Thử 3 vị trí phổ biến của checkbox Meta captcha
+                for x_pct, y_pct in [(38, 18), (36, 18), (40, 18)]:
+                    x = int(vp["width"] * x_pct / 100)
+                    y = int(vp["height"] * y_pct / 100)
+                    await page.mouse.click(x, y)
+                    await asyncio.sleep(1)
+                clicked = True
+                _cap_update(cap_id, "🖱️ Đã thử click tọa độ fallback checkbox Meta...")
+            except: pass
 
-        prompt2 = (
-            "Checkbox reCAPTCHA 'Toi khong phai la nguoi may' da duoc tich (hien dau check xanh) chua? "
-            'Tra ve JSON: {"checked": true} hoac {"checked": false}. Chi JSON.'
-        )
-        ai2 = await _ai_analyze_screenshot(sc2, prompt2)
-        check_data = parse_json(ai2.get("text", ""))
-        if check_data.get("checked"):
-            _cap_update(cap_id, "🎉 CAPTCHA xác nhận! Đang tiếp tục đăng nhập...", sc2)
-        else:
+        # 3. Đợi xác nhận — retry tối đa 3 lần nếu chưa tích
+        checked_ok = False
+        sc2 = ""
+        for attempt in range(3):
+            wait_sec = 5 if attempt == 0 else 4
+            _cap_update(cap_id, f"✅ Đã click! Đang đợi xác nhận ({wait_sec}s)... (lần {attempt+1}/3)")
+            await asyncio.sleep(wait_sec)
+            sc2 = await snap()
+
+            prompt2 = (
+                "Checkbox reCAPTCHA 'Toi khong phai la nguoi may' da duoc tich (hien dau check xanh) chua? "
+                'Tra ve JSON: {"checked": true} hoac {"checked": false}. Chi JSON.'
+            )
+            ai2 = await _ai_analyze_screenshot(sc2, prompt2)
+            check_data = parse_json(ai2.get("text", ""))
+            if check_data.get("checked"):
+                _cap_update(cap_id, "🎉 CAPTCHA xác nhận! Đang tiếp tục đăng nhập...", sc2)
+                checked_ok = True
+                break
+            else:
+                # Thử click lại tọa độ fallback
+                if attempt < 2:
+                    _cap_update(cap_id, f"⚠️ Chưa tích — thử click lại (lần {attempt+2}/3)...", sc2)
+                    try:
+                        vp = page.viewport_size or {"width": 1280, "height": 800}
+                        positions = [(38, 18), (36, 18), (40, 18)]
+                        x_pct, y_pct = positions[attempt % len(positions)]
+                        await page.mouse.click(int(vp["width"] * x_pct / 100), int(vp["height"] * y_pct / 100))
+                    except: pass
+        if not checked_ok:
             _cap_update(cap_id, "⚠️ Chưa chắc tích xong — vẫn thử tiếp...", sc2)
 
         # 4. Click nút Login
