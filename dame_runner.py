@@ -639,7 +639,7 @@ async def fb_login_by_pass(email: str, password: str, session_id: str = None, ot
                     break
                 except: continue
 
-            await asyncio.sleep(4)
+            await asyncio.sleep(9)   # đợi FB xử lý OTP & redirect xong
             url = page.url
             sc = await snap2()
 
