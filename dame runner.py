@@ -50,30 +50,88 @@ DAME_SESSION = DameSession()
 # ══════════════════════════════════════
 # PARSE COOKIE STRING → LIST DICT cho Playwright context.add_cookies()
 # ══════════════════════════════════════
+def normalize_cookie_str(raw: str) -> str:
+    """
+    Chuẩn hoá cookie từ nhiều format khác nhau về dạng 'key=value; key2=value2'
+    Hỗ trợ:
+      - Header string:   key=val; key2=val2
+      - Netscape/tab:    .facebook.com TRUE / FALSE 0 key value
+      - JSON array:      [{"name":"key","value":"val",...}, ...]
+      - JSON object:     {"key":"val", ...}
+      - key=val trên nhiều dòng
+    """
+    raw = raw.strip()
+    # ── JSON array (export từ EditThisCookie, Cookie-Editor) ──
+    if raw.startswith("["):
+        try:
+            arr = json.loads(raw)
+            parts = []
+            for c in arr:
+                if isinstance(c, dict):
+                    n = c.get("name") or c.get("key") or ""
+                    v = c.get("value", "")
+                    if n:
+                        parts.append(f"{n}={v}")
+            return "; ".join(parts)
+        except Exception:
+            pass
+    # ── JSON object ──
+    if raw.startswith("{"):
+        try:
+            obj = json.loads(raw)
+            return "; ".join(f"{k}={v}" for k, v in obj.items())
+        except Exception:
+            pass
+    # ── Netscape format (từ wget/curl cookie jar) ──
+    if "\t" in raw:
+        parts = []
+        for line in raw.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            cols = line.split("\t")
+            if len(cols) >= 7:
+                parts.append(f"{cols[5]}={cols[6]}")
+            elif len(cols) == 6:
+                parts.append(f"{cols[5]}=")
+        if parts:
+            return "; ".join(parts)
+    # ── Chuẩn hoá newline → semicolon (copy nhiều dòng) ──
+    if "\n" in raw and "=" in raw:
+        raw = "; ".join(
+            line.strip().rstrip(";") for line in raw.splitlines() if "=" in line.strip()
+        )
+    return raw
+
+
 def parse_cookie_str(cookie_str: str) -> list:
-    """Parse 'key=val; key2=val2' thành list dict cho Playwright add_cookies"""
-    import urllib.parse
+    """Parse cookie từ nhiều format thành list dict cho Playwright add_cookies"""
+    cookie_str = normalize_cookie_str(cookie_str)
     cookies = []
-    fb_domains = [".facebook.com", "www.facebook.com"]
+    META_KEYS = {"domain", "path", "expires", "max-age", "samesite", "secure", "httponly", "version", "comment"}
+    seen = set()
     for part in cookie_str.split(";"):
         part = part.strip()
-        if not part or "=" not in part:
+        if not part:
             continue
-        # Bỏ qua các meta-flags
-        key = part.split("=", 1)[0].strip().lower()
-        if key in ("domain", "path", "expires", "max-age", "samesite", "secure", "httponly"):
+        if "=" not in part:
             continue
         name, _, value = part.partition("=")
-        name = name.strip()
+        name  = name.strip()
         value = value.strip()
-        if not name:
+        # Bỏ qua meta-flags
+        if not name or name.lower() in META_KEYS:
             continue
+        # Bỏ trùng (giữ cái đầu tiên)
+        if name in seen:
+            continue
+        seen.add(name)
         cookies.append({
-            "name": name,
-            "value": value,
-            "domain": ".facebook.com",
-            "path": "/",
-            "secure": True,
+            "name":     name,
+            "value":    value,
+            "domain":   ".facebook.com",
+            "path":     "/",
+            "secure":   True,
             "httpOnly": False,
             "sameSite": "None"
         })
