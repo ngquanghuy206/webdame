@@ -614,7 +614,7 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
                     return ""
 
             # ── 1. Mở trang login ──
-            await page.goto("https://www.facebook.com/login", wait_until="domcontentloaded", timeout=30000)
+            await page.goto("https://www.facebook.com/login", wait_until="domcontentloaded", timeout=60000)
             await asyncio.sleep(1.5)
 
             # ── 2. Nhập email + pass ──
