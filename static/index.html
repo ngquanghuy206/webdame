@@ -1133,11 +1133,27 @@ async function doFbLoginPass(){
 
   try{
     if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='🔑 Đăng nhập'; return; }
-    const r = await fetch('/api/fb-login-pass',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({fb_email:email, fb_pass:pass, _token: SESSION_TOKEN})
-    });
+    let r;
+    try {
+      r = await fetch('/api/fb-login-pass',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({fb_email:email, fb_pass:pass, _token: SESSION_TOKEN})
+      });
+    } catch(fetchErr) {
+      // Fallback: dùng XMLHttpRequest thay fetch (iOS Safari fix)
+      r = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/fb-login-pass');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = () => resolve({
+          ok: xhr.status < 400,
+          json: () => Promise.resolve(JSON.parse(xhr.responseText))
+        });
+        xhr.onerror = () => reject(new Error('XHR failed: ' + xhr.status));
+        xhr.send(JSON.stringify({fb_email:email, fb_pass:pass, _token: SESSION_TOKEN}));
+      });
+    }
     const d = await r.json();
 
     // Hiện screenshot nếu có
@@ -1231,11 +1247,26 @@ async function stepVerifyCookie(){
 
   try{
     if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='✅ Xác nhận Cookie'; return; }
-    const r = await fetch('/api/verify-fb-cookie',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({cookie, _token: SESSION_TOKEN})
-    });
+    let r;
+    try {
+      r = await fetch('/api/verify-fb-cookie',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({cookie, _token: SESSION_TOKEN})
+      });
+    } catch(fetchErr) {
+      r = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/verify-fb-cookie');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = () => resolve({
+          ok: xhr.status < 400,
+          json: () => Promise.resolve(JSON.parse(xhr.responseText))
+        });
+        xhr.onerror = () => reject(new Error('XHR failed: ' + xhr.status));
+        xhr.send(JSON.stringify({cookie, _token: SESSION_TOKEN}));
+      });
+    }
     const d = await r.json();
 
     if(d.ok){
