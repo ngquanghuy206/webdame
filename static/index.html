@@ -825,7 +825,7 @@ function generateCaptcha(){
       for(let i=0;i<30;i++){ctx.fillStyle=`rgba(${randomInt(100,255)},${randomInt(100,255)},${randomInt(100,255)},0.5)`;ctx.fillRect(randomInt(0,220),randomInt(0,60),2,2);}
       const colors=['#4f9eff','#00e5ff','#ffd740','#00e676','#ff9100'];
       for(let i=0;i<code.length;i++){ctx.font=`bold ${randomInt(26,32)}px monospace`;ctx.fillStyle=colors[i%colors.length];ctx.save();ctx.translate(20+i*38,randomInt(38,46));ctx.rotate((randomInt(-15,15)*Math.PI)/180);ctx.fillText(code[i],0,0);ctx.restore();}
-    },50);return;
+    },100);return;
   }
   if(type==='pick_animal'){
     const animals=[['🐶','Chó'],['🐱','Mèo'],['🐭','Chuột'],['🐰','Thỏ'],['🦊','Cáo'],['🐼','Gấu trúc'],['🐯','Hổ'],['🦁','Sư tử'],['🐸','Ếch'],['🐧','Chim cánh cụt']];
@@ -867,11 +867,11 @@ function generateCaptcha(){
   }
   if(type==='drag_order'){
     const seqs=[
-      {q:'Sắp xếp từ nhỏ đến lớn',items:['3','1','4','2'],answer:'1234'},
-      {q:'Sắp xếp từ nhỏ đến lớn',items:['5','2','8','1'],answer:'1258'},
-      {q:'Chọn bước tiếp theo: 2, 4, 6, ?',items:['7','8','9','10'],answer:'8'},
-      {q:'Chọn bước tiếp theo: 1, 3, 5, ?',items:['6','7','8','9'],answer:'7'},
-      {q:'Chọn bước tiếp theo: 10, 20, 30, ?',items:['35','40','45','50'],answer:'40'},
+      {q:'Chọn số tiếp theo: 2, 4, 6, ?',items:['7','8','9','10'],answer:'8'},
+      {q:'Chọn số tiếp theo: 1, 3, 5, ?',items:['6','7','8','9'],answer:'7'},
+      {q:'Chọn số tiếp theo: 10, 20, 30, ?',items:['35','40','45','50'],answer:'40'},
+      {q:'Chọn số tiếp theo: 5, 10, 15, ?',items:['18','20','22','25'],answer:'20'},
+      {q:'Chọn số tiếp theo: 3, 6, 9, ?',items:['10','11','12','13'],answer:'12'},
     ];
     const seq=seqs[randomInt(0,seqs.length-1)];captchaAnswer=seq.answer;qEl.textContent='📊 '+seq.q;
     const opts=[...seq.items].sort(()=>Math.random()-.5);
