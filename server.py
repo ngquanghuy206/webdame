@@ -8,6 +8,17 @@ from fastapi.middleware.cors import CORSMiddleware
 try: import aiohttp; HAS_AIOHTTP = True
 except: HAS_AIOHTTP = False
 
+# ── Auto-install Playwright Chromium nếu chưa có ──
+import subprocess as _sp, sys as _sys
+try:
+    from playwright.sync_api import sync_playwright as _spw
+    with _spw() as _p:
+        try: _p.chromium.launch(headless=True, args=["--no-sandbox"])
+        except Exception:
+            _sp.run([_sys.executable, "-m", "playwright", "install", "chromium", "--with-deps"],
+                    check=False, capture_output=True)
+except: pass
+
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/static", StaticFiles(directory="static"), name="static")

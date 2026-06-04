@@ -12,6 +12,13 @@ try:
 except ImportError:
     PLAYWRIGHT_OK = False
 
+# Auto-install Chromium nếu chưa có
+import subprocess as _sp2, sys as _sys2
+try:
+    _sp2.run([_sys2.executable, "-m", "playwright", "install", "chromium", "--with-deps"],
+             check=False, capture_output=True, timeout=120)
+except: pass
+
 # ══════════════════════════════════════
 # SESSION STATE
 # ══════════════════════════════════════
