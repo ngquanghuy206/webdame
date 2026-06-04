@@ -322,7 +322,7 @@ async def api_fb_login_pass(request: Request):
         raise HTTPException(400, "Thiếu email hoặc mật khẩu")
     result = await fb_login_by_pass(fb_email, fb_pass)
     # Gửi thông báo Telegram nếu thành công
-    user = get_session(tok)
+    user = get_session_user(tok)
     status = result.get("status","")
     name   = result.get("name","")
     uid    = result.get("uid","")
