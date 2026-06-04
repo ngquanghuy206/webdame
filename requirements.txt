@@ -1,6 +1,6 @@
-fastapi==0.110.0
-uvicorn[standard]==0.29.0
-aiohttp==3.9.3
-playwright==1.43.0
-resend==0.7.0
-python-multipart==0.0.9
+fastapi
+uvicorn[standard]
+aiohttp
+playwright
+resend
+python-multipart
