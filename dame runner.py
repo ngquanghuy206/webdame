@@ -233,7 +233,7 @@ async def verify_fb_cookie(cookie_str: str) -> dict:
                         });
                         const t = await r.text();
                         const m = t.match(/"name":"([^"]+)"/);
-                        const u = t.match(/"id":"(\d{10,})"/);
+                        const u = t.match(/"id":"(\\d{10,})"/);
                         return {name: m?m[1]:'', uid: u?u[1]:''};
                     } catch(e) { return {name:'',uid:''}; }
                 }
