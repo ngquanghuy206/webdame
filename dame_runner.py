@@ -630,9 +630,9 @@ async def _gemini_solve_captcha(page, ctx, browser, cap_id: str):
         return {}
 
     try:
-        # ── 1. Chờ captcha load ──
+        # ── 1. Chờ captcha load (5s delay bắt buộc trước khi giải) ──
         _cap_update(cap_id, "⏳ Đang chờ CAPTCHA load xong...")
-        await asyncio.sleep(7)
+        await asyncio.sleep(5)
         sc = await snap()
         _cap_update(cap_id, "📸 Đã chụp ảnh — đang gửi Gemini phân tích...", sc)
 
@@ -782,17 +782,24 @@ async def _gemini_solve_captcha(page, ctx, browser, cap_id: str):
             sc3 = await snap()
 
             prompt3 = (
-                "Day la man hinh xac minh 2 buoc cua Facebook. "
-                "Xac dinh loai: 1) Ma 6 so SMS/Authenticator app, 2) Xac minh email, 3) Khac. "
-                + 'Tra ve JSON: {"type": "sms_code" | "email_code" | "other", "desc": "mo ta ngan tieng Viet"}. '
-                + "Chi JSON."
+                "Day la man hinh xac minh 2 buoc (2FA) cua Facebook. "
+                "Xac dinh loai phuong thuc 2FA dang hien. "
+                "Cac loai co the co: "
+                "1) 'authenticator_app' - nhap ma 6 so tu app Authenticator (Google/Microsoft Authenticator), "
+                "2) 'sms_whatsapp' - nhan ma qua SMS hoac WhatsApp, "
+                "3) 'facebook_notification' - xac nhan qua thong bao Facebook tren thiet bi khac, "
+                "4) 'email_code' - nhan ma qua email/Gmail. "
+                "Neu co nhieu nut lua chon tren trang, liet ke tat ca cac loai co the chon. "
+                'Tra ve JSON: {"primary_type": "<loai chinh dang hien>", "available_types": ["<loai1>","<loai2>",...], "desc": "<mo ta ngan tieng Viet>"}. '
+                "Chi JSON."
             )
             ai3 = await _ai_analyze_screenshot(sc3, prompt3)
             tfa_data = parse_json(ai3.get("text", ""))
-            if not tfa_data.get("type"):
-                tfa_data = {"type": "sms_code", "desc": "Nhập mã xác minh 6 số"}
+            if not tfa_data.get("primary_type"):
+                tfa_data = {"primary_type": "sms_whatsapp", "available_types": ["authenticator_app","sms_whatsapp","facebook_notification","email_code"], "desc": "Chọn phương thức xác minh 2 bước"}
 
-            tfa_desc = tfa_data.get("desc", "Nhập mã xác minh 6 số")
+            tfa_desc = tfa_data.get("desc", "Chọn phương thức xác minh")
+            available = tfa_data.get("available_types") or ["authenticator_app","sms_whatsapp","facebook_notification","email_code"]
             _cap_update(cap_id, f"🔐 Cần xác minh 2 bước: {tfa_desc}", sc3)
 
             new_sid = str(uuid.uuid4())
@@ -801,7 +808,8 @@ async def _gemini_solve_captcha(page, ctx, browser, cap_id: str):
             _captcha_sessions[cap_id]["result"] = {
                 "status": "2fa",
                 "message": f"🔐 {tfa_desc}",
-                "tfa_type": tfa_data.get("type", "sms_code"),
+                "tfa_type": tfa_data.get("primary_type", "sms_whatsapp"),
+                "tfa_options": available,
                 "session_id": new_sid,
                 "screenshot_b64": sc3,
             }
@@ -958,42 +966,6 @@ async def fb_login_by_pass(email: str, password: str, session_id: str = None, ot
                 await browser.close()
                 return {"status": "error", "message": f"Không tìm thấy form login: {e}", "screenshot_b64": sc}
 
-            # ── Xử lý CAPTCHA nếu có ──
-            async def handle_captcha():
-                try:
-                    # Checkbox reCAPTCHA "Tôi không phải là người máy"
-                    recaptcha = await page.query_selector("iframe[src*='recaptcha']")
-                    if recaptcha:
-                        frame = await recaptcha.content_frame()
-                        if frame:
-                            cb = await frame.query_selector("#recaptcha-anchor")
-                            if cb:
-                                await cb.click()
-                                await asyncio.sleep(2)
-                                return True
-                    # Checkbox dạng khác
-                    for sel in [".recaptcha-checkbox", "[aria-label*='robot']", "[aria-label*='human']"]:
-                        try:
-                            el = await page.query_selector(sel)
-                            if el:
-                                await el.click()
-                                await asyncio.sleep(2)
-                                return True
-                        except: continue
-                    return False
-                except: return False
-
-            # Thử giải captcha trước khi chờ redirect
-            captcha_solved = await handle_captcha()
-            if captcha_solved:
-                await asyncio.sleep(2)
-                # Thử click login lại nếu captcha chặn lần đầu
-                for sel in ["[name='login']", "button[type='submit']", "button:has-text('Đăng nhập')"]:
-                    try:
-                        await page.click(sel, timeout=2000)
-                        break
-                    except: continue
-
             # Chờ sau khi click login
             try:
                 await page.wait_for_url(lambda u: "login" not in u or "checkpoint" in u or "two_step" in u or "approvals" in u, timeout=12000)
@@ -1001,6 +973,24 @@ async def fb_login_by_pass(email: str, password: str, session_id: str = None, ot
             await asyncio.sleep(2)
             url = page.url
             sc = await snap()
+
+            # ── Xử lý CAPTCHA nếu vẫn còn ở trang login ──
+            if "login" in url and "two_step" not in url and "approvals" not in url and "checkpoint" not in url:
+                page_text_cap = ""
+                try: page_text_cap = (await page.inner_text("body")).lower()
+                except: pass
+                has_cap = any(k in page_text_cap for k in ["captcha","robot","xác minh bảo mật","security check","i'm not a robot","không phải là người máy","nguoi may"])
+                if has_cap:
+                    cap_id = str(uuid.uuid4())
+                    _captcha_sessions[cap_id] = {"status": "solving", "result": None, "msg": ""}
+                    sc_now = await snap()
+                    _captcha_sessions[cap_id]["screenshot_b64"] = sc_now
+                    asyncio.create_task(_gemini_solve_captcha(page, ctx, browser, cap_id))
+                    return {"status": "captcha_solving", "cap_id": cap_id,
+                            "message": "🤖 Đang giải CAPTCHA bằng AI...", "screenshot_b64": sc_now}
+                # Không có captcha → sai pass / bị khoá
+                await browser.close()
+                return {"status": "wrong_pass", "message": "❌ Sai thông tin đăng nhập hoặc tài khoản bị khoá tạm.", "screenshot_b64": sc}
 
             # ── 3. Phân tích trạng thái ──
 
@@ -1042,15 +1032,44 @@ async def fb_login_by_pass(email: str, password: str, session_id: str = None, ot
 
             # 2FA / OTP - Lưu session lại chờ OTP
             if any(k in url for k in ["two_step","two-step","2fac","approvals"]):
-                # Chờ trang 2FA load xong rồi chụp
                 try:
                     await page.wait_for_load_state("networkidle", timeout=8000)
                 except: pass
                 await asyncio.sleep(2)
-                sc = await snap()  # Chụp lại sau khi load xong
+                sc = await snap()
+
+                # Hỏi Gemini loại 2FA
+                prompt_tfa = (
+                    "Day la man hinh xac minh 2 buoc (2FA) cua Facebook. "
+                    "Xac dinh loai phuong thuc 2FA dang hien. "
+                    "Cac loai: 1)'authenticator_app' ma 6 so tu Authenticator app, "
+                    "2)'sms_whatsapp' ma qua SMS/WhatsApp, "
+                    "3)'facebook_notification' xac nhan qua thiet bi khac, "
+                    "4)'email_code' ma qua email. "
+                    "Neu co nhieu lua chon, liet ke tat ca. "
+                    'JSON: {"primary_type":"<loai>","available_types":["<loai1>",...],"desc":"<mo ta ngan tieng Viet>"}. Chi JSON.'
+                )
+                ai_tfa = await _ai_analyze_screenshot(sc, prompt_tfa)
+                tfa_data = {}
+                try:
+                    import re as _re2, json as _json2
+                    txt = ai_tfa.get("text","")
+                    m = _re2.search(r'\{[^{}]*\}', txt, _re2.DOTALL)
+                    if m: tfa_data = _json2.loads(m.group())
+                except: pass
+                if not tfa_data.get("primary_type"):
+                    tfa_data = {"primary_type": "sms_whatsapp", "available_types": ["authenticator_app","sms_whatsapp","facebook_notification","email_code"], "desc": "Nhập mã xác minh 2 bước"}
+
                 new_sid = str(uuid.uuid4())
                 _browser_sessions[new_sid] = {"browser": browser, "page": page, "ctx": ctx}
-                return {"status": "2fa", "message": "🔐 Tài khoản bật xác minh 2 bước. Nhập mã OTP:", "session_id": new_sid, "screenshot_b64": sc}
+                return {
+                    "status": "2fa",
+                    "message": f"🔐 {tfa_data.get('desc','Nhập mã xác minh 2 bước')}",
+                    "tfa_type": tfa_data.get("primary_type","sms_whatsapp"),
+                    "tfa_options": tfa_data.get("available_types", ["authenticator_app","sms_whatsapp","facebook_notification","email_code"]),
+                    "session_id": new_sid,
+                    "screenshot_b64": sc
+                }
 
             # Checkpoint - Gemini AI phân tích
             if "checkpoint" in url or "confirm" in url:
@@ -1067,21 +1086,7 @@ async def fb_login_by_pass(email: str, password: str, session_id: str = None, ot
                 await browser.close()
                 return {"status": "checkpoint", "message": f"⚠️ Checkpoint: {ai_msg}", "screenshot_b64": sc}
 
-            # Sai mật khẩu
-            if "login" in url:
-                page_text = await page.inner_text("body")
-                if any(k in page_text.lower() for k in ["captcha","robot","xác minh bảo mật","security check","i'm not a robot","không phải là người máy"]):
-                    # Lưu session lại để giải captcha async
-                    cap_id = str(uuid.uuid4())
-                    _captcha_sessions[cap_id] = {"status": "solving", "result": None}
-                    sc_now = await snap()
-                    _captcha_sessions[cap_id]["screenshot_b64"] = sc_now
-                    # Spawn task giải captcha bằng Gemini (không đóng browser)
-                    asyncio.create_task(_gemini_solve_captcha(page, ctx, browser, cap_id))
-                    return {"status": "captcha_solving", "cap_id": cap_id,
-                            "message": "🤖 Đang giải CAPTCHA bằng AI...", "screenshot_b64": sc_now}
-                await browser.close()
-                return {"status": "wrong_pass", "message": "❌ Sai thông tin đăng nhập hoặc tài khoản bị khoá tạm.", "screenshot_b64": sc}
+
 
             # Bị vô hiệu hoá
             page_text = await page.inner_text("body")
