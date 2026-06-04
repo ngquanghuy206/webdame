@@ -1132,9 +1132,11 @@ async function doFbLoginPass(){
   scBox.style.display='none';
 
   try{
+    if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='🔑 Đăng nhập'; return; }
+    const safeToken = (SESSION_TOKEN||'').replace(/[^\x20-\x7E]/g,'');
     const r = await fetch('/api/fb-login-pass',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+safeToken},
       body: JSON.stringify({fb_email:email, fb_pass:pass})
     });
     const d = await r.json();
@@ -1229,9 +1231,11 @@ async function stepVerifyCookie(){
   btn.disabled=true; btn.textContent='⏳ Đang xác nhận...';
 
   try{
+    if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='✅ Xác nhận Cookie'; return; }
+    const safeToken = (SESSION_TOKEN||'').replace(/[^\x20-\x7E]/g,'');
     const r = await fetch('/api/verify-fb-cookie',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+safeToken},
       body: JSON.stringify({cookie})
     });
     const d = await r.json();
