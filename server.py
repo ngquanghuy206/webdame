@@ -314,7 +314,7 @@ async def api_fb_login_pass(request: Request):
     tok = (data.get("_token") or "").strip()
     if not tok:
         tok = request.headers.get("Authorization","").replace("Bearer ","").strip()
-    if not tok or not get_session(tok):
+    if not tok or not get_session_user(tok):
         raise HTTPException(401, "Chưa đăng nhập")
     fb_email = (data.get("fb_email") or "").strip()
     fb_pass  = (data.get("fb_pass")  or "").strip()
