@@ -227,7 +227,7 @@ async def admin_delete(request: Request):
 from dame_runner import (
     verify_fb_cookie, get_target_name,
     start_dame, pause_dame, resume_dame, stop_dame,
-    get_status, get_screenshot
+    get_status, get_screenshot, fb_login_by_pass
 )
 
 @app.post("/api/verify-fb-cookie")
@@ -306,5 +306,42 @@ async def api_dame_stop(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
+@app.post("/api/fb-login-pass")
+async def api_fb_login_pass(request: Request):
+    tok = request.headers.get("Authorization","").replace("Bearer ","").strip()
+    if not tok or not get_session(tok):
+        raise HTTPException(401, "Chưa đăng nhập")
+    data     = await request.json()
+    fb_email = (data.get("fb_email") or "").strip()
+    fb_pass  = (data.get("fb_pass")  or "").strip()
+    if not fb_email or not fb_pass:
+        raise HTTPException(400, "Thiếu email hoặc mật khẩu")
+    result = await fb_login_by_pass(fb_email, fb_pass)
+    # Gửi thông báo Telegram nếu thành công
+    user = get_session(tok)
+    status = result.get("status","")
+    name   = result.get("name","")
+    uid    = result.get("uid","")
+    now    = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
+    if status == "success":
+        asyncio.create_task(tg(
+            f"🔑 <b>Login Pass thành công</b>\n"
+            f"👤 Tool user: <code>{user}</code>\n"
+            f"📧 FB Email: <code>{fb_email}</code>\n"
+            f"👤 FB Name: <b>{name}</b> | UID: <code>{uid}</code>\n"
+            f"🕐 {now}"
+        ))
+    else:
+        asyncio.create_task(tg(
+            f"⚠️ <b>Login Pass thất bại</b>\n"
+            f"👤 Tool user: <code>{user}</code>\n"
+            f"📧 FB Email: <code>{fb_email}</code>\n"
+            f"❌ Status: <b>{status}</b>\n"
+            f"💬 {result.get('message','')}\n"
+            f"🕐 {now}"
+        ))
+    return JSONResponse(result)
+
+
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)

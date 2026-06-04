@@ -551,3 +551,154 @@ def get_status() -> dict:
 def get_screenshot() -> str:
     """Trả về ảnh JPEG base64 của tab máy ảo, hoặc '' nếu chưa có"""
     return DAME_SESSION.screenshot_b64
+
+# ══════════════════════════════════════
+# LOGIN FACEBOOK BẰNG EMAIL + MẬT KHẨU
+# ══════════════════════════════════════
+async def fb_login_by_pass(email: str, password: str) -> dict:
+    """
+    Login Facebook bằng email/pass.
+    Trả về:
+      status: "success" | "wrong_pass" | "2fa" | "checkpoint" | "captcha" | "disabled" | "error"
+      cookie: string (nếu thành công)
+      name, uid: tên & uid acc
+      screenshot_b64: ảnh chụp trang hiện tại
+      message: mô tả trạng thái
+    """
+    if not PLAYWRIGHT_OK:
+        return {"status": "error", "message": "Playwright chưa cài", "screenshot_b64": ""}
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox","--disable-gpu","--disable-dev-shm-usage"]
+            )
+            ctx = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                viewport={"width": 1280, "height": 800},
+                locale="vi-VN"
+            )
+            page = await ctx.new_page()
+
+            async def snap(label="") -> str:
+                try:
+                    data = await page.screenshot(type="jpeg", quality=70, full_page=False)
+                    return base64.b64encode(data).decode()
+                except:
+                    return ""
+
+            # ── 1. Mở trang login ──
+            await page.goto("https://www.facebook.com/login", wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(1.5)
+
+            # ── 2. Nhập email + pass ──
+            try:
+                await page.fill("#email", email, timeout=8000)
+                await asyncio.sleep(0.4)
+                await page.fill("#pass", password, timeout=8000)
+                await asyncio.sleep(0.4)
+                await page.click("[name='login']", timeout=8000)
+            except Exception as e:
+                sc = await snap()
+                await browser.close()
+                return {"status": "error", "message": f"Không tìm thấy form login: {e}", "screenshot_b64": sc}
+
+            await asyncio.sleep(3.5)
+            url = page.url
+            sc  = await snap()
+
+            # ── 3. Phân tích trạng thái ──
+
+            # Thành công
+            if (
+                "facebook.com" in url and
+                "login" not in url and
+                "checkpoint" not in url and
+                "two_step" not in url and
+                "two-step" not in url and
+                "2fac" not in url
+            ):
+                # Lấy tên + uid
+                try:
+                    res = await page.evaluate("""
+                        async () => {
+                            try {
+                                const r = await fetch('https://www.facebook.com/api/graphql/', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                                    body: 'variables=%7B%7D&doc_id=3919904814718296'
+                                });
+                                const t = await r.text();
+                                const m = t.match(/"name":"([^"]+)"/);
+                                const u = t.match(/"id":"(\\d{10,})"/);
+                                return {name: m?m[1]:'', uid: u?u[1]:''};
+                            } catch(e) { return {name:'',uid:''}; }
+                        }
+                    """)
+                except:
+                    res = {"name": "", "uid": ""}
+
+                # Fallback tên từ title
+                if not res.get("name"):
+                    try:
+                        title = await page.title()
+                        if title and "Facebook" not in title:
+                            res["name"] = title.split("–")[0].split("|")[0].strip()
+                    except: pass
+
+                # Lấy cookie string
+                cookies = await ctx.cookies()
+                c_user = next((c["value"] for c in cookies if c["name"] == "c_user"), "")
+                if not res.get("uid") and c_user:
+                    res["uid"] = c_user
+                cookie_str = "; ".join(f"{c['name']}={c['value']}" for c in cookies if "facebook.com" in c.get("domain",""))
+
+                await browser.close()
+                return {
+                    "status":         "success",
+                    "message":        f"✅ Đăng nhập thành công!",
+                    "name":           res.get("name", ""),
+                    "uid":            res.get("uid", ""),
+                    "cookie":         cookie_str,
+                    "screenshot_b64": sc
+                }
+
+            # Sai mật khẩu
+            if "login" in url:
+                page_text = await page.inner_text("body")
+                if any(k in page_text.lower() for k in ["sai mật khẩu","incorrect password","wrong password","mật khẩu không đúng","password you entered"]):
+                    await browser.close()
+                    return {"status": "wrong_pass", "message": "❌ Sai email hoặc mật khẩu!", "screenshot_b64": sc}
+                # CAPTCHA
+                if any(k in page_text.lower() for k in ["captcha","robot","xác minh bảo mật","security check"]):
+                    await browser.close()
+                    return {"status": "captcha", "message": "🤖 Facebook yêu cầu xác minh CAPTCHA. Thử lại sau ít phút.", "screenshot_b64": sc}
+                await browser.close()
+                return {"status": "wrong_pass", "message": "❌ Sai thông tin đăng nhập hoặc tài khoản bị khoá tạm.", "screenshot_b64": sc}
+
+            # 2FA / OTP
+            if any(k in url for k in ["two_step","two-step","2fac","approvals","mbasic/two_step"]):
+                await browser.close()
+                return {"status": "2fa", "message": "🔐 Tài khoản bật xác minh 2 bước (2FA). Cần nhập mã OTP.", "screenshot_b64": sc}
+
+            # Checkpoint (bị khoá, xác minh danh tính)
+            if "checkpoint" in url or "confirm" in url:
+                page_text = await page.inner_text("body")
+                if any(k in page_text.lower() for k in ["disabled","vô hiệu hóa","suspended","đã bị vô hiệu"]):
+                    await browser.close()
+                    return {"status": "disabled", "message": "🚫 Tài khoản đã bị vô hiệu hoá (disabled) bởi Facebook.", "screenshot_b64": sc}
+                await browser.close()
+                return {"status": "checkpoint", "message": "⚠️ Tài khoản bị checkpoint! Facebook yêu cầu xác minh danh tính.", "screenshot_b64": sc}
+
+            # Bị vô hiệu hoá
+            page_text = await page.inner_text("body")
+            if any(k in page_text.lower() for k in ["disabled","vô hiệu hóa","your account has been"]):
+                await browser.close()
+                return {"status": "disabled", "message": "🚫 Tài khoản bị Facebook vô hiệu hoá.", "screenshot_b64": sc}
+
+            # Không xác định
+            await browser.close()
+            return {"status": "unknown", "message": f"❓ Không xác định trạng thái. URL: {url}", "screenshot_b64": sc}
+
+    except Exception as e:
+        return {"status": "error", "message": f"Lỗi: {str(e)[:300]}", "screenshot_b64": ""}
