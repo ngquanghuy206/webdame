@@ -1,9 +1,10 @@
+import uuid
 """
 dame_runner.py — Playwright headless dame FB
 Inject cookie theo bookmark JS từ ảnh → navigate target → auto 13 report
 Hỗ trợ: screenshot tab máy ảo realtime
 """
-import asyncio, json, re, time, base64, uuid
+import asyncio, json, re, time, base64
 from typing import Optional
 
 try:
@@ -769,6 +770,12 @@ async def fb_login_by_pass(email: str, password: str, session_id: str = None, ot
 
             # 2FA / OTP - Lưu session lại chờ OTP
             if any(k in url for k in ["two_step","two-step","2fac","approvals"]):
+                # Chờ trang 2FA load xong rồi chụp
+                try:
+                    await page.wait_for_load_state("networkidle", timeout=8000)
+                except: pass
+                await asyncio.sleep(2)
+                sc = await snap()  # Chụp lại sau khi load xong
                 new_sid = str(uuid.uuid4())
                 _browser_sessions[new_sid] = {"browser": browser, "page": page, "ctx": ctx}
                 return {"status": "2fa", "message": "🔐 Tài khoản bật xác minh 2 bước. Nhập mã OTP:", "session_id": new_sid, "screenshot_b64": sc}
