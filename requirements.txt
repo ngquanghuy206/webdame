@@ -4,3 +4,4 @@ aiohttp
 playwright==1.43.0
 resend
 python-multipart
+uuid
