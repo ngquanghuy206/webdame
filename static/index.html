@@ -1540,9 +1540,10 @@ function startClock(){
   if(el){el.classList.toggle('checked',rememberMe);el.textContent=rememberMe?'✓':'';}
   if(rememberMe&&CURRENT_USER){const u=document.getElementById('login-user');if(u)u.value=CURRENT_USER;}
   if(SESSION_TOKEN&&CURRENT_USER){
-    fetch('/api/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}})
-      .then(r=>{if(r.ok)showApp();else{SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});}})
-      .catch(()=>showApp());
+    const _ac=new AbortController(),_tid=setTimeout(()=>_ac.abort(),5000);
+    fetch('/api/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN},signal:_ac.signal})
+      .then(r=>{clearTimeout(_tid);if(r.ok)showApp();else{SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});}})
+      .catch(()=>{clearTimeout(_tid);SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});});
   }
   setActiveStep(1);
   setInterval(()=>{if(dameRunning)updateRunUI();},1000);
