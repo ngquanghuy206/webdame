@@ -576,10 +576,29 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
         return {"status": "error", "message": "Playwright chưa cài", "screenshot_b64": ""}
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(
-                headless=True,
-                args=["--no-sandbox","--disable-gpu","--disable-dev-shm-usage"]
-            )
+            # Danh sách proxy
+            import os as _os, random as _random
+            _proxy_list = [
+                "http://mcpekvct:fu91r4wh2wnf@38.154.203.95:5863",
+                "http://mcpekvct:fu91r4wh2wnf@198.105.121.200:6462",
+                "http://mcpekvct:fu91r4wh2wnf@64.137.96.74:6641",
+                "http://mcpekvct:fu91r4wh2wnf@209.127.138.10:5784",
+                "http://mcpekvct:fu91r4wh2wnf@38.154.185.97:6370",
+                "http://mcpekvct:fu91r4wh2wnf@84.247.60.125:6095",
+                "http://mcpekvct:fu91r4wh2wnf@142.111.67.146:5611",
+                "http://mcpekvct:fu91r4wh2wnf@191.96.254.138:6185",
+                "http://mcpekvct:fu91r4wh2wnf@31.58.9.4:6077",
+                "http://mcpekvct:fu91r4wh2wnf@104.239.107.47:5699",
+            ]
+            # Ưu tiên env var, fallback random từ list
+            proxy_server = _os.environ.get("PROXY_SERVER", "") or _random.choice(_proxy_list)
+            launch_kwargs = {
+                "headless": True,
+                "args": ["--no-sandbox","--disable-gpu","--disable-dev-shm-usage"],
+                "proxy": {"server": proxy_server}
+            }
+
+            browser = await p.chromium.launch(**launch_kwargs)
             ctx = await browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 viewport={"width": 1280, "height": 800},
@@ -654,7 +673,12 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
                 await browser.close()
                 return {"status": "error", "message": f"Không tìm thấy form login: {e}", "screenshot_b64": sc}
 
-            await asyncio.sleep(3.5)
+            # Chờ Facebook xử lý - wait for navigation hoặc tối đa 10s
+            try:
+                await page.wait_for_url(lambda u: "login" not in u or "checkpoint" in u or "two_step" in u, timeout=10000)
+            except:
+                pass
+            await asyncio.sleep(2)
             url = page.url
             sc  = await snap()
 
