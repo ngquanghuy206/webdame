@@ -553,17 +553,6 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         </div>
       </div>
 
-      <!-- ── TOGGLE: COOKIE vs EMAIL/PASS ── -->
-      <div style="display:flex;gap:8px;margin-bottom:16px">
-        <button id="btn-mode-cookie" onclick="switchLoginMode('cookie')"
-          style="flex:1;padding:8px 0;border-radius:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff">
-          🍪 Đăng nhập Cookie
-        </button>
-        <button id="btn-mode-pass" onclick="switchLoginMode('pass')"
-          style="flex:1;padding:8px 0;border-radius:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:var(--glass2);color:var(--muted)">
-          🔑 Email & Mật khẩu
-        </button>
-      </div>
 
       <!-- ── BƯỚC 1: NHẬP COOKIE ── -->
       <div id="step1">
@@ -585,45 +574,34 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
           <button class="btn btn-primary" id="btn-verify-cookie" onclick="stepVerifyCookie()">✅ Xác nhận Cookie</button>
         </div>
         <div id="step1-err" class="auth-err" style="margin-top:8px"></div>
-      </div>
 
-      <!-- ── LOGIN BẰNG EMAIL + PASS ── -->
-      <div id="panel-login-pass" style="display:none">
-        <div class="field-label" style="font-size:15px;margin-bottom:6px">🔑 Đăng nhập bằng Email & Mật khẩu</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:12px;line-height:1.6">
-          Nhập email/SĐT và mật khẩu Facebook. Tool sẽ tự login, chụp ảnh kết quả và lấy cookie.
+        <!-- Đặt tên tab -->
+        <div style="margin-top:14px">
+          <div class="field-label" style="font-size:12px;margin-bottom:6px">🏷️ Tên tab (tuỳ chọn)</div>
+          <input id="tab-name-input" class="field-input" type="text" placeholder="VD: Acc chính, Nick dự phòng..."
+            style="font-size:13px"/>
         </div>
-        <input id="fb-email-input" class="field-input" type="email" placeholder="Email hoặc số điện thoại FB"
-          style="margin-bottom:10px;font-size:13px"/>
-        <input id="fb-pass-input" class="field-input" type="password" placeholder="Mật khẩu Facebook"
-          style="margin-bottom:10px;font-size:13px"/>
-        <div id="pass-login-result" style="display:none;margin-bottom:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7"></div>
-        <div id="pass-login-screenshot" style="display:none;margin-bottom:12px;text-align:center">
-          <img id="pass-login-img" style="max-width:100%;border-radius:10px;border:1px solid var(--glass2)" src="" alt="Screenshot"/>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">📸 Ảnh chụp trang sau khi login</div>
-        </div>
-        <div class="btn-row" style="margin-top:4px">
-          <button class="btn btn-primary" id="btn-fb-login-pass" onclick="doFbLoginPass()">🔑 Đăng nhập</button>
-        </div>
-        <div id="pass-login-err" class="auth-err" style="margin-top:8px"></div>
-      </div>
 
       <!-- ── BƯỚC 2: NHẬP TARGET ── -->
       <div id="step2" style="display:none">
         <!-- Thông tin acc đang dùng -->
         <div id="acc-confirmed-box" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);margin-bottom:16px">
-          <div style="font-size:28px">👤</div>
+          <div style="font-size:28px">🍪</div>
           <div>
             <div style="font-size:13px;font-weight:700;color:var(--green)" id="acc-confirmed-name">—</div>
-            <div style="font-size:11px;color:var(--muted)" id="acc-confirmed-uid">UID: —</div>
             <div style="font-size:11px;color:var(--green)">✅ Cookie hợp lệ</div>
           </div>
           <button onclick="resetToStep1()" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px" title="Đổi cookie">✏️</button>
         </div>
 
-        <div class="field-label" style="font-size:15px;margin-bottom:12px">🎯 Bước 2 — Nhập Link / UID Target</div>
+        <div class="field-label" style="font-size:15px;margin-bottom:8px">🎯 Bước 2 — Nhập Link Target</div>
         <input id="fb-target-input" class="field-input" type="text"
-          placeholder="https://www.facebook.com/username hoặc UID số...">
+          placeholder="https://www.facebook.com/username hoặc UID số..." style="margin-bottom:10px">
+
+        <div class="field-label" style="font-size:12px;margin-bottom:6px">👤 Tên nạn nhân (tuỳ chọn)</div>
+        <input id="victim-name-input" class="field-input" type="text"
+          placeholder="VD: Nguyễn Văn A..." style="font-size:13px;margin-bottom:10px">
+
         <div id="target-verify-box" style="display:none;margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7"></div>
         <div class="btn-row" style="margin-top:14px">
           <button class="btn btn-primary" id="btn-verify-target" onclick="stepVerifyTarget()">🔍 Xác nhận Target</button>
@@ -638,16 +616,16 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
           <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--blue)">📋 Tóm tắt dame</div>
           <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
             <div style="display:flex;justify-content:space-between">
-              <span style="color:var(--muted)">🍪 Cookie acc</span>
-              <span id="sum-acc-name" style="font-weight:700;color:var(--green)">—</span>
+              <span style="color:var(--muted)">🏷️ Tên tab</span>
+              <span id="sum-tab-name" style="font-weight:700;color:var(--blue)">—</span>
             </div>
             <div style="display:flex;justify-content:space-between">
-              <span style="color:var(--muted)">🆔 UID acc</span>
-              <span id="sum-acc-uid" style="font-family:monospace;color:var(--muted)">—</span>
+              <span style="color:var(--muted)">🍪 Cookie</span>
+              <span id="sum-acc-name" style="font-weight:700;color:var(--green)">—</span>
             </div>
             <div style="height:1px;background:var(--glass3)"></div>
             <div style="display:flex;justify-content:space-between">
-              <span style="color:var(--muted)">🎯 Target name</span>
+              <span style="color:var(--muted)">👤 Nạn nhân</span>
               <span id="sum-target-name" style="font-weight:700;color:var(--red)">—</span>
             </div>
             <div style="display:flex;justify-content:space-between">
@@ -693,9 +671,17 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
           <div class="avatar-circle">👤</div>
           <div>
             <div class="acc-name" id="run-acc-name">—</div>
-            <div class="acc-sub" id="run-acc-uid" style="font-size:11px;color:var(--muted)">UID: —</div>
-            <div class="acc-sub" id="run-target-url" style="font-size:11px;color:var(--blue);margin-top:2px;word-break:break-all">Target: —</div>
+            <div class="acc-sub" style="font-size:11px;color:var(--blue);margin-top:2px" id="run-victim-name">Nạn nhân: —</div>
+            <div class="acc-sub" id="run-target-url" style="font-size:11px;color:var(--muted);margin-top:2px;word-break:break-all">Target: —</div>
           </div>
+        </div>
+        <!-- Badge DIE -->
+        <div id="die-badge" style="display:none;margin-top:10px;padding:12px 14px;border-radius:12px;background:rgba(255,50,50,.12);border:1.5px solid rgba(255,50,50,.4);text-align:center">
+          <div style="font-size:22px;margin-bottom:4px">💀</div>
+          <div style="font-weight:800;color:#ff4444;font-size:15px">ACC ĐÃ DIE</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Facebook báo lỗi kỹ thuật → acc bị khoá/die</div>
+          <img id="die-screenshot" src="" alt="Die screenshot"
+            style="display:none;max-width:100%;border-radius:10px;margin-top:10px;border:1px solid rgba(255,50,50,.3)"/>
         </div>
       </div>
 
@@ -1091,94 +1077,7 @@ function resetToStep2(){
 // ── BƯỚC 1: XÁC NHẬN COOKIE ──
 
 // ── LOGIN MODE SWITCH ──
-function switchLoginMode(mode){
-  const panelCookie = document.getElementById('step1');
-  const panelPass   = document.getElementById('panel-login-pass');
-  const btnCookie   = document.getElementById('btn-mode-cookie');
-  const btnPass     = document.getElementById('btn-mode-pass');
-  const active  = 'background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff';
-  const inactive= 'background:var(--glass2);color:var(--muted)';
-  if(mode==='cookie'){
-    panelCookie.style.display='';
-    panelPass.style.display='none';
-    btnCookie.style.cssText += ';'+active;
-    btnPass.style.cssText   += ';'+inactive;
-  } else {
-    panelCookie.style.display='none';
-    panelPass.style.display='';
-    btnCookie.style.cssText += ';'+inactive;
-    btnPass.style.cssText   += ';'+active;
-  }
-}
-
-// ── LOGIN BẰNG EMAIL + PASS ──
-  async function submitCaptcha(session_id){
-    const captcha_text = (document.getElementById('captcha-input')||{}).value.trim();
-    if(!captcha_text){ alert('Nhập text captcha!'); return; }
-    const resEl = document.getElementById('pass-login-res');
-    const scImg = document.getElementById('pass-login-img');
-    const scBox = document.getElementById('pass-login-sc');
-    resEl.innerHTML = '<div style="color:var(--orange)">⏳ Đang gửi captcha...</div>';
-    try{
-      const r = await fetch('/api/fb-login-pass/captcha',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
-        body: JSON.stringify({session_id, captcha_text, _token: SESSION_TOKEN})
-      });
-      const {job_id} = await r.json();
-      for(let i=0;i<40;i++){
-        await new Promise(r=>setTimeout(r, i===0 ? 5000 : 3000));
-        const pr = await fetch('/api/fb-login-pass/poll/'+job_id,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-        const pd = await pr.json();
-        if(pd.status==='done'||pd.status==='error'){
-          const d = pd.result;
-          if(d.screenshot_b64){ scImg.src='data:image/jpeg;base64,'+d.screenshot_b64; scBox.style.display='block'; }
-          if(d.status==='success'){
-            resEl.style.color='var(--green)';
-            resEl.innerHTML='✅ Đăng nhập thành công! Cookie đã được lưu.';
-            switchLoginMode('cookie');
-            document.getElementById('fb-cookie-input').value = d.cookie||'';
-            detectCookieFormat(d.cookie||'');
-            setTimeout(()=>stepVerifyCookie(), 600);
-            if(typeof playSfx==='function') playSfx('success');
-          } else if(d.status==='captcha'){
-            // Captcha sai → hiện lại ảnh mới
-            resEl.style.background='rgba(255,145,0,.08)';
-            resEl.style.border='1px solid rgba(255,145,0,.3)';
-            resEl.style.color='var(--orange)';
-            resEl.innerHTML = `
-              <div style="font-weight:700;margin-bottom:8px">🤖 ${d.message}</div>
-              <input id="captcha-input" type="text" placeholder="Nhập text captcha..."
-                style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:15px;margin-bottom:10px;box-sizing:border-box"/>
-              <button onclick="submitCaptcha('${d.session_id}')"
-                style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;font-weight:700;border:none;cursor:pointer;font-size:15px">
-                ✅ Gửi lại captcha
-              </button>`;
-          } else if(d.status==='2fa'){
-            resEl.style.color='var(--blue)';
-            resEl.innerHTML = `<div style="font-weight:700;margin-bottom:8px">🔐 ${d.message}</div>
-              <input id="otp-input" type="text" inputmode="numeric" maxlength="8" placeholder="Nhập mã OTP..."
-                style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin-bottom:10px;box-sizing:border-box"/>
-              <button onclick="submitOTP('${d.session_id}','')" style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#4f9eff,#9b59b6);color:#fff;font-weight:700;border:none;cursor:pointer">✅ Xác nhận OTP</button>`;
-          } else {
-            resEl.style.color='var(--red)';
-            resEl.innerHTML = d.message || 'Lỗi không xác định';
-          }
-          break;
-        }
-      }
-    }catch(e){
-      resEl.style.color='var(--red)';
-      resEl.innerHTML='⚠️ Lỗi: '+e.message;
-    }
-  }
-
-  async function submitOTP(session_id, old_job_id){
-    const otp_code = (document.getElementById('otp-input')||{}).value || '';
-    if(!otp_code){ alert('Nhập mã OTP!'); return; }
-    const resEl = document.getElementById('pass-login-res');
-    const scImg = document.getElementById('pass-login-img');
-    const scBox = document.getElementById('pass-login-sc');
+function detectCookieFormat(val){
     resEl.innerHTML = '<div style="color:var(--blue)">⏳ Đang xác minh OTP...</div>';
     try{
       const r = await fetch('/api/fb-login-pass/otp',{
@@ -1211,162 +1110,6 @@ function switchLoginMode(mode){
       }
     }catch(e){ document.getElementById('pass-login-err').style.display='block'; document.getElementById('pass-login-err').textContent='Lỗi: '+e.message; }
   }
-
-async function doFbLoginPass(){
-  const email = document.getElementById('fb-email-input').value.trim();
-  const pass  = document.getElementById('fb-pass-input').value.trim();
-  const res   = document.getElementById('pass-login-result');
-  const scBox = document.getElementById('pass-login-screenshot');
-  const scImg = document.getElementById('pass-login-img');
-  const err   = document.getElementById('pass-login-err');
-  const btn   = document.getElementById('btn-fb-login-pass');
-  err.style.display='none';
-  if(!email||!pass){ err.style.display='block'; err.textContent='⚠️ Nhập đủ email và mật khẩu!'; return; }
-
-  btn.disabled=true; btn.textContent='⏳ Đang đăng nhập...';
-  res.style.display='block';
-  res.style.background='rgba(79,158,255,.08)';
-  res.style.border='1px solid rgba(79,158,255,.2)';
-  res.style.color='var(--blue)';
-  res.innerHTML='<div style="display:flex;align-items:center;gap:10px"><div class="spinner" style="width:18px;height:18px;display:inline-block"></div> Đang mở trình duyệt & đăng nhập Facebook... (30-60s)</div>';
-  scBox.style.display='none';
-
-  try{
-    if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='🔑 Đăng nhập'; return; }
-
-    // Gửi job và poll kết quả (tránh timeout 30s của Render)
-    const startRes = await fetch('/api/fb-login-pass/start',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
-      body: JSON.stringify({fb_email:email, fb_pass:pass, _token: SESSION_TOKEN})
-    });
-    if(!startRes.ok){ throw new Error('Không thể bắt đầu đăng nhập'); }
-    const {job_id} = await startRes.json();
-
-    // Poll mỗi 3 giây tối đa 3 phút
-    let d = null;
-    let current_job_id = job_id;
-    for(let i=0; i<60; i++){
-      await new Promise(r=>setTimeout(r,3000));
-      const pollRes = await fetch('/api/fb-login-pass/poll/'+current_job_id,{
-        headers:{'Authorization':'Bearer '+SESSION_TOKEN}
-      });
-      const pollData = await pollRes.json();
-      if(pollData.status === 'done' || pollData.status === 'error'){
-        d = pollData.result;
-        // Captcha đang giải → poll riêng
-        if(d && d.status === 'captcha_solving'){
-          const capId = d.cap_id;
-          const showCapStatus = (msg, sc) => {
-            res.style.background='rgba(243,156,18,.08)';
-            res.style.border='1px solid rgba(243,156,18,.3)';
-            res.style.color='#f39c12';
-            res.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><div class="spinner" style="width:16px;height:16px;display:inline-block;flex-shrink:0"></div><span>${msg}</span></div>`;
-            if(sc){ scImg.src='data:image/jpeg;base64,'+sc; scBox.style.display='block'; }
-          };
-          showCapStatus('🤖 Đang giải CAPTCHA bằng Gemini AI...', d.screenshot_b64||'');
-          let capResult = null;
-          for(let j=0;j<40;j++){
-            await new Promise(r=>setTimeout(r,3000));
-            try{
-              const capRes = await fetch('/api/fb-captcha/poll/'+capId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-              const capData = await capRes.json();
-              if(capData.status==='solving'){
-                showCapStatus(capData.msg||'🤖 Đang giải CAPTCHA...', capData.screenshot_b64||'');
-              } else if(capData.status==='done'||capData.status==='error'){
-                if(capData.msg) showCapStatus(capData.msg, capData.screenshot_b64||'');
-                await new Promise(r=>setTimeout(r,600));
-                capResult = capData.result;
-                break;
-              }
-            }catch(e){}
-          }
-          if(!capResult){ throw new Error('Quá thời gian giải captcha'); }
-          d = capResult;
-        }
-        // Nếu gặp 2FA - hiện ô nhập OTP
-        if(d && d.status === '2fa'){
-          res.innerHTML = `<div style="color:var(--blue)">🔐 ${d.message}</div>
-            <div style="margin-top:12px">
-              <input id="otp-input" type="text" inputmode="numeric" maxlength="8"
-                placeholder="Nhập mã OTP..."
-                style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin-bottom:10px"/>
-              <button onclick="submitOTP('${d.session_id}','${current_job_id}')"
-                style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#4f9eff,#9b59b6);color:#fff;font-weight:700;border:none;cursor:pointer;font-size:15px">
-                ✅ Xác nhận OTP
-              </button>
-            </div>`;
-          if(d.screenshot_b64) { scImg.src='data:image/jpeg;base64,'+d.screenshot_b64; scBox.style.display='block'; }
-          btn.disabled=false; btn.textContent='🔑 Đăng nhập';
-          d = null;
-        }
-        // Nếu gặp CAPTCHA - hiện ảnh cho user giải
-        if(d && d.status === 'captcha'){
-          res.style.background='rgba(255,145,0,.08)';
-          res.style.border='1px solid rgba(255,145,0,.3)';
-          res.style.color='var(--orange)';
-          res.innerHTML = `
-            <div style="font-weight:700;margin-bottom:8px">🤖 ${d.message}</div>
-            <input id="captcha-input" type="text" placeholder="Nhập text trong ảnh captcha..."
-              style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:15px;margin-bottom:10px;box-sizing:border-box"/>
-            <button onclick="submitCaptcha('${d.session_id}')"
-              style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;font-weight:700;border:none;cursor:pointer;font-size:15px">
-              ✅ Gửi captcha
-            </button>`;
-          if(d.screenshot_b64){ scImg.src='data:image/jpeg;base64,'+d.screenshot_b64; scBox.style.display='block'; }
-          btn.disabled=false; btn.textContent='🔑 Đăng nhập';
-          d = null;
-        }
-        break;
-      }
-    }
-    if(!d && !document.getElementById('otp-input')){ throw new Error('Quá thời gian chờ (3 phút)'); }
-    if(!d) return; // đang chờ OTP
-
-    // Hiện screenshot nếu có
-    if(d.screenshot_b64){
-      scImg.src='data:image/jpeg;base64,'+d.screenshot_b64;
-      scBox.style.display='block';
-    }
-
-    const colors = {
-      success:    ['rgba(0,230,118,.08)','rgba(0,230,118,.25)','var(--green)'],
-      wrong_pass: ['rgba(255,82,82,.08)','rgba(255,82,82,.2)','var(--red)'],
-      disabled:   ['rgba(255,82,82,.08)','rgba(255,82,82,.2)','var(--red)'],
-      '2fa':      ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
-      checkpoint: ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
-      captcha:    ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
-      unknown:    ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
-      error:      ['rgba(255,82,82,.08)','rgba(255,82,82,.2)','var(--red)'],
-    };
-    const [bg,border,color] = colors[d.status] || colors.error;
-    res.style.background=bg; res.style.border='1px solid '+border; res.style.color=color;
-
-    if(d.status==='success'){
-      res.innerHTML=`
-        <div style="font-weight:700;font-size:14px;margin-bottom:6px">${d.message}</div>
-        <div style="font-size:12px">👤 <b>${d.name||'(ẩn)'}</b> — UID: ${d.uid||'?'}</div>
-        <div style="font-size:11px;margin-top:6px;color:var(--muted)">Cookie đã tự động điền vào ô bên dưới ✅</div>`;
-      // Auto fill cookie vào textarea và chuyển về tab cookie
-      switchLoginMode('cookie');
-      document.getElementById('fb-cookie-input').value = d.cookie||'';
-      detectCookieFormat(d.cookie||'');
-      // Tự verify luôn
-      setTimeout(()=>stepVerifyCookie(), 600);
-      playSfx('success');
-    } else {
-      res.innerHTML=`<div style="font-weight:700">${d.message||'Lỗi không xác định'}</div>`;
-      playSfx('error');
-    }
-  }catch(e){
-    res.style.background='rgba(255,82,82,.08)';
-    res.style.border='1px solid rgba(255,82,82,.2)';
-    res.style.color='var(--red)';
-    res.innerHTML='⚠️ Lỗi kết nối: '+e.message;
-  } finally {
-    btn.disabled=false; btn.textContent='🔑 Đăng nhập';
-  }
-}
 
 function detectCookieFormat(val){
   const hint = document.getElementById('cookie-format-hint');
@@ -1438,25 +1181,22 @@ async function stepVerifyCookie(){
 
     if(d.ok){
       _cookieStr = cookie;
-      _accName   = d.name || '(ẩn)';
-      _accUid    = d.uid  || '';
+      _accName   = document.getElementById('tab-name-input').value.trim() || '(Cookie ' + cookie.substring(0,8) + '...)';
+      _accUid    = '';
 
       box.style.background='rgba(0,230,118,.08)';
       box.style.border='1px solid rgba(0,230,118,.25)';
       box.style.color='var(--green)';
-      box.innerHTML=`
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:26px">👤</div>
+      box.innerHTML=`<div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:26px">🍪</div>
           <div>
             <div style="font-weight:700;font-size:14px">${_accName}</div>
-            <div style="font-size:11px;color:var(--muted)">UID: ${_accUid||'?'}</div>
             <div style="font-size:11px;margin-top:2px">✅ Cookie hợp lệ!</div>
           </div>
         </div>`;
       playSfx('success');
       setTimeout(()=>{
         document.getElementById('acc-confirmed-name').textContent = _accName;
-        document.getElementById('acc-confirmed-uid').textContent  = 'UID: '+(_accUid||'?');
         setActiveStep(2);
       }, 900);
     } else {
@@ -1480,73 +1220,24 @@ async function stepVerifyCookie(){
 // ── BƯỚC 2: XÁC NHẬN TARGET ──
 async function stepVerifyTarget(){
   let target = document.getElementById('fb-target-input').value.trim();
-  const box  = document.getElementById('target-verify-box');
   const err  = document.getElementById('step2-err');
   const btn  = document.getElementById('btn-verify-target');
   err.style.display='none';
 
-  if(!target){ err.style.display='block'; err.textContent='⚠️ Chưa nhập link / UID target!'; return; }
+  if(!target){ err.style.display='block'; err.textContent='⚠️ Chưa nhập link target!'; return; }
 
   // Chuẩn hóa URL
   if(target.match(/^\d{6,}$/)) target = 'https://www.facebook.com/profile.php?id='+target;
   else if(!target.startsWith('http')) target = 'https://www.facebook.com/'+target;
   _targetUrl = target;
+  _targetName = document.getElementById('victim-name-input').value.trim() || target;
 
-  showBox('target-verify-box');
-  box.style.background='rgba(79,158,255,.08)';
-  box.style.border='1px solid rgba(79,158,255,.2)';
-  box.style.color='var(--blue)';
-  box.innerHTML='<div style="display:flex;align-items:center;gap:10px"><div class="spinner" style="width:18px;height:18px;display:inline-block"></div> Đang lấy thông tin target...</div>';
-  btn.disabled=true; btn.textContent='⏳ Đang xác nhận...';
-
-  try{
-    const r = await fetch('/api/verify-fb-target',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
-      body: JSON.stringify({cookie: _cookieStr, target_url: target})
-    });
-    const d = await r.json();
-
-    _targetName = d.name || 'Không xác định';
-    _targetUid  = d.uid  || '';
-
-    if(d.ok){
-      box.style.background='rgba(255,82,82,.08)';
-      box.style.border='1px solid rgba(255,82,82,.2)';
-      box.style.color='var(--red)';
-      box.innerHTML=`
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:26px">🎯</div>
-          <div>
-            <div style="font-weight:700;font-size:14px">${_targetName}</div>
-            <div style="font-size:11px;color:var(--muted)">UID: ${_targetUid||'?'}</div>
-            <div style="font-size:11px;margin-top:2px;color:var(--red)">⚠️ Đây là target sẽ bị dame!</div>
-          </div>
-        </div>`;
-    } else {
-      box.style.background='rgba(255,145,0,.08)';
-      box.style.border='1px solid rgba(255,145,0,.2)';
-      box.style.color='var(--orange)';
-      box.innerHTML=`⚠️ Không lấy được tên target (${d.error||'?'}). Vẫn có thể tiếp tục dame.`;
-    }
-
-    playSfx('success');
-    setTimeout(()=>{
-      document.getElementById('sum-acc-name').textContent    = _accName;
-      document.getElementById('sum-acc-uid').textContent     = _accUid||'?';
-      document.getElementById('sum-target-name').textContent = _targetName;
-      document.getElementById('sum-target-url').textContent  = _targetUrl;
-      setActiveStep(3);
-    }, 900);
-
-  } catch(e){
-    box.style.background='rgba(255,82,82,.08)';
-    box.style.color='var(--red)';
-    box.innerHTML='❌ Lỗi: '+e.message;
-  } finally {
-    btn.disabled=false;
-    btn.textContent='🔍 Xác nhận Target';
-  }
+  playSfx('success');
+  document.getElementById('sum-tab-name').textContent    = _accName;
+  document.getElementById('sum-acc-name').textContent    = _accName;
+  document.getElementById('sum-target-name').textContent = _targetName;
+  document.getElementById('sum-target-url').textContent  = _targetUrl;
+  setActiveStep(3);
 }
 
 // ── BƯỚC 3: BẮT ĐẦU DAME ──
@@ -1574,9 +1265,9 @@ async function startDame(){
 
     // Cập nhật tab trạng thái
     document.getElementById('run-acc-info').style.display='block';
-    document.getElementById('run-acc-name').textContent   = _accName;
-    document.getElementById('run-acc-uid').textContent    = 'UID: '+(_accUid||'?');
-    document.getElementById('run-target-url').textContent = '🎯 '+_targetName+' — '+_targetUrl;
+    document.getElementById('run-acc-name').textContent    = _accName;
+    document.getElementById('run-victim-name').textContent = '👤 '+_targetName;
+    document.getElementById('run-target-url').textContent  = '🔗 '+_targetUrl;
     document.getElementById('run-dot').className='dot active';
     document.getElementById('run-status-text').textContent='🐬 Đang dame '+_targetName+'...';
 
@@ -1596,7 +1287,23 @@ async function startDame(){
         const prog=document.getElementById('run-progress');
         if(prog) prog.style.width=((dameTotal%13)/13*100)+'%';
         updateRunUI();
-        if(ds.stopped){
+        // Detect DIE
+        if(ds.died){
+          dameRunning=false; clearInterval(dameTimer);
+          document.getElementById('run-dot').className='dot';
+          document.getElementById('run-dot').style.background='#ff4444';
+          document.getElementById('run-status-text').textContent='💀 ACC ĐÃ DIE!';
+          document.getElementById('run-status-text').style.color='#ff4444';
+          const dieBadge = document.getElementById('die-badge');
+          if(dieBadge) dieBadge.style.display='block';
+          if(ds.die_screenshot){
+            const dieImg = document.getElementById('die-screenshot');
+            if(dieImg){ dieImg.src='data:image/jpeg;base64,'+ds.die_screenshot; dieImg.style.display='block'; }
+          }
+          addLog('💀 ACC DIE · Dừng dame');
+          showToast('💀 ACC DIE!','#ff4444');
+          playSfx('error');
+        } else if(ds.stopped){
           dameRunning=false; clearInterval(dameTimer);
           document.getElementById('run-dot').className='dot ok';
           document.getElementById('run-status-text').textContent='✅ Hoàn thành · '+dameTotal+' báo cáo đã gửi';
