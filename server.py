@@ -15,7 +15,7 @@ try:
     with _spw() as _p:
         try: _p.chromium.launch(headless=True, args=["--no-sandbox"])
         except Exception:
-            _sp.run([_sys.executable, "-m", "playwright", "install", "chromium", "--with-deps"],
+            _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
                     check=False, capture_output=True)
 except: pass
 
