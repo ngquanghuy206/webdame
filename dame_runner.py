@@ -722,6 +722,42 @@ async def fb_login_by_pass(email: str, password: str, session_id: str = None, ot
                 await browser.close()
                 return {"status": "error", "message": f"Không tìm thấy form login: {e}", "screenshot_b64": sc}
 
+            # ── Xử lý CAPTCHA nếu có ──
+            async def handle_captcha():
+                try:
+                    # Checkbox reCAPTCHA "Tôi không phải là người máy"
+                    recaptcha = await page.query_selector("iframe[src*='recaptcha']")
+                    if recaptcha:
+                        frame = await recaptcha.content_frame()
+                        if frame:
+                            cb = await frame.query_selector("#recaptcha-anchor")
+                            if cb:
+                                await cb.click()
+                                await asyncio.sleep(2)
+                                return True
+                    # Checkbox dạng khác
+                    for sel in [".recaptcha-checkbox", "[aria-label*='robot']", "[aria-label*='human']"]:
+                        try:
+                            el = await page.query_selector(sel)
+                            if el:
+                                await el.click()
+                                await asyncio.sleep(2)
+                                return True
+                        except: continue
+                    return False
+                except: return False
+
+            # Thử giải captcha trước khi chờ redirect
+            captcha_solved = await handle_captcha()
+            if captcha_solved:
+                await asyncio.sleep(2)
+                # Thử click login lại nếu captcha chặn lần đầu
+                for sel in ["[name='login']", "button[type='submit']", "button:has-text('Đăng nhập')"]:
+                    try:
+                        await page.click(sel, timeout=2000)
+                        break
+                    except: continue
+
             # Chờ sau khi click login
             try:
                 await page.wait_for_url(lambda u: "login" not in u or "checkpoint" in u or "two_step" in u or "approvals" in u, timeout=12000)
