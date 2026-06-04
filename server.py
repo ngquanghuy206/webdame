@@ -232,9 +232,10 @@ from dame_runner import (
 
 @app.post("/api/verify-fb-cookie")
 async def api_verify_cookie(request: Request):
-    username = get_session_user(get_token(request))
-    if not username: raise HTTPException(401, "Chưa đăng nhập")
     data = await request.json()
+    tok = (data.get("_token") or "").strip() or get_token(request)
+    username = get_session_user(tok)
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
     cookie = (data.get("cookie") or "").strip()
     if not cookie: raise HTTPException(400, "Thiếu cookie")
     return JSONResponse(await verify_fb_cookie(cookie))
@@ -308,10 +309,13 @@ if __name__ == "__main__":
     import uvicorn
 @app.post("/api/fb-login-pass")
 async def api_fb_login_pass(request: Request):
-    tok = request.headers.get("Authorization","").replace("Bearer ","").strip()
+    data     = await request.json()
+    # Thử token từ body trước (iOS Safari fix), fallback header
+    tok = (data.get("_token") or "").strip()
+    if not tok:
+        tok = request.headers.get("Authorization","").replace("Bearer ","").strip()
     if not tok or not get_session(tok):
         raise HTTPException(401, "Chưa đăng nhập")
-    data     = await request.json()
     fb_email = (data.get("fb_email") or "").strip()
     fb_pass  = (data.get("fb_pass")  or "").strip()
     if not fb_email or not fb_pass:
