@@ -332,7 +332,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       <div class="auth-err" id="forgot-err2"></div>
       <button class="auth-btn" id="forgot-btn2" onclick="doVerifyOtp()">✅ Xác nhận OTP</button>
       <div style="text-align:center;margin-top:8px">
-        <span onclick="doForgotSend()" style="color:var(--blue);font-size:12px;cursor:pointer">Gửi lại OTP</span>
+        <span onclick="doForgotSend();startOtpCountdown(300)" style="color:var(--blue);font-size:12px;cursor:pointer">Gửi lại OTP</span>
       </div>
     </div>
 
@@ -755,9 +755,9 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 //  STATE
 // ═══════════════════════════════════════════════════════
 let rememberMe    = localStorage.getItem('zct_remember') === '1';
-let SESSION_TOKEN = localStorage.getItem('zct_token') || sessionStorage.getItem('zct_token') || '';
-let CURRENT_USER  = localStorage.getItem('zct_user')  || sessionStorage.getItem('zct_user')  || '';
-let IS_ADMIN      = (localStorage.getItem('zct_admin') || sessionStorage.getItem('zct_admin')) === '1';
+let SESSION_TOKEN = rememberMe ? (localStorage.getItem('zct_token')||'') : (sessionStorage.getItem('zct_token')||'');
+let CURRENT_USER  = rememberMe ? (localStorage.getItem('zct_user')||'')  : (sessionStorage.getItem('zct_user')||'');
+let IS_ADMIN      = rememberMe ? localStorage.getItem('zct_admin')==='1' : sessionStorage.getItem('zct_admin')==='1';
 let currentData = null, viewingHistItem = null;
 
 // Dame state
@@ -991,11 +991,13 @@ function showApp(){
 }
 
 function doLogout(){
+  const _tok=SESSION_TOKEN;
   SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;
   ['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});
   stopDame();
   document.getElementById('app-screen').style.display='none';
   document.getElementById('auth-screen').style.display='flex';
+  if(_tok) fetch('/api/logout',{method:'POST',headers:{'Authorization':'Bearer '+_tok}}).catch(()=>{});
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1339,8 +1341,8 @@ function renderHistList(){
   const chunk=histData.slice(start,start+HIST_PER_PAGE);
   if(list)list.innerHTML=chunk.map((h,i)=>`
     <div class="hist-item" onclick="openHistDetail(${start+i})">
-      <div class="hist-head"><span class="hist-name">${h.name||'(ẩn)'}</span><span class="hist-time">${h.time||''}</span></div>
-      <div class="hist-phone">UID: ${h.uid||'?'}</div>
+      <div class="hist-head"><span class="hist-name">${h.acc_name||h.name||'(ẩn)'}</span><span class="hist-time">${h.time||''}</span></div>
+      <div class="hist-phone">Target: ${h.target_name||'?'} · UID: ${h.acc_uid||h.uid||'?'}</div>
       <div class="hist-actions">
         <div class="hist-btn" onclick="event.stopPropagation();copyHistCookie(${start+i},this)">📋 Copy</div>
         <div class="hist-btn dl" onclick="event.stopPropagation();downloadHist(${start+i})">⬇️ Tải</div>
@@ -1414,16 +1416,15 @@ async function deleteUser(username){
   await fetch('/api/admin/delete-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username})});
   openMgmt();
 }
-async function openUserDetail(username){
-  try{
-    const r=await fetch(`/api/admin/user-detail?username=${username}`,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-    const d=await r.json();
-    document.getElementById('user-detail-content').innerHTML=`
-      <div class="info-row"><div class="info-label">Username</div><div class="info-value">${d.username}</div></div>
-      <div class="info-row"><div class="info-label">Email</div><div class="info-value">${d.email||'—'}</div></div>
-      <div class="info-row"><div class="info-label">Ngày tạo</div><div class="info-value">${d.created||'—'}</div></div>`;
-    openModal('user-detail-modal');
-  }catch{}
+function openUserDetail(username){
+  const d=mgmtData.find(u=>u.username===username);
+  if(!d)return;
+  document.getElementById('user-detail-content').innerHTML=`
+    <div class="info-row"><div class="info-label">Username</div><div class="info-value">${d.username}</div></div>
+    <div class="info-row"><div class="info-label">Email</div><div class="info-value">${d.email||'—'}</div></div>
+    <div class="info-row"><div class="info-label">Ngày tạo</div><div class="info-value">${d.created||'—'}</div></div>
+    <div class="info-row"><div class="info-label">Trạng thái</div><div class="info-value">${d.active!==false?'✅ Hoạt động':'🔒 Bị khóa'}</div></div>`;
+  openModal('user-detail-modal');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1477,7 +1478,11 @@ function startClock(){
   const el=document.getElementById('remember-check');
   if(el){el.classList.toggle('checked',rememberMe);el.textContent=rememberMe?'✓':'';}
   if(rememberMe&&CURRENT_USER){const u=document.getElementById('login-user');if(u)u.value=CURRENT_USER;}
-  if(SESSION_TOKEN&&CURRENT_USER)showApp();
+  if(SESSION_TOKEN&&CURRENT_USER){
+    fetch('/api/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}})
+      .then(r=>{if(r.ok)showApp();else{SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});}})
+      .catch(()=>showApp());
+  }
   setActiveStep(1);
   setInterval(()=>{if(dameRunning)updateRunUI();},1000);
 })();
@@ -1554,10 +1559,10 @@ document.addEventListener('keydown', e=>{
     if(m && m.classList.contains('open')) closeScreenshotModal();
   }
   if(e.key==='Enter'){
-    const ls=document.getElementById('auth-login-form');
-    const rs=document.getElementById('auth-register-form');
-    if(ls&&ls.style.display!=='none') doLogin();
-    else if(rs&&rs.style.display!=='none') doRegister();
+    const loginTab=document.getElementById('tab-login-btn');
+    const regTab=document.getElementById('tab-reg-btn');
+    if(loginTab&&loginTab.classList.contains('active')) doLogin();
+    else if(regTab&&regTab.classList.contains('active')) doRegister();
   }
 });
 
