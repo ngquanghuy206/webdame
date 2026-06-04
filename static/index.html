@@ -1076,41 +1076,46 @@ function resetToStep2(){
 
 // ── BƯỚC 1: XÁC NHẬN COOKIE ──
 
-// ── LOGIN MODE SWITCH ──
-function detectCookieFormat(val){
-    resEl.innerHTML = '<div style="color:var(--blue)">⏳ Đang xác minh OTP...</div>';
-    try{
-      const r = await fetch('/api/fb-login-pass/otp',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
-        body: JSON.stringify({session_id, otp_code, _token: SESSION_TOKEN})
-      });
-      const {job_id} = await r.json();
-      for(let i=0;i<40;i++){
-        await new Promise(r=>setTimeout(r,3000));
-        const pr = await fetch('/api/fb-login-pass/poll/'+job_id,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-        const pd = await pr.json();
-        if(pd.status==='done'||pd.status==='error'){
-          const d = pd.result;
-          if(d.screenshot_b64){ scImg.src='data:image/jpeg;base64,'+d.screenshot_b64; scBox.style.display='block'; }
-          if(d.status==='success'){
-            resEl.style.color='#2ecc71';
-            resEl.innerHTML='✅ Đăng nhập thành công! Cookie đã được lưu.';
-            window._fbCookieFromLogin = d.cookie;
-          } else if(d.status==='2fa'){
-            resEl.innerHTML=`<div style="color:var(--blue)">🔐 ${d.message}</div>
-              <input id="otp-input" type="text" inputmode="numeric" maxlength="8" placeholder="Nhập lại OTP..." style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin:8px 0"/>
-              <button onclick="submitOTP('${d.session_id}','${job_id}')" style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#4f9eff,#9b59b6);color:#fff;font-weight:700;border:none;cursor:pointer">✅ Xác nhận OTP</button>`;
-          } else {
-            resEl.style.color='#e74c3c';
-            resEl.innerHTML=d.message;
-          }
-          break;
+// ── SUBMIT OTP FB LOGIN ──
+async function submitOTP(session_id, otp_code){
+  const resEl=document.getElementById('pass-login-result');
+  const scImg=document.getElementById('pass-login-sc');
+  const scBox=document.getElementById('pass-login-scbox');
+  if(!resEl)return;
+  resEl.innerHTML = '<div style="color:var(--blue)">⏳ Đang xác minh OTP...</div>';
+  try{
+    const r = await fetch('/api/fb-login-pass/otp',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+      body: JSON.stringify({session_id, otp_code, _token: SESSION_TOKEN})
+    });
+    const {job_id} = await r.json();
+    for(let i=0;i<40;i++){
+      await new Promise(r=>setTimeout(r,3000));
+      const pr = await fetch('/api/fb-login-pass/poll/'+job_id,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+      const pd = await pr.json();
+      if(pd.status==='done'||pd.status==='error'){
+        const d = pd.result;
+        if(d.screenshot_b64 && scImg && scBox){ scImg.src='data:image/jpeg;base64,'+d.screenshot_b64; scBox.style.display='block'; }
+        if(d.status==='success'){
+          resEl.style.color='#2ecc71';
+          resEl.innerHTML='✅ Đăng nhập thành công! Cookie đã được lưu.';
+          window._fbCookieFromLogin = d.cookie;
+        } else if(d.status==='2fa'){
+          resEl.innerHTML=`<div style="color:var(--blue)">🔐 ${d.message}</div>
+            <input id="otp-input" type="text" inputmode="numeric" maxlength="8" placeholder="Nhập lại OTP..." style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin:8px 0"/>
+            <button onclick="submitOTP('${d.session_id}',document.getElementById('otp-input').value)" style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#4f9eff,#9b59b6);color:#fff;font-weight:700;border:none;cursor:pointer">✅ Xác nhận OTP</button>`;
+        } else {
+          resEl.style.color='#e74c3c';
+          resEl.innerHTML=d.message;
         }
+        break;
       }
-    }catch(e){ document.getElementById('pass-login-err').style.display='block'; document.getElementById('pass-login-err').textContent='Lỗi: '+e.message; }
-  }
+    }
+  }catch(e){ const errEl=document.getElementById('pass-login-err'); if(errEl){errEl.style.display='block';errEl.textContent='Lỗi: '+e.message;} }
+}
 
+// ── LOGIN MODE SWITCH ──
 function detectCookieFormat(val){
   const hint = document.getElementById('cookie-format-hint');
   if(!hint) return;
