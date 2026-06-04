@@ -600,11 +600,42 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
 
             # ── 2. Nhập email + pass ──
             try:
-                await page.fill("#email", email, timeout=8000)
+                # Thử nhiều selector cho ô email
+                email_selectors = [
+                    "#email",
+                    "input[name='email']",
+                    "input[type='email']",
+                    "input[placeholder*='mail']",
+                ]
+                email_filled = False
+                for sel in email_selectors:
+                    try:
+                        await page.fill(sel, email, timeout=3000)
+                        email_filled = True
+                        break
+                    except:
+                        continue
+                if not email_filled:
+                    raise Exception("Không tìm thấy ô email")
                 await asyncio.sleep(0.4)
-                await page.fill("#pass", password, timeout=8000)
+
+                # Thử nhiều selector cho ô password
+                for sel in ["#pass", "input[name='pass']", "input[type='password']"]:
+                    try:
+                        await page.fill(sel, password, timeout=3000)
+                        break
+                    except:
+                        continue
                 await asyncio.sleep(0.4)
-                await page.click("[name='login']", timeout=8000)
+
+                # Thử nhiều selector cho nút login
+                for sel in ["[name='login']", "button[type='submit']", "[data-testid='royal_login_button']"]:
+                    try:
+                        await page.click(sel, timeout=3000)
+                        break
+                    except:
+                        continue
+
             except Exception as e:
                 sc = await snap()
                 await browser.close()
