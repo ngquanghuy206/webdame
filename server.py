@@ -241,7 +241,8 @@ async def admin_delete(request: Request):
 from dame_runner import (
     verify_fb_cookie, get_target_name,
     start_dame, pause_dame, resume_dame, stop_dame,
-    get_status, get_screenshot, fb_login_by_pass
+    get_status, get_screenshot, fb_login_by_pass,
+    _captcha_sessions
 )
 import os
 
@@ -391,6 +392,22 @@ async def api_fb_login_pass_poll(job_id: str, request: Request):
     if not job:
         raise HTTPException(404, "Job không tồn tại")
     return job
+
+@app.get("/api/fb-captcha/poll/{cap_id}")
+async def api_captcha_poll(cap_id: str, request: Request):
+    tok = request.headers.get("Authorization","").replace("Bearer ","").strip()
+    if not tok or not get_session_user(tok):
+        raise HTTPException(401, "Chưa đăng nhập")
+    cap = _captcha_sessions.get(cap_id)
+    if not cap:
+        raise HTTPException(404, "Captcha session không tồn tại")
+    if cap["status"] == "solving":
+        return {
+            "status": "solving",
+            "msg": cap.get("msg", "⏳ Đang giải CAPTCHA..."),
+            "screenshot_b64": cap.get("screenshot_b64", "")
+        }
+    return {"status": cap["status"], "msg": cap.get("msg", ""), "result": cap.get("result", {})}
 
 @app.post("/api/fb-login-pass")
 async def api_fb_login_pass(request: Request):
