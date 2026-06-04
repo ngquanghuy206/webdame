@@ -553,6 +553,18 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         </div>
       </div>
 
+      <!-- ── TOGGLE: COOKIE vs EMAIL/PASS ── -->
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button id="btn-mode-cookie" onclick="switchLoginMode('cookie')"
+          style="flex:1;padding:8px 0;border-radius:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff">
+          🍪 Đăng nhập Cookie
+        </button>
+        <button id="btn-mode-pass" onclick="switchLoginMode('pass')"
+          style="flex:1;padding:8px 0;border-radius:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:var(--glass2);color:var(--muted)">
+          🔑 Email & Mật khẩu
+        </button>
+      </div>
+
       <!-- ── BƯỚC 1: NHẬP COOKIE ── -->
       <div id="step1">
         <div class="field-label" style="font-size:15px;margin-bottom:6px">🍪 Bước 1 — Nhập Cookie Facebook</div>
@@ -573,6 +585,27 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
           <button class="btn btn-primary" id="btn-verify-cookie" onclick="stepVerifyCookie()">✅ Xác nhận Cookie</button>
         </div>
         <div id="step1-err" class="auth-err" style="margin-top:8px"></div>
+      </div>
+
+      <!-- ── LOGIN BẰNG EMAIL + PASS ── -->
+      <div id="panel-login-pass" style="display:none">
+        <div class="field-label" style="font-size:15px;margin-bottom:6px">🔑 Đăng nhập bằng Email & Mật khẩu</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+          Nhập email/SĐT và mật khẩu Facebook. Tool sẽ tự login, chụp ảnh kết quả và lấy cookie.
+        </div>
+        <input id="fb-email-input" class="field-input" type="email" placeholder="Email hoặc số điện thoại FB"
+          style="margin-bottom:10px;font-size:13px"/>
+        <input id="fb-pass-input" class="field-input" type="password" placeholder="Mật khẩu Facebook"
+          style="margin-bottom:10px;font-size:13px"/>
+        <div id="pass-login-result" style="display:none;margin-bottom:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7"></div>
+        <div id="pass-login-screenshot" style="display:none;margin-bottom:12px;text-align:center">
+          <img id="pass-login-img" style="max-width:100%;border-radius:10px;border:1px solid var(--glass2)" src="" alt="Screenshot"/>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">📸 Ảnh chụp trang sau khi login</div>
+        </div>
+        <div class="btn-row" style="margin-top:4px">
+          <button class="btn btn-primary" id="btn-fb-login-pass" onclick="doFbLoginPass()">🔑 Đăng nhập</button>
+        </div>
+        <div id="pass-login-err" class="auth-err" style="margin-top:8px"></div>
       </div>
 
       <!-- ── BƯỚC 2: NHẬP TARGET ── -->
@@ -1056,6 +1089,101 @@ function resetToStep2(){
 }
 
 // ── BƯỚC 1: XÁC NHẬN COOKIE ──
+
+// ── LOGIN MODE SWITCH ──
+function switchLoginMode(mode){
+  const panelCookie = document.getElementById('step1');
+  const panelPass   = document.getElementById('panel-login-pass');
+  const btnCookie   = document.getElementById('btn-mode-cookie');
+  const btnPass     = document.getElementById('btn-mode-pass');
+  const active  = 'background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff';
+  const inactive= 'background:var(--glass2);color:var(--muted)';
+  if(mode==='cookie'){
+    panelCookie.style.display='';
+    panelPass.style.display='none';
+    btnCookie.style.cssText += ';'+active;
+    btnPass.style.cssText   += ';'+inactive;
+  } else {
+    panelCookie.style.display='none';
+    panelPass.style.display='';
+    btnCookie.style.cssText += ';'+inactive;
+    btnPass.style.cssText   += ';'+active;
+  }
+}
+
+// ── LOGIN BẰNG EMAIL + PASS ──
+async function doFbLoginPass(){
+  const email = document.getElementById('fb-email-input').value.trim();
+  const pass  = document.getElementById('fb-pass-input').value.trim();
+  const res   = document.getElementById('pass-login-result');
+  const scBox = document.getElementById('pass-login-screenshot');
+  const scImg = document.getElementById('pass-login-img');
+  const err   = document.getElementById('pass-login-err');
+  const btn   = document.getElementById('btn-fb-login-pass');
+  err.style.display='none';
+  if(!email||!pass){ err.style.display='block'; err.textContent='⚠️ Nhập đủ email và mật khẩu!'; return; }
+
+  btn.disabled=true; btn.textContent='⏳ Đang đăng nhập...';
+  res.style.display='block';
+  res.style.background='rgba(79,158,255,.08)';
+  res.style.border='1px solid rgba(79,158,255,.2)';
+  res.style.color='var(--blue)';
+  res.innerHTML='<div style="display:flex;align-items:center;gap:10px"><div class="spinner" style="width:18px;height:18px;display:inline-block"></div> Đang mở trình duyệt & đăng nhập Facebook... (30-60s)</div>';
+  scBox.style.display='none';
+
+  try{
+    const r = await fetch('/api/fb-login-pass',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+      body: JSON.stringify({fb_email:email, fb_pass:pass})
+    });
+    const d = await r.json();
+
+    // Hiện screenshot nếu có
+    if(d.screenshot_b64){
+      scImg.src='data:image/jpeg;base64,'+d.screenshot_b64;
+      scBox.style.display='block';
+    }
+
+    const colors = {
+      success:    ['rgba(0,230,118,.08)','rgba(0,230,118,.25)','var(--green)'],
+      wrong_pass: ['rgba(255,82,82,.08)','rgba(255,82,82,.2)','var(--red)'],
+      disabled:   ['rgba(255,82,82,.08)','rgba(255,82,82,.2)','var(--red)'],
+      '2fa':      ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
+      checkpoint: ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
+      captcha:    ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
+      unknown:    ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
+      error:      ['rgba(255,82,82,.08)','rgba(255,82,82,.2)','var(--red)'],
+    };
+    const [bg,border,color] = colors[d.status] || colors.error;
+    res.style.background=bg; res.style.border='1px solid '+border; res.style.color=color;
+
+    if(d.status==='success'){
+      res.innerHTML=`
+        <div style="font-weight:700;font-size:14px;margin-bottom:6px">${d.message}</div>
+        <div style="font-size:12px">👤 <b>${d.name||'(ẩn)'}</b> — UID: ${d.uid||'?'}</div>
+        <div style="font-size:11px;margin-top:6px;color:var(--muted)">Cookie đã tự động điền vào ô bên dưới ✅</div>`;
+      // Auto fill cookie vào textarea và chuyển về tab cookie
+      switchLoginMode('cookie');
+      document.getElementById('fb-cookie-input').value = d.cookie||'';
+      detectCookieFormat(d.cookie||'');
+      // Tự verify luôn
+      setTimeout(()=>stepVerifyCookie(), 600);
+      playSfx('success');
+    } else {
+      res.innerHTML=`<div style="font-weight:700">${d.message||'Lỗi không xác định'}</div>`;
+      playSfx('error');
+    }
+  }catch(e){
+    res.style.background='rgba(255,82,82,.08)';
+    res.style.border='1px solid rgba(255,82,82,.2)';
+    res.style.color='var(--red)';
+    res.innerHTML='⚠️ Lỗi kết nối: '+e.message;
+  } finally {
+    btn.disabled=false; btn.textContent='🔑 Đăng nhập';
+  }
+}
+
 function detectCookieFormat(val){
   const hint = document.getElementById('cookie-format-hint');
   if(!hint) return;
