@@ -562,43 +562,107 @@ def get_screenshot() -> str:
 # ══════════════════════════════════════
 # LOGIN FACEBOOK BẰNG EMAIL + MẬT KHẨU
 # ══════════════════════════════════════
-async def fb_login_by_pass(email: str, password: str) -> dict:
+
+# ── Browser session store (giữ browser đang mở cho 2FA/checkpoint) ──
+_browser_sessions = {}  # session_id -> {"browser": ..., "page": ..., "ctx": ...}
+
+async def _ai_analyze_screenshot(screenshot_b64: str, instruction: str) -> dict:
+    """Gửi ảnh cho Gemini AI phân tích."""
+    import httpx
+    GEMINI_KEY = "AIzaSyBQ.Ab8RN6LtUjxQV2RbjFEaFrtpNSA9ES2WEpEZ4ptXOnMBqzX0kg"
+    try:
+        resp = await httpx.AsyncClient(timeout=30).post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_KEY}",
+            headers={"content-type": "application/json"},
+            json={
+                "contents": [{
+                    "parts": [
+                        {"inline_data": {"mime_type": "image/jpeg", "data": screenshot_b64}},
+                        {"text": instruction}
+                    ]
+                }]
+            }
+        )
+        data = resp.json()
+        text = data["candidates"][0]["content"]["parts"][0]["text"]
+        return {"ok": True, "text": text}
+    except Exception as e:
+        return {"ok": False, "text": str(e)}
+
+async def fb_login_by_pass(email: str, password: str, session_id: str = None, otp_code: str = None) -> dict:
     """
     Login Facebook bằng email/pass.
-    Trả về:
-      status: "success" | "wrong_pass" | "2fa" | "checkpoint" | "captcha" | "disabled" | "error"
-      cookie: string (nếu thành công)
-      name, uid: tên & uid acc
-      screenshot_b64: ảnh chụp trang hiện tại
-      message: mô tả trạng thái
+    - session_id + otp_code: tiếp tục session đang chờ 2FA
     """
+    import base64
+
+    # ── Tiếp tục session 2FA ──
+    if session_id and otp_code and session_id in _browser_sessions:
+        sess = _browser_sessions[session_id]
+        page = sess["page"]
+        browser = sess["browser"]
+        ctx = sess["ctx"]
+        try:
+            async def snap2():
+                try:
+                    data = await page.screenshot(type="jpeg", quality=70, full_page=False)
+                    return base64.b64encode(data).decode()
+                except: return ""
+
+            # Tìm ô nhập OTP và điền
+            otp_selectors = [
+                "input[name='approvals_code']",
+                "input[name='otp']",
+                "input[type='tel']",
+                "input[autocomplete='one-time-code']",
+                "input[maxlength='6']",
+                "#approvals_code",
+            ]
+            filled = False
+            for sel in otp_selectors:
+                try:
+                    await page.wait_for_selector(sel, timeout=3000)
+                    await page.fill(sel, otp_code, timeout=3000)
+                    filled = True
+                    break
+                except: continue
+
+            if not filled:
+                sc = await snap2()
+                return {"status": "error", "message": "Không tìm thấy ô nhập OTP", "screenshot_b64": sc}
+
+            # Submit
+            for sel in ["button[type='submit']", "input[type='submit']", "button:has-text('Tiếp tục')", "button:has-text('Submit')"]:
+                try:
+                    await page.click(sel, timeout=3000)
+                    break
+                except: continue
+
+            await asyncio.sleep(4)
+            url = page.url
+            sc = await snap2()
+
+            # Xử lý kết quả sau OTP
+            if "login" not in url and "two_step" not in url and "2fac" not in url and "approvals" not in url:
+                cookies = await ctx.cookies()
+                c_user = next((c["value"] for c in cookies if c["name"] == "c_user"), "")
+                cookie_str = "; ".join(f"{c['name']}={c['value']}" for c in cookies if "facebook.com" in c.get("domain",""))
+                del _browser_sessions[session_id]
+                await browser.close()
+                return {"status": "success", "message": "✅ Đăng nhập thành công!", "uid": c_user, "name": "", "cookie": cookie_str, "screenshot_b64": sc}
+            else:
+                return {"status": "2fa", "message": "🔐 Mã OTP không đúng hoặc cần nhập lại.", "session_id": session_id, "screenshot_b64": sc}
+        except Exception as e:
+            return {"status": "error", "message": f"Lỗi OTP: {str(e)}", "screenshot_b64": ""}
+
     if not PLAYWRIGHT_OK:
         return {"status": "error", "message": "Playwright chưa cài", "screenshot_b64": ""}
     try:
         async with async_playwright() as p:
-            # Danh sách proxy
-            import os as _os, random as _random
-            _proxy_list = [
-                "http://mcpekvct:fu91r4wh2wnf@38.154.203.95:5863",
-                "http://mcpekvct:fu91r4wh2wnf@198.105.121.200:6462",
-                "http://mcpekvct:fu91r4wh2wnf@64.137.96.74:6641",
-                "http://mcpekvct:fu91r4wh2wnf@209.127.138.10:5784",
-                "http://mcpekvct:fu91r4wh2wnf@38.154.185.97:6370",
-                "http://mcpekvct:fu91r4wh2wnf@84.247.60.125:6095",
-                "http://mcpekvct:fu91r4wh2wnf@142.111.67.146:5611",
-                "http://mcpekvct:fu91r4wh2wnf@191.96.254.138:6185",
-                "http://mcpekvct:fu91r4wh2wnf@31.58.9.4:6077",
-                "http://mcpekvct:fu91r4wh2wnf@104.239.107.47:5699",
-            ]
-            # Ưu tiên env var, fallback random từ list
-            proxy_server = _os.environ.get("PROXY_SERVER", "") or _random.choice(_proxy_list)
-            launch_kwargs = {
-                "headless": True,
-                "args": ["--no-sandbox","--disable-gpu","--disable-dev-shm-usage"],
-                "proxy": {"server": proxy_server}
-            }
-
-            browser = await p.chromium.launch(**launch_kwargs)
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox","--disable-gpu","--disable-dev-shm-usage"]
+            )
             ctx = await browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 viewport={"width": 1280, "height": 800},
@@ -610,8 +674,7 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
                 try:
                     data = await page.screenshot(type="jpeg", quality=70, full_page=False)
                     return base64.b64encode(data).decode()
-                except:
-                    return ""
+                except: return ""
 
             # ── 1. Mở trang login ──
             await page.goto("https://www.facebook.com/login", wait_until="domcontentloaded", timeout=60000)
@@ -619,19 +682,10 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
 
             # ── 2. Nhập email + pass ──
             try:
-                # Chờ trang load xong hẳn
                 await page.wait_for_load_state("networkidle", timeout=15000)
                 await asyncio.sleep(1)
 
-                # Thử nhiều selector cho ô email
-                email_selectors = [
-                    "#email",
-                    "input[name='email']",
-                    "input[type='email']",
-                    "input[placeholder*='mail']",
-                    "input[placeholder*='số']",
-                    "input[placeholder*='phone']",
-                ]
+                email_selectors = ["#email","input[name='email']","input[type='email']","input[placeholder*='mail']","input[placeholder*='số']","input[placeholder*='phone']"]
                 email_filled = False
                 for sel in email_selectors:
                     try:
@@ -639,33 +693,27 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
                         await page.fill(sel, email, timeout=5000)
                         email_filled = True
                         break
-                    except:
-                        continue
+                    except: continue
                 if not email_filled:
                     raise Exception("Không tìm thấy ô email")
                 await asyncio.sleep(0.4)
 
-                # Thử nhiều selector cho ô password
-                for sel in ["#pass", "input[name='pass']", "input[type='password']", "input[placeholder='Mật khẩu']", "input[placeholder='Password']", "input[placeholder*='khẩu']"]:
+                for sel in ["#pass","input[name='pass']","input[type='password']","input[placeholder='Mật khẩu']","input[placeholder='Password']","input[placeholder*='khẩu']"]:
                     try:
                         await page.fill(sel, password, timeout=3000)
                         break
-                    except:
-                        continue
+                    except: continue
                 await asyncio.sleep(0.4)
 
-                # Thử nhiều selector cho nút login
                 login_clicked = False
-                for sel in ["[name='login']", "button[type='submit']", "[data-testid='royal_login_button']", "button:has-text('Đăng nhập')", "input[value='Log In']", "input[value='Đăng nhập']"]:
+                for sel in ["[name='login']","button[type='submit']","[data-testid='royal_login_button']","button:has-text('Đăng nhập')","input[value='Log In']","input[value='Đăng nhập']"]:
                     try:
                         await page.wait_for_selector(sel, timeout=2000)
                         await page.click(sel, timeout=3000)
                         login_clicked = True
                         break
-                    except:
-                        continue
+                    except: continue
                 if not login_clicked:
-                    # Fallback: nhấn Enter
                     await page.keyboard.press("Enter")
 
             except Exception as e:
@@ -673,27 +721,20 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
                 await browser.close()
                 return {"status": "error", "message": f"Không tìm thấy form login: {e}", "screenshot_b64": sc}
 
-            # Chờ Facebook xử lý - wait for navigation hoặc tối đa 10s
+            # Chờ sau khi click login
             try:
-                await page.wait_for_url(lambda u: "login" not in u or "checkpoint" in u or "two_step" in u, timeout=10000)
-            except:
-                pass
+                await page.wait_for_url(lambda u: "login" not in u or "checkpoint" in u or "two_step" in u or "approvals" in u, timeout=12000)
+            except: pass
             await asyncio.sleep(2)
             url = page.url
-            sc  = await snap()
+            sc = await snap()
 
             # ── 3. Phân tích trạng thái ──
 
             # Thành công
-            if (
-                "facebook.com" in url and
-                "login" not in url and
-                "checkpoint" not in url and
-                "two_step" not in url and
-                "two-step" not in url and
-                "2fac" not in url
-            ):
-                # Lấy tên + uid
+            if ("facebook.com" in url and "login" not in url and
+                "checkpoint" not in url and "two_step" not in url and
+                "two-step" not in url and "2fac" not in url and "approvals" not in url):
                 try:
                     res = await page.evaluate("""
                         async () => {
@@ -705,15 +746,13 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
                                 });
                                 const t = await r.text();
                                 const m = t.match(/"name":"([^"]+)"/);
-                                const u = t.match(/"id":"(\\d{10,})"/);
+                                const u = t.match(/"id":"(\d{10,})"/);
                                 return {name: m?m[1]:'', uid: u?u[1]:''};
                             } catch(e) { return {name:'',uid:''}; }
                         }
                     """)
-                except:
-                    res = {"name": "", "uid": ""}
+                except: res = {"name": "", "uid": ""}
 
-                # Fallback tên từ title
                 if not res.get("name"):
                     try:
                         title = await page.title()
@@ -721,49 +760,42 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
                             res["name"] = title.split("–")[0].split("|")[0].strip()
                     except: pass
 
-                # Lấy cookie string
                 cookies = await ctx.cookies()
                 c_user = next((c["value"] for c in cookies if c["name"] == "c_user"), "")
-                if not res.get("uid") and c_user:
-                    res["uid"] = c_user
+                if not res.get("uid") and c_user: res["uid"] = c_user
                 cookie_str = "; ".join(f"{c['name']}={c['value']}" for c in cookies if "facebook.com" in c.get("domain",""))
-
                 await browser.close()
-                return {
-                    "status":         "success",
-                    "message":        f"✅ Đăng nhập thành công!",
-                    "name":           res.get("name", ""),
-                    "uid":            res.get("uid", ""),
-                    "cookie":         cookie_str,
-                    "screenshot_b64": sc
-                }
+                return {"status": "success", "message": "✅ Đăng nhập thành công!", "name": res.get("name",""), "uid": res.get("uid",""), "cookie": cookie_str, "screenshot_b64": sc}
+
+            # 2FA / OTP - Lưu session lại chờ OTP
+            if any(k in url for k in ["two_step","two-step","2fac","approvals"]):
+                new_sid = str(uuid.uuid4())
+                _browser_sessions[new_sid] = {"browser": browser, "page": page, "ctx": ctx}
+                return {"status": "2fa", "message": "🔐 Tài khoản bật xác minh 2 bước. Nhập mã OTP:", "session_id": new_sid, "screenshot_b64": sc}
+
+            # Checkpoint - Gemini AI phân tích
+            if "checkpoint" in url or "confirm" in url:
+                page_text = await page.inner_text("body")
+                if any(k in page_text.lower() for k in ["disabled","vô hiệu hóa","suspended"]):
+                    await browser.close()
+                    return {"status": "disabled", "message": "🚫 Tài khoản bị vô hiệu hoá.", "screenshot_b64": sc}
+                ai_result = await _ai_analyze_screenshot(sc,
+                    "Đây là ảnh chụp màn hình trang Facebook checkpoint. "
+                    "Mô tả ngắn gọn Facebook đang yêu cầu gì (xác minh SĐT, email, ảnh ID, nhận dạng bạn bè...). "
+                    "Trả lời tiếng Việt, tối đa 2 câu."
+                )
+                ai_msg = ai_result.get("text", "Tài khoản bị checkpoint.")
+                await browser.close()
+                return {"status": "checkpoint", "message": f"⚠️ Checkpoint: {ai_msg}", "screenshot_b64": sc}
 
             # Sai mật khẩu
             if "login" in url:
                 page_text = await page.inner_text("body")
-                if any(k in page_text.lower() for k in ["sai mật khẩu","incorrect password","wrong password","mật khẩu không đúng","password you entered"]):
-                    await browser.close()
-                    return {"status": "wrong_pass", "message": "❌ Sai email hoặc mật khẩu!", "screenshot_b64": sc}
-                # CAPTCHA
                 if any(k in page_text.lower() for k in ["captcha","robot","xác minh bảo mật","security check"]):
                     await browser.close()
-                    return {"status": "captcha", "message": "🤖 Facebook yêu cầu xác minh CAPTCHA. Thử lại sau ít phút.", "screenshot_b64": sc}
+                    return {"status": "captcha", "message": "🤖 Facebook yêu cầu xác minh CAPTCHA.", "screenshot_b64": sc}
                 await browser.close()
                 return {"status": "wrong_pass", "message": "❌ Sai thông tin đăng nhập hoặc tài khoản bị khoá tạm.", "screenshot_b64": sc}
-
-            # 2FA / OTP
-            if any(k in url for k in ["two_step","two-step","2fac","approvals","mbasic/two_step"]):
-                await browser.close()
-                return {"status": "2fa", "message": "🔐 Tài khoản bật xác minh 2 bước (2FA). Cần nhập mã OTP.", "screenshot_b64": sc}
-
-            # Checkpoint (bị khoá, xác minh danh tính)
-            if "checkpoint" in url or "confirm" in url:
-                page_text = await page.inner_text("body")
-                if any(k in page_text.lower() for k in ["disabled","vô hiệu hóa","suspended","đã bị vô hiệu"]):
-                    await browser.close()
-                    return {"status": "disabled", "message": "🚫 Tài khoản đã bị vô hiệu hoá (disabled) bởi Facebook.", "screenshot_b64": sc}
-                await browser.close()
-                return {"status": "checkpoint", "message": "⚠️ Tài khoản bị checkpoint! Facebook yêu cầu xác minh danh tính.", "screenshot_b64": sc}
 
             # Bị vô hiệu hoá
             page_text = await page.inner_text("body")
@@ -771,7 +803,6 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
                 await browser.close()
                 return {"status": "disabled", "message": "🚫 Tài khoản bị Facebook vô hiệu hoá.", "screenshot_b64": sc}
 
-            # Không xác định
             await browser.close()
             return {"status": "unknown", "message": f"❓ Không xác định trạng thái. URL: {url}", "screenshot_b64": sc}
 

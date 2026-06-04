@@ -243,6 +243,7 @@ from dame_runner import (
     start_dame, pause_dame, resume_dame, stop_dame,
     get_status, get_screenshot, fb_login_by_pass
 )
+import os
 
 @app.post("/api/verify-fb-cookie")
 async def api_verify_cookie(request: Request):
@@ -321,6 +322,27 @@ async def api_dame_stop(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
+@app.post("/api/fb-login-pass/otp")
+async def api_fb_login_otp(request: Request):
+    data = await request.json()
+    tok = (data.get("_token") or "").strip() or request.headers.get("Authorization","").replace("Bearer ","").strip()
+    if not tok or not get_session_user(tok):
+        raise HTTPException(401, "Chưa đăng nhập")
+    session_id = (data.get("session_id") or "").strip()
+    otp_code   = (data.get("otp_code") or "").strip()
+    if not session_id or not otp_code:
+        raise HTTPException(400, "Thiếu session_id hoặc otp_code")
+    job_id = str(_uuid.uuid4())
+    login_jobs[job_id] = {"status": "pending", "result": None}
+    async def run_otp():
+        try:
+            result = await fb_login_by_pass("", "", session_id=session_id, otp_code=otp_code)
+            login_jobs[job_id] = {"status": "done", "result": result}
+        except Exception as e:
+            login_jobs[job_id] = {"status": "error", "result": {"status": "error", "message": str(e)}}
+    asyncio.create_task(run_otp())
+    return {"job_id": job_id}
+
 @app.post("/api/fb-login-pass/start")
 async def api_fb_login_pass_start(request: Request):
     data = await request.json()
