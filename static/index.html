@@ -263,10 +263,10 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         <div class="field-label">Mật khẩu</div>
         <input class="field-input" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password">
       </div>
-      <label class="remember-row" id="remember-row">
-        <div class="remember-check" id="remember-check" onclick="toggleRemember()"></div>
+      <div class="remember-row" id="remember-row" onclick="toggleRemember()">
+        <div class="remember-check" id="remember-check"></div>
         <span>Ghi nhớ đăng nhập</span>
-      </label>
+      </div>
       <div class="auth-err" id="login-err"></div>
       <button class="auth-btn" id="login-btn" onclick="doLogin()">🔐 Đăng nhập</button>
       <div style="text-align:center;margin-top:10px">
