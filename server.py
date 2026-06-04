@@ -8,8 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 try: import aiohttp; HAS_AIOHTTP = True
 except: HAS_AIOHTTP = False
 
-# Playwright install được xử lý trong dame_runner.py (background thread)
-
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -314,6 +312,21 @@ async def api_dame_stop(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
+@app.get("/api/fb-captcha/poll/{cap_id}")
+async def api_captcha_poll(cap_id: str, request: Request):
+    tok = request.headers.get("Authorization","").replace("Bearer ","").strip()
+    if not tok or not get_session_user(tok):
+        raise HTTPException(401, "Chưa đăng nhập")
+    sess = _captcha_sessions.get(cap_id)
+    if not sess:
+        raise HTTPException(404, "Cap session không tồn tại")
+    return {
+        "status": sess.get("status","solving"),
+        "msg": sess.get("msg",""),
+        "screenshot_b64": sess.get("screenshot_b64",""),
+        "result": sess.get("result")
+    }
+
 @app.post("/api/fb-login-pass/otp")
 async def api_fb_login_otp(request: Request):
     data = await request.json()
@@ -383,22 +396,6 @@ async def api_fb_login_pass_poll(job_id: str, request: Request):
     if not job:
         raise HTTPException(404, "Job không tồn tại")
     return job
-
-@app.get("/api/fb-captcha/poll/{cap_id}")
-async def api_captcha_poll(cap_id: str, request: Request):
-    tok = request.headers.get("Authorization","").replace("Bearer ","").strip()
-    if not tok or not get_session_user(tok):
-        raise HTTPException(401, "Chưa đăng nhập")
-    cap = _captcha_sessions.get(cap_id)
-    if not cap:
-        raise HTTPException(404, "Captcha session không tồn tại")
-    if cap["status"] == "solving":
-        return {
-            "status": "solving",
-            "msg": cap.get("msg", "⏳ Đang giải CAPTCHA..."),
-            "screenshot_b64": cap.get("screenshot_b64", "")
-        }
-    return {"status": cap["status"], "msg": cap.get("msg", ""), "result": cap.get("result", {})}
 
 @app.post("/api/fb-login-pass")
 async def api_fb_login_pass(request: Request):
