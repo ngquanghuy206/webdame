@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FB Dame Tool — Dzi Meo Meo</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="🐬 FB Dame Tool — by Dzi Meo Meo">
+<meta property="og:description" content="Công cụ dame acc Facebook. Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi) · IT Automation Developer · 2026">
+<meta property="og:image" content="https://i.imgur.com/vacr9kd.jpeg">
+<meta name="description" content="Công cụ dame acc Facebook">
+<link rel="icon" href="https://i.imgur.com/vacr9kd.jpeg" type="image/jpeg">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;transition:background .3s,color .3s,border-color .3s}
+:root{
+  --bg1:#0a0e1a;--bg2:#0d1428;--bg3:#0f1830;
+  --glass:rgba(255,255,255,0.04);--glass2:rgba(255,255,255,0.08);
+  --border:rgba(255,255,255,0.1);
+  --blue:#4f9eff;--blue2:#2979ff;--cyan:#00e5ff;--purple:#7c4dff;
+  --green:#00e676;--red:#ff5252;--yellow:#ffd740;--orange:#ff9100;
+  --text:#f0f4ff;--muted:rgba(240,244,255,0.45);--shadow:rgba(0,0,0,0.5);
+}
+[data-theme="light"]{
+  --bg1:#e8edf8;--bg2:#dde4f5;--bg3:#d4dcf0;
+  --glass:rgba(255,255,255,0.6);--glass2:rgba(255,255,255,0.85);
+  --border:rgba(0,0,0,0.1);--text:#1a1f35;--muted:rgba(26,31,53,0.5);--shadow:rgba(0,0,0,0.12);
+}
+body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;overflow-x:hidden}
+.bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.12;animation:float 8s ease-in-out infinite}
+.orb1{width:500px;height:500px;background:var(--blue2);top:-100px;left:-100px;animation-delay:0s}
+.orb2{width:400px;height:400px;background:var(--purple);bottom:-100px;right:-100px;animation-delay:3s}
+.orb3{width:300px;height:300px;background:var(--cyan);top:40%;left:40%;animation-delay:1.5s}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-30px) scale(1.05)}}
+.wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:16px 14px 60px}
+
+/* ── AUTH SCREEN ─────────────────────────────────────── */
+#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.auth-card{width:100%;max-width:420px;background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:24px;padding:30px 28px;box-shadow:0 20px 60px var(--shadow)}
+.auth-logo{text-align:center;margin-bottom:22px}
+.auth-logo-icon{font-size:42px;margin-bottom:8px}
+.auth-logo-title{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.auth-logo-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.auth-tabs{display:flex;gap:0;background:var(--glass2);border-radius:12px;padding:4px;margin-bottom:24px}
+.auth-tab{flex:1;padding:9px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;color:var(--muted);transition:all .2s}
+.auth-tab.active{background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff;box-shadow:0 4px 12px rgba(41,121,255,.35)}
+.auth-form{display:flex;flex-direction:column;gap:12px}
+.field-group{display:flex;flex-direction:column;gap:6px}
+.field-label{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.field-input{width:100%;padding:11px 14px;background:var(--glass2);border:1.5px solid var(--border);border-radius:11px;font-size:14px;color:var(--text);outline:none;font-family:inherit}
+.field-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(79,158,255,.12)}
+.field-input::placeholder{color:var(--muted)}
+.auth-btn{width:100%;padding:13px;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff;box-shadow:0 4px 20px rgba(41,121,255,.3);margin-top:4px}
+.auth-btn:hover{opacity:.9;transform:translateY(-1px)}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.auth-err{background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.3);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--red);display:none}
+.remember-row{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--muted);user-select:none}
+.remember-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);background:var(--glass2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:12px}
+.remember-check.checked{background:linear-gradient(135deg,var(--blue2),var(--purple));border-color:transparent;color:#fff}
+
+/* ── CAPTCHA ─────────────────────────────────────────── */
+.captcha-box{background:var(--glass2);border:1.5px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.captcha-question{font-size:14px;font-weight:600;min-height:24px;line-height:1.5}
+.captcha-options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.captcha-opt{padding:9px 10px;border-radius:9px;border:1.5px solid var(--border);background:var(--glass);font-size:13px;cursor:pointer;text-align:center;transition:all .15s}
+.captcha-opt:hover{border-color:var(--blue);background:var(--glass2)}
+.captcha-opt.selected{border-color:var(--green);background:rgba(0,230,118,.1);color:var(--green)}
+.captcha-opt.wrong{border-color:var(--red);background:rgba(255,82,82,.1);color:var(--red)}
+.captcha-input-row{display:flex;gap:8px;align-items:center}
+.captcha-input{flex:1;padding:9px 12px;background:var(--glass2);border:1.5px solid var(--border);border-radius:9px;font-size:14px;color:var(--text);outline:none;font-family:inherit}
+.captcha-input:focus{border-color:var(--blue)}
+.captcha-refresh{width:36px;height:36px;border:1.5px solid var(--border);border-radius:9px;background:var(--glass2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.captcha-refresh:hover{border-color:var(--blue)}
+.captcha-canvas{border-radius:8px;background:#1a2040;display:block;width:100%}
+
+/* ── TOP BAR ─────────────────────────────────────────── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;margin-bottom:20px;background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:16px;position:relative;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo-text{font-size:17px;font-weight:800;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:10px;color:var(--muted)}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.clock{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:64px}
+.user-badge{font-size:12px;font-weight:700;padding:4px 10px;background:linear-gradient(135deg,rgba(79,158,255,.2),rgba(124,77,255,.2));border:1px solid rgba(79,158,255,.3);border-radius:20px;color:var(--blue)}
+.admin-badge{background:linear-gradient(135deg,rgba(255,215,64,.2),rgba(255,145,0,.2));border-color:rgba(255,215,64,.4);color:var(--yellow)}
+
+/* ── ICON BUTTONS ────────────────────────────────────── */
+.icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--glass2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text);position:relative}
+.icon-btn:hover{border-color:var(--blue)}
+.badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* ── DROPDOWN ────────────────────────────────────────── */
+.dropdown{position:relative}
+.dropdown-menu{display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--bg2);border:1px solid var(--border);border-radius:14px;min-width:220px;box-shadow:0 20px 60px var(--shadow);z-index:9999;overflow:hidden;backdrop-filter:blur(20px)}
+.dropdown-menu.open{display:block;animation:fadeDown .15s ease}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.d-section{padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--blue);opacity:.6;text-transform:uppercase;margin-top:4px}
+.d-item{padding:11px 16px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:10px;border-top:1px solid var(--border)}
+.d-item:hover{background:var(--glass2)}
+.d-item:first-of-type{border-top:none}
+.d-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;font-size:13px;cursor:pointer;border-top:1px solid var(--border)}
+.d-toggle:hover{background:var(--glass2)}
+.toggle-switch{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:background .2s}
+.toggle-switch.on{background:var(--blue2)}
+.toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle-switch.on .toggle-knob{left:18px}
+
+/* ── MARQUEE ─────────────────────────────────────────── */
+.marquee-wrap{background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:12px;padding:9px 0;margin-bottom:18px;overflow:hidden}
+.marquee{white-space:nowrap;font-size:12px;color:var(--muted);animation:marquee 35s linear infinite;display:inline-block}
+@keyframes marquee{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+
+/* ── SUPPORT ─────────────────────────────────────────── */
+.support-wrap{display:flex;gap:10px;margin-bottom:18px}
+.support-btn{flex:1;padding:10px;border-radius:12px;background:var(--glass);border:1px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;text-align:center;color:var(--text)}
+.support-btn:hover{border-color:var(--blue);background:var(--glass2)}
+
+/* ── CARD ────────────────────────────────────────────── */
+.card{background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:16px;box-shadow:0 8px 40px var(--shadow)}
+
+/* ── STATUS ──────────────────────────────────────────── */
+.status-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--glass2);border:1px solid var(--border);margin-bottom:22px;font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.dot.active{background:var(--blue);box-shadow:0 0 8px var(--blue);animation:pulse 1.2s infinite}
+.dot.ok{background:var(--green);box-shadow:0 0 8px var(--green)}
+.dot.err{background:var(--red)}.dot.warn{background:var(--yellow)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── QR AREA ─────────────────────────────────────────── */
+.qr-area{display:flex;flex-direction:column;align-items:center;gap:18px;min-height:260px;justify-content:center}
+.qr-frame{width:210px;height:210px;border-radius:20px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;font-size:13px;color:var(--muted);position:relative}
+.qr-frame::before,.qr-frame::after{content:'';position:absolute;width:22px;height:22px;border-color:var(--blue);border-style:solid}
+.qr-frame::before{top:8px;left:8px;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
+.qr-frame::after{bottom:8px;right:8px;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
+#qr-icon{font-size:44px}
+#qr-img{width:200px;height:200px;border-radius:14px;display:none;border:2px solid var(--blue);box-shadow:0 0 30px rgba(79,158,255,.3)}
+.qr-hint{font-size:12px;color:var(--muted);text-align:center}
+.countdown-bar-wrap{width:100%;max-width:210px;margin-top:4px}
+.countdown-bar-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.countdown-bar-fill{height:100%;border-radius:3px;transition:width 1s linear,background .5s}
+.countdown-label{font-size:11px;text-align:center;margin-top:5px;font-variant-numeric:tabular-nums;font-weight:700}
+.otp-timer{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
+.otp-timer-val{font-weight:800;font-variant-numeric:tabular-nums;color:var(--blue)}
+.otp-timer-bar{width:120px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;display:inline-block}
+.otp-timer-fill{height:100%;border-radius:2px;background:var(--blue);transition:width 1s linear,background .5s}
+.scanned-box{display:none;flex-direction:column;align-items:center;gap:10px;padding:20px 24px;border-radius:16px;text-align:center;background:rgba(0,230,118,.06);border:1.5px solid rgba(0,230,118,.25)}
+.scanned-name{font-weight:700;font-size:16px;color:var(--green)}
+.spinner{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── RESULT ──────────────────────────────────────────── */
+.result-wrap{display:none;flex-direction:column;gap:14px;margin-top:4px}
+.acc-card{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(79,158,255,.1),rgba(0,229,255,.05));border:1px solid rgba(79,158,255,.25)}
+.avatar-circle{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--blue2),var(--purple));display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 16px rgba(41,121,255,.4)}
+.acc-name{font-weight:700;font-size:15px}.acc-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.info-row{padding:11px 14px;border-radius:12px;background:var(--glass2);border:1px solid var(--border)}
+.info-label{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--blue);opacity:.7;text-transform:uppercase;margin-bottom:4px}
+.info-value{font-size:11px;font-family:monospace;color:#7dd3fc;word-break:break-all;line-height:1.6;max-height:90px;overflow-y:auto}
+.info-value::-webkit-scrollbar{width:3px}.info-value::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tab{flex:1;padding:7px 4px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--glass);color:var(--muted);text-align:center}
+.tab.active{background:linear-gradient(135deg,var(--blue2),var(--purple));border-color:transparent;color:#fff}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* ── BUTTONS ─────────────────────────────────────────── */
+.btn-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn{flex:1;min-width:110px;padding:11px 14px;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn:hover{opacity:.85;transform:translateY(-1px)}.btn:active{transform:translateY(0)}
+.btn-primary{background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff;box-shadow:0 4px 20px rgba(41,121,255,.3)}
+.btn-green{background:linear-gradient(135deg,#00c853,#00a040);color:#fff}
+.btn-outline{background:var(--glass2);border:1px solid var(--border);color:var(--muted)}
+.btn-danger{background:linear-gradient(135deg,#ff5252,#c62828);color:#fff}
+.btn.copied{background:linear-gradient(135deg,var(--green),#00a040)!important;color:#fff}
+
+/* ── MODALS ──────────────────────────────────────────── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:520px;box-shadow:0 30px 80px var(--shadow);margin:auto;animation:popIn .2s ease}
+@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.close-btn{width:100%;padding:11px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff;font-weight:700;cursor:pointer;margin-top:16px;font-size:14px}
+
+/* ── ADMIN MODAL ─────────────────────────────────────── */
+.admin-avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 14px;background:linear-gradient(135deg,var(--blue2),var(--purple));display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 8px 30px rgba(79,158,255,.4)}
+.admin-name{font-size:18px;font-weight:800;text-align:center;margin-bottom:3px}
+.admin-title{font-size:12px;color:var(--muted);text-align:center;margin-bottom:18px}
+.admin-info-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--glass2);margin-bottom:8px;font-size:13px}
+
+/* ── HISTORY ─────────────────────────────────────────── */
+.hist-item{padding:12px 14px;border-radius:12px;background:var(--glass);border:1px solid var(--border);margin-bottom:10px;cursor:pointer}
+.hist-item:hover{border-color:var(--blue)}
+.hist-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.hist-name{font-weight:700;font-size:14px}
+.hist-time{font-size:11px;color:var(--muted)}
+.hist-phone{font-size:12px;color:var(--muted);margin-bottom:6px}
+.hist-actions{display:flex;gap:6px;margin-top:8px}
+.hist-btn{flex:1;padding:6px;border-radius:8px;border:1px solid var(--border);background:var(--glass2);font-size:11px;font-weight:700;cursor:pointer;color:var(--text);text-align:center}
+.hist-btn:hover{border-color:var(--blue)}
+.hist-btn.dl{background:linear-gradient(135deg,var(--green),#00a040);border-color:transparent;color:#fff}
+.hist-empty{text-align:center;color:var(--muted);padding:40px;font-size:14px}
+.page-nav{display:flex;gap:6px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.page-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--glass);cursor:pointer;font-size:12px;color:var(--text)}
+.page-btn.active{background:var(--blue2);border-color:transparent;color:#fff}
+
+/* ── GUIDE ───────────────────────────────────────────── */
+.guide-step{display:flex;gap:14px;margin-bottom:18px;align-items:flex-start}
+.step-num{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue2),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;margin-top:2px}
+.step-content h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.step-content p{font-size:13px;color:var(--muted);line-height:1.6}
+.step-content .tip{margin-top:6px;padding:8px 12px;border-radius:8px;background:rgba(255,215,64,.08);border-left:3px solid var(--yellow);font-size:12px;color:var(--yellow)}
+.guide-divider{height:1px;background:var(--border);margin:16px 0}
+.guide-section-title{font-size:13px;font-weight:700;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+/* ── USER MANAGEMENT ─────────────────────────────────── */
+.user-table{width:100%;border-collapse:collapse;font-size:12px}
+.user-table th{text-align:left;padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue);opacity:.7;border-bottom:1px solid var(--border)}
+.user-table td{padding:10px 10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+.user-table tr:last-child td{border-bottom:none}
+.u-active{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.u-active.yes{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+.u-active.no{background:rgba(255,82,82,.12);color:var(--red);border:1px solid rgba(255,82,82,.3)}
+.u-action{padding:4px 9px;border-radius:6px;border:1px solid var(--border);background:var(--glass2);font-size:11px;font-weight:700;cursor:pointer;color:var(--text);margin-right:4px}
+.u-action:hover{border-color:var(--blue)}
+.u-action.del{border-color:rgba(255,82,82,.3);color:var(--red)}
+.u-action.del:hover{background:rgba(255,82,82,.12)}
+.pw-reveal{font-family:monospace;font-size:10px;color:var(--muted);word-break:break-all;max-width:120px;cursor:pointer}
+.pw-reveal:hover{color:var(--text)}
+
+/* ── FOOTER ──────────────────────────────────────────── */
+.footer{text-align:center;font-size:11px;color:var(--muted);margin-top:28px;opacity:.5}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4);pointer-events:none;max-width:90vw;text-align:center}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<audio id="bg-music" loop>
+  <source src="/static/nhac.mp3" type="audio/mpeg">
+</audio>
+<div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     AUTH SCREEN
+════════════════════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🐬</div>
+      <div class="auth-logo-title">FB Dame Tool</div>
+      <div class="auth-logo-sub">Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi) · 2026</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">🔐 Đăng nhập</div>
+      <div class="auth-tab" id="tab-reg-btn" onclick="switchAuthTab('register')">📝 Đăng ký</div>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="auth-login-form" class="auth-form">
+      <div class="field-group">
+        <div class="field-label">Tên đăng nhập</div>
+        <input class="field-input" id="login-user" type="text" placeholder="Nhập tên đăng nhập" autocomplete="username">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Mật khẩu</div>
+        <input class="field-input" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password">
+      </div>
+      <div class="remember-row" id="remember-row" onclick="toggleRemember()">
+        <div class="remember-check" id="remember-check"></div>
+        <span>Ghi nhớ đăng nhập</span>
+      </div>
+      <div class="auth-err" id="login-err"></div>
+      <button class="auth-btn" id="login-btn" onclick="doLogin()">🔐 Đăng nhập</button>
+      <div style="text-align:center;margin-top:10px">
+        <span onclick="openForgotModal()" style="color:var(--blue);font-size:13px;cursor:pointer;text-decoration:underline">Quên mật khẩu?</span>
+      </div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="auth-register-form" class="auth-form" style="display:none">
+      <div class="field-group">
+        <div class="field-label">Tên đăng nhập</div>
+        <input class="field-input" id="reg-user" type="text" placeholder="Tối thiểu 6 ký tự" autocomplete="username">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Mật khẩu</div>
+        <input class="field-input" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Gmail</div>
+        <input class="field-input" id="reg-email" type="email" placeholder="example@gmail.com">
+      </div>
+      <!-- CAPTCHA -->
+      <div class="field-group">
+        <div class="field-label">Xác minh bảo mật (CAPTCHA)</div>
+        <div class="captcha-box" id="captcha-box">
+          <div class="captcha-question" id="captcha-q">Đang tải...</div>
+          <div id="captcha-content"></div>
+        </div>
+      </div>
+      <div class="auth-err" id="reg-err"></div>
+      <button class="auth-btn" id="reg-btn" onclick="doRegister()">📝 Đăng ký</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD MODAL -->
+<div class="modal-overlay" id="forgot-modal" onclick="if(event.target===this)closeModal('forgot-modal')">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-title">🔑 Quên mật khẩu</div>
+
+    <!-- STEP 1: Nhập email -->
+    <div id="forgot-step1">
+      <div class="field-group">
+        <div class="field-label">Gmail đã đăng ký</div>
+        <input class="field-input" id="forgot-email" type="email" placeholder="example@gmail.com">
+      </div>
+      <div class="auth-err" id="forgot-err1"></div>
+      <button class="auth-btn" id="forgot-btn1" onclick="doForgotSend()">📧 Gửi mã OTP</button>
+    </div>
+
+    <!-- STEP 2: Nhập OTP -->
+    <div id="forgot-step2" style="display:none">
+      <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:10px">Nhập mã OTP đã gửi về Gmail của bạn</p>
+      <div class="otp-timer" id="otp-timer-wrap">
+        ⏱ Còn lại: <span class="otp-timer-val" id="otp-timer-val">5:00</span>
+        <span class="otp-timer-bar"><span class="otp-timer-fill" id="otp-bar-fill" style="width:100%"></span></span>
+      </div>
+      <div style="margin-bottom:10px"></div>
+      <div class="field-group">
+        <div class="field-label">Mã OTP (6 số)</div>
+        <input class="field-input" id="forgot-otp" type="text" maxlength="6" placeholder="123456" style="letter-spacing:6px;font-size:20px;text-align:center">
+      </div>
+      <div class="auth-err" id="forgot-err2"></div>
+      <button class="auth-btn" id="forgot-btn2" onclick="doVerifyOtp()">✅ Xác nhận OTP</button>
+      <div style="text-align:center;margin-top:8px">
+        <span onclick="doForgotSend();startOtpCountdown(300)" style="color:var(--blue);font-size:12px;cursor:pointer">Gửi lại OTP</span>
+      </div>
+    </div>
+
+    <!-- STEP 3: Đặt MK mới -->
+    <div id="forgot-step3" style="display:none">
+      <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:16px">OTP hợp lệ! Nhập mật khẩu mới</p>
+      <div class="field-group">
+        <div class="field-label">Mật khẩu mới</div>
+        <input class="field-input" id="forgot-newpw" type="password" placeholder="Tối thiểu 6 ký tự">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Xác nhận mật khẩu</div>
+        <input class="field-input" id="forgot-confirmpw" type="password" placeholder="Nhập lại mật khẩu mới">
+      </div>
+      <div class="auth-err" id="forgot-err3"></div>
+      <button class="auth-btn" id="forgot-btn3" onclick="doResetPassword()">🔐 Đặt lại mật khẩu</button>
+    </div>
+
+    <button class="close-btn" onclick="closeModal('forgot-modal')" style="margin-top:12px">Đóng</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     ADMIN MODAL
+════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="admin-modal" onclick="if(event.target===this)closeModal('admin-modal')">
+  <div class="modal-box">
+    <div class="admin-avatar">🧑‍💻</div>
+    <div class="admin-name">Nguyễn Hoàng Khánh Nam</div>
+    <div class="admin-title">Dzi Meo Meo · IT Automation Developer · 2026</div>
+    <div class="admin-info-row">🎂 <span>30/05/2006</span></div>
+    <div class="admin-info-row">📱 <span>Zalo: <b>0993329535</b></span></div>
+    <div class="admin-info-row">🎵 <span>TikTok: <b>@hkhanhnam206</b></span></div>
+    <div class="admin-info-row">💼 <span>Lĩnh vực: <b>IT / Automation / Bot Dev</b></span></div>
+    <div class="admin-info-row">✨ <span>Admin: <b>Dzi Meo Meo</b></span></div>
+    <button class="close-btn" onclick="closeModal('admin-modal')">✕ Đóng</button>
+  </div>
+</div>
+
+<!-- GUIDE MODAL -->
+<div class="modal-overlay" id="guide-modal" onclick="if(event.target===this)closeModal('guide-modal')">
+  <div class="modal-box" style="max-width:580px">
+    <div class="modal-title">📖 Hướng dẫn sử dụng FB Dame Tool</div>
+
+    <div class="guide-section-title">🚀 Cách sử dụng</div>
+
+    <div class="guide-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h4>Lấy Cookie Facebook</h4>
+        <p>Mở <b>Facebook.com</b> trên Chrome/Edge → <b>F12</b> → Tab <b>Application</b> → <b>Cookies</b> → copy toàn bộ.<br>Hoặc dùng extension <b>EditThisCookie / Cookie-Editor</b> để export dạng string.</p>
+        <div class="tip">💡 Cookie phải từ tài khoản Facebook còn sống, chưa bị checkpoint.</div>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h4>Dán Cookie vào ô "Cookie Facebook"</h4>
+        <p>Paste cookie string vào ô đầu tiên. Bấm <b>✅ Kiểm tra</b> để xác nhận cookie còn sống và lấy tên tài khoản.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h4>Nhập link / UID target</h4>
+        <p>Dán link profile Facebook cần dame, ví dụ:<br>
+        <b>https://www.facebook.com/username</b><br>hoặc nhập UID số trực tiếp.</p>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h4>Chọn tốc độ và bấm Bắt đầu</h4>
+        <p>Chọn tốc độ phù hợp rồi bấm <b>🐬 Bắt đầu Dame</b>. Theo dõi trạng thái ở tab <b>📊 Trạng thái</b>.</p>
+        <div class="tip">💡 Tốc độ "Chậm" ít bị rate limit hơn, dùng khi cookie yếu.</div>
+      </div>
+    </div>
+
+    <div class="guide-divider"></div>
+    <div class="guide-section-title">⚠️ Lưu ý</div>
+
+    <div class="guide-step">
+      <div class="step-num">⚠️</div>
+      <div class="step-content">
+        <h4>Những việc làm hỏng cookie</h4>
+        <p>❌ Đăng xuất Facebook trên trình duyệt gốc<br>
+        ❌ Đổi mật khẩu Facebook<br>
+        ❌ Bật xác thực 2 lớp sau khi lấy cookie<br>
+        ❌ Facebook phát hiện đăng nhập bất thường</p>
+      </div>
+    </div>
+
+    <button class="close-btn" onclick="closeModal('guide-modal')">✕ Đóng</button>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="modal-overlay" id="history-modal" onclick="if(event.target===this)closeModal('history-modal')">
+  <div class="modal-box" style="max-width:600px">
+    <div class="modal-title">📋 Lịch sử lấy cookie <span id="hist-count" style="font-size:13px;font-weight:400;color:var(--muted)"></span></div>
+    <div id="hist-list"></div>
+    <div class="page-nav" id="hist-pages"></div>
+    <button class="close-btn" onclick="closeModal('history-modal')">Đóng</button>
+  </div>
+</div>
+
+<!-- HIST DETAIL MODAL -->
+<div class="modal-overlay" id="hist-detail-modal" onclick="if(event.target===this)closeModal('hist-detail-modal')">
+  <div class="modal-box">
+    <div class="modal-title">🔍 Chi tiết cookie</div>
+    <div id="hist-detail-content"></div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-green" onclick="copyHistDetailCookie(this)">📋 Copy Cookie</button>
+      <button class="btn btn-primary" onclick="downloadHistDetail()">⬇️ Tải .txt</button>
+    </div>
+    <button class="close-btn" onclick="closeModal('hist-detail-modal')">Đóng</button>
+  </div>
+</div>
+
+<!-- USER DETAIL MODAL -->
+<div class="modal-overlay" id="user-detail-modal" onclick="if(event.target===this)closeModal('user-detail-modal')">
+  <div class="modal-box">
+    <div class="modal-title">🔍 Chi tiết tài khoản</div>
+    <div id="user-detail-content"></div>
+    <button class="close-btn" onclick="closeModal('user-detail-modal')">Đóng</button>
+  </div>
+</div>
+
+<!-- ADMIN USER MANAGEMENT MODAL -->
+<div class="modal-overlay" id="mgmt-modal" onclick="if(event.target===this)closeModal('mgmt-modal')">
+  <div class="modal-box" style="max-width:700px">
+    <div class="modal-title">👑 Quản lý tài khoản <span id="mgmt-count" style="font-size:13px;font-weight:400;color:var(--muted)"></span></div>
+    <div id="mgmt-list"></div>
+    <div class="page-nav" id="mgmt-pages"></div>
+    <button class="close-btn" onclick="closeModal('mgmt-modal')">Đóng</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MAIN APP (hidden until login)
+════════════════════════════════════════════════════════ -->
+<div id="app-screen" style="display:none">
+<div class="wrap">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="logo-text">🐬 FB Dame Tool</div>
+        <div class="logo-sub">by Dzi Meo Meo · IT Automation</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="user-badge" id="user-badge-el">👤 ...</div>
+      <div class="dropdown">
+        <div class="icon-btn" onclick="toggleMenu()" title="Menu">☰</div>
+        <div class="dropdown-menu" id="main-menu">
+          <div class="d-section">Tài khoản</div>
+          <div class="d-item" onclick="doLogout()">🚪 Đăng xuất</div>
+          <div class="d-section">Tính năng</div>
+          <div class="d-item" onclick="openHistory();closeMenu()">📋 Lịch sử <span id="hist-badge" class="badge" style="position:static;margin-left:auto;display:none"></span></div>
+          <div class="d-item" onclick="openModal('admin-modal');closeMenu()">🔐 Thông tin Admin</div>
+          <div class="d-item" onclick="openModal('guide-modal');closeMenu()">📚 Hướng dẫn</div>
+          <div class="d-item" id="mgmt-menu-item" style="display:none" onclick="openMgmt();closeMenu()">👑 Quản lý tài khoản</div>
+          <div class="d-section">Cài đặt</div>
+          <div class="d-toggle" onclick="toggleTheme()">
+            <span><span id="theme-label">🌙 Chế độ tối</span></span>
+            <div class="toggle-switch on" id="theme-toggle"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="d-toggle" onclick="toggleMusic()">
+            <span>🎵 Nhạc nền</span>
+            <div class="toggle-switch" id="music-toggle"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="d-toggle" onclick="toggleSfx()">
+            <span>🔊 Âm thanh</span>
+            <div class="toggle-switch on" id="sfx-toggle"><div class="toggle-knob"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARQUEE -->
+  <div class="marquee-wrap">
+    <div class="marquee">🐬 FB Dame Tool · Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi Meo Meo) · IT Automation Developer · Nhập cookie Facebook + link target để dame acc · Không chia sẻ cookie với người khác · 2026</div>
+  </div>
+
+  <!-- SUPPORT BUTTONS -->
+  <div class="support-wrap">
+    <div class="support-btn" onclick="openModal('admin-modal')">👤 Thông tin Admin</div>
+    <div class="support-btn" onclick="openModal('guide-modal')">📖 Hướng dẫn sử dụng</div>
+  </div>
+
+  <!-- MAIN CARD -->
+  <div class="card">
+    <div class="tabs" style="margin-bottom:18px">
+      <div class="tab active" id="tab-input-btn" onclick="switchMainTab('input')">⚙️ Nhập & Chạy</div>
+      <div class="tab" id="tab-run-btn" onclick="switchMainTab('run')">📊 Trạng thái</div>
+    </div>
+
+    <!-- ════ TAB NHẬP — STEP WIZARD ════ -->
+    <div id="main-tab-input">
+
+      <!-- PROGRESS BAR BƯỚC -->
+      <div style="display:flex;gap:0;margin-bottom:20px;border-radius:12px;overflow:hidden;background:var(--glass2)">
+        <div id="step-bar-1" style="flex:1;padding:9px 0;text-align:center;font-size:12px;font-weight:700;transition:.3s;background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff">
+          1 · Cookie
+        </div>
+        <div id="step-bar-2" style="flex:1;padding:9px 0;text-align:center;font-size:12px;font-weight:700;transition:.3s;color:var(--muted)">
+          2 · Target
+        </div>
+        <div id="step-bar-3" style="flex:1;padding:9px 0;text-align:center;font-size:12px;font-weight:700;transition:.3s;color:var(--muted)">
+          3 · Bắt đầu
+        </div>
+      </div>
+
+
+      <!-- ── BƯỚC 1: NHẬP COOKIE ── -->
+      <div id="step1">
+        <div class="field-label" style="font-size:15px;margin-bottom:6px">🍪 Bước 1 — Nhập Cookie Facebook</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+          Hỗ trợ mọi format: <b>header string</b>, <b>JSON array</b> (Cookie-Editor), nhiều dòng.
+        </div>
+        <textarea id="fb-cookie-input" class="field-input" rows="5"
+          placeholder="Dán cookie vào đây...&#10;VD: datr=xxx; c_user=yyy; xs=zzz&#10;Hoặc JSON từ extension Cookie-Editor"
+          style="resize:vertical;font-family:monospace;font-size:11.5px;line-height:1.6"
+          oninput="detectCookieFormat(this.value)"></textarea>
+        <div id="cookie-format-hint" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:16px"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="pasteCookie()">📋 Dán</button>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('fb-cookie-input').value='';hideBox('cookie-verify-box');document.getElementById('cookie-format-hint').textContent=''">🗑 Xóa</button>
+        </div>
+        <div id="cookie-verify-box" style="display:none;margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7"></div>
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn btn-primary" id="btn-verify-cookie" onclick="stepVerifyCookie()">✅ Xác nhận Cookie</button>
+        </div>
+        <div id="step1-err" class="auth-err" style="margin-top:8px"></div>
+
+        <!-- Đặt tên tab -->
+        <div style="margin-top:14px">
+          <div class="field-label" style="font-size:12px;margin-bottom:6px">🏷️ Tên tab (tuỳ chọn)</div>
+          <input id="tab-name-input" class="field-input" type="text" placeholder="VD: Acc chính, Nick dự phòng..."
+            style="font-size:13px"/>
+        </div>
+
+      <!-- ── BƯỚC 2: NHẬP TARGET ── -->
+      <div id="step2" style="display:none">
+        <!-- Thông tin acc đang dùng -->
+        <div id="acc-confirmed-box" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);margin-bottom:16px">
+          <div style="font-size:28px">🍪</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--green)" id="acc-confirmed-name">—</div>
+            <div style="font-size:11px;color:var(--green)">✅ Cookie hợp lệ</div>
+          </div>
+          <button onclick="resetToStep1()" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px" title="Đổi cookie">✏️</button>
+        </div>
+
+        <div class="field-label" style="font-size:15px;margin-bottom:8px">🎯 Bước 2 — Nhập Link Target</div>
+        <input id="fb-target-input" class="field-input" type="text"
+          placeholder="https://www.facebook.com/username hoặc UID số..." style="margin-bottom:10px">
+
+        <div class="field-label" style="font-size:12px;margin-bottom:6px">👤 Tên nạn nhân (tuỳ chọn)</div>
+        <input id="victim-name-input" class="field-input" type="text"
+          placeholder="VD: Nguyễn Văn A..." style="font-size:13px;margin-bottom:10px">
+
+        <div id="target-verify-box" style="display:none;margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7"></div>
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn btn-primary" id="btn-verify-target" onclick="stepVerifyTarget()">🔍 Xác nhận Target</button>
+        </div>
+        <div id="step2-err" class="auth-err" style="margin-top:8px"></div>
+      </div>
+
+      <!-- ── BƯỚC 3: XÁC NHẬN & BẮT ĐẦU ── -->
+      <div id="step3" style="display:none">
+        <!-- Tóm tắt -->
+        <div style="background:var(--glass2);border-radius:14px;padding:14px;margin-bottom:16px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--blue)">📋 Tóm tắt dame</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--muted)">🏷️ Tên tab</span>
+              <span id="sum-tab-name" style="font-weight:700;color:var(--blue)">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--muted)">🍪 Cookie</span>
+              <span id="sum-acc-name" style="font-weight:700;color:var(--green)">—</span>
+            </div>
+            <div style="height:1px;background:var(--glass3)"></div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--muted)">👤 Nạn nhân</span>
+              <span id="sum-target-name" style="font-weight:700;color:var(--red)">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--muted)">🔗 Target URL</span>
+              <span id="sum-target-url" style="font-family:monospace;font-size:11px;color:var(--muted);word-break:break-all;max-width:65%;text-align:right">—</span>
+            </div>
+            <div style="height:1px;background:var(--glass3)"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="color:var(--muted)">🚀 Tốc độ</span>
+              <select id="speed-select" class="field-input" style="cursor:pointer;width:auto;padding:4px 10px;font-size:12px">
+                <option value="fast">🏎️ Nhanh</option>
+                <option value="normal" selected>⚡ Trung bình</option>
+                <option value="slow">🐢 Chậm (An toàn)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-start-dame" onclick="startDame()" style="flex:1;padding:14px;font-size:15px;letter-spacing:.5px">
+            🐬 Bắt đầu Dame
+          </button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-outline" style="flex:1;font-size:12px" onclick="resetToStep2()">← Đổi target</button>
+          <button class="btn btn-outline" style="flex:1;font-size:12px" onclick="resetToStep1()">↩ Đổi cookie</button>
+        </div>
+        <div id="step3-err" class="auth-err" style="margin-top:8px"></div>
+      </div>
+
+    </div><!-- end main-tab-input -->
+
+    <!-- TAB TRẠNG THÁI -->
+    <div id="main-tab-run" style="display:none">
+      <div class="status-row">
+        <div class="dot" id="run-dot"></div>
+        <span id="run-status-text">Chưa chạy</span>
+      </div>
+
+      <!-- INFO ACC ĐANG DÙNG -->
+      <div id="run-acc-info" style="display:none;margin-bottom:14px">
+        <div class="acc-card">
+          <div class="avatar-circle">👤</div>
+          <div>
+            <div class="acc-name" id="run-acc-name">—</div>
+            <div class="acc-sub" style="font-size:11px;color:var(--blue);margin-top:2px" id="run-victim-name">Nạn nhân: —</div>
+            <div class="acc-sub" id="run-target-url" style="font-size:11px;color:var(--muted);margin-top:2px;word-break:break-all">Target: —</div>
+          </div>
+        </div>
+        <!-- Badge DIE -->
+        <div id="die-badge" style="display:none;margin-top:10px;padding:12px 14px;border-radius:12px;background:rgba(255,50,50,.12);border:1.5px solid rgba(255,50,50,.4);text-align:center">
+          <div style="font-size:22px;margin-bottom:4px">💀</div>
+          <div style="font-weight:800;color:#ff4444;font-size:15px">ACC ĐÃ DIE</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Facebook báo lỗi kỹ thuật → acc bị khoá/die</div>
+          <img id="die-screenshot" src="" alt="Die screenshot"
+            style="display:none;max-width:100%;border-radius:10px;margin-top:10px;border:1px solid rgba(255,50,50,.3)"/>
+        </div>
+      </div>
+
+      <!-- THỐNG KÊ -->
+      <div class="info-row" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;color:var(--muted)">📈 Báo cáo đã gửi</span>
+          <span id="run-total" style="font-size:22px;font-weight:800;color:var(--blue)">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;color:var(--muted)">🔄 Vòng lặp</span>
+          <span id="run-loops" style="font-weight:700">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--muted)">⏱️ Uptime</span>
+          <span id="run-uptime" style="font-family:monospace;font-weight:700">00:00:00</span>
+        </div>
+      </div>
+
+      <!-- PROGRESS BAR -->
+      <div style="background:var(--glass2);border-radius:10px;height:6px;margin-bottom:14px;overflow:hidden">
+        <div id="run-progress" style="width:0%;height:100%;background:linear-gradient(90deg,var(--blue2),var(--cyan));border-radius:10px;transition:width .3s"></div>
+      </div>
+
+      <!-- LOG -->
+      <div class="info-row" style="margin-bottom:14px">
+        <div class="info-label">📋 Log</div>
+        <div id="run-log" style="font-size:11px;font-family:monospace;color:var(--muted);max-height:120px;overflow-y:auto;line-height:1.7"></div>
+      </div>
+
+      <!-- ĐIỀU KHIỂN -->
+      <div class="btn-row">
+        <button class="btn btn-outline" id="btn-pause" onclick="togglePause()" style="display:none">⏸️ Tạm dừng</button>
+        <button class="btn btn-danger" id="btn-stop" onclick="stopDame()" style="display:none">⏹️ Dừng</button>
+        <button class="btn btn-primary" id="btn-resume" onclick="togglePause()" style="display:none">▶️ Tiếp tục</button>
+        <button class="btn btn-outline" id="btn-back-input" onclick="switchMainTab('input')">← Quay lại</button>
+      </div>
+      <!-- NÚT XEM TAB MÁY ẢO -->
+      <div style="margin-top:10px">
+        <button class="btn" id="btn-view-tab" onclick="openScreenshotModal()"
+          style="width:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(79,158,255,.35);color:var(--blue);font-size:13px;padding:11px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          🖥️ Xem tab máy ảo đang chạy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">FB Dame Tool · Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi) · 2026</div>
+</div>
+</div><!-- /#app-screen -->
+
+<!-- ════ MODAL TAB MÁY ẢO ════ -->
+<div class="modal-overlay" id="screenshot-modal" onclick="if(event.target===this)closeScreenshotModal()" style="z-index:9999">
+  <div class="modal-box" style="max-width:700px;padding:0;overflow:hidden;background:#0a0a14;border:1px solid rgba(79,158,255,.25)">
+    <!-- Titlebar giả lập browser -->
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#111128;border-bottom:1px solid rgba(255,255,255,.06)">
+      <div style="display:flex;gap:6px">
+        <div style="width:12px;height:12px;border-radius:50%;background:#ff5f57;cursor:pointer" onclick="closeScreenshotModal()"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#febc2e"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#28c840"></div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.06);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--muted);font-family:monospace" id="ss-url-bar">
+        https://www.facebook.com
+      </div>
+      <div id="ss-live-dot" style="width:8px;height:8px;border-radius:50%;background:var(--red)"></div>
+      <span style="font-size:11px;color:var(--muted)" id="ss-live-label">Chờ...</span>
+    </div>
+
+    <!-- Ảnh screenshot -->
+    <div style="position:relative;background:#0d0d1a;min-height:300px;display:flex;align-items:center;justify-content:center">
+      <img id="ss-img" alt="Tab máy ảo"
+        style="width:100%;display:none;image-rendering:auto;border-radius:0">
+      <div id="ss-placeholder" style="text-align:center;color:var(--muted);padding:40px">
+        <div style="font-size:42px;margin-bottom:10px">🖥️</div>
+        <div style="font-size:13px">Chờ tab máy ảo khởi động...</div>
+        <div style="font-size:11px;margin-top:6px;opacity:.6">Ảnh sẽ tự cập nhật mỗi 2 giây</div>
+      </div>
+    </div>
+
+    <!-- Footer info -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#111128;border-top:1px solid rgba(255,255,255,.06)">
+      <div style="font-size:11px;color:var(--muted)">
+        🤖 Playwright headless · <span id="ss-total-label">0 báo cáo</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="refreshScreenshot()" style="background:rgba(79,158,255,.15);border:none;border-radius:8px;padding:5px 12px;font-size:11px;color:var(--blue);cursor:pointer">🔄 Làm mới</button>
+        <button onclick="closeScreenshotModal()" style="background:rgba(255,82,82,.15);border:none;border-radius:8px;padding:5px 12px;font-size:11px;color:var(--red);cursor:pointer">✕ Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let rememberMe    = localStorage.getItem('zct_remember') === '1';
+let SESSION_TOKEN = rememberMe ? (localStorage.getItem('zct_token')||'') : (sessionStorage.getItem('zct_token')||'');
+let CURRENT_USER  = rememberMe ? (localStorage.getItem('zct_user')||'')  : (sessionStorage.getItem('zct_user')||'');
+let IS_ADMIN      = rememberMe ? localStorage.getItem('zct_admin')==='1' : sessionStorage.getItem('zct_admin')==='1';
+let currentData = null, viewingHistItem = null;
+
+// Dame state
+let dameRunning = false, damePaused = false, dameStop = false;
+let dameTotal = 0, dameLoops = 0, dameStartTime = null, dameTimer = null;
+let dameWin = null; // cửa sổ FB mở
+
+// ═══════════════════════════════════════════════════════
+//  CAPTCHA ENGINE
+// ═══════════════════════════════════════════════════════
+let captchaAnswer = null, captchaType = null;
+const CAPTCHA_TYPES = ['math_add','math_sub','math_mul','pick_animal','pick_fruit','pick_color','drag_order','canvas_text','odd_one_out','emoji_count'];
+function randomInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+function generateCaptcha(){
+  captchaAnswer = null;
+  const type = CAPTCHA_TYPES[randomInt(0, CAPTCHA_TYPES.length-1)];
+  captchaType  = type;
+  const box = document.getElementById('captcha-content');
+  const qEl  = document.getElementById('captcha-q');
+
+  if(type==='math_add'||type==='math_sub'||type==='math_mul'){
+    const a=randomInt(1,20),b=randomInt(1,20);
+    const op=type==='math_add'?'+':type==='math_sub'?'-':'×';
+    const ans=type==='math_add'?a+b:type==='math_sub'?a-b:a*b;
+    captchaAnswer=String(ans);
+    qEl.textContent=`🔢 Tính: ${a} ${op} ${b} = ?`;
+    box.innerHTML=`<div class="captcha-input-row"><input class="captcha-input" id="cap-input" type="number" placeholder="Nhập kết quả"><button class="captcha-refresh" onclick="generateCaptcha()">🔄</button></div>`;
+    return;
+  }
+  if(type==='canvas_text'){
+    const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code='';for(let i=0;i<5;i++)code+=chars[randomInt(0,chars.length-1)];
+    captchaAnswer=code;
+    qEl.textContent='🖼 Nhập chính xác mã trong ảnh:';
+    box.innerHTML=`<div class="captcha-input-row"><canvas id="cap-canvas" class="captcha-canvas" width="220" height="60"></canvas><button class="captcha-refresh" onclick="generateCaptcha()">🔄</button></div><div class="captcha-input-row" style="margin-top:8px"><input class="captcha-input" id="cap-input" type="text" maxlength="5" placeholder="5 ký tự" style="text-transform:uppercase"></div>`;
+    setTimeout(()=>{
+      const canvas=document.getElementById('cap-canvas');if(!canvas)return;
+      const ctx=canvas.getContext('2d');ctx.fillStyle='#1a2040';ctx.fillRect(0,0,220,60);
+      for(let i=0;i<6;i++){ctx.strokeStyle=`hsl(${randomInt(0,360)},50%,50%)`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(randomInt(0,220),randomInt(0,60));ctx.lineTo(randomInt(0,220),randomInt(0,60));ctx.stroke();}
+      for(let i=0;i<30;i++){ctx.fillStyle=`rgba(${randomInt(100,255)},${randomInt(100,255)},${randomInt(100,255)},0.5)`;ctx.fillRect(randomInt(0,220),randomInt(0,60),2,2);}
+      const colors=['#4f9eff','#00e5ff','#ffd740','#00e676','#ff9100'];
+      for(let i=0;i<code.length;i++){ctx.font=`bold ${randomInt(26,32)}px monospace`;ctx.fillStyle=colors[i%colors.length];ctx.save();ctx.translate(20+i*38,randomInt(38,46));ctx.rotate((randomInt(-15,15)*Math.PI)/180);ctx.fillText(code[i],0,0);ctx.restore();}
+    },100);return;
+  }
+  if(type==='pick_animal'){
+    const animals=[['🐶','Chó'],['🐱','Mèo'],['🐭','Chuột'],['🐰','Thỏ'],['🦊','Cáo'],['🐼','Gấu trúc'],['🐯','Hổ'],['🦁','Sư tử'],['🐸','Ếch'],['🐧','Chim cánh cụt']];
+    const pick=animals[randomInt(0,animals.length-1)];captchaAnswer=pick[0];qEl.textContent=`🐾 Chọn con vật: ${pick[1]}`;
+    const shuffled=[...animals].sort(()=>Math.random()-.5).slice(0,6);if(!shuffled.find(a=>a[0]===pick[0]))shuffled[0]=pick;shuffled.sort(()=>Math.random()-.5);
+    box.innerHTML=`<div class="captcha-options">${shuffled.map(a=>`<div class="captcha-opt" onclick="selectOpt(this,'${a[0]}')">${a[0]} ${a[1]}</div>`).join('')}</div><button class="captcha-refresh" style="margin-top:8px;width:100%" onclick="generateCaptcha()">🔄 Đổi câu hỏi</button>`;return;
+  }
+  if(type==='pick_fruit'){
+    const fruits=[['🍎','Táo'],['🍌','Chuối'],['🍇','Nho'],['🍊','Cam'],['🍓','Dâu'],['🍋','Chanh'],['🥝','Kiwi'],['🍑','Đào'],['🍉','Dưa hấu'],['🍍','Dứa']];
+    const pick=fruits[randomInt(0,fruits.length-1)];captchaAnswer=pick[0];qEl.textContent=`🍒 Chọn loại quả: ${pick[1]}`;
+    const shuffled=[...fruits].sort(()=>Math.random()-.5).slice(0,6);if(!shuffled.find(a=>a[0]===pick[0]))shuffled[0]=pick;shuffled.sort(()=>Math.random()-.5);
+    box.innerHTML=`<div class="captcha-options">${shuffled.map(a=>`<div class="captcha-opt" onclick="selectOpt(this,'${a[0]}')">${a[0]} ${a[1]}</div>`).join('')}</div><button class="captcha-refresh" style="margin-top:8px;width:100%" onclick="generateCaptcha()">🔄 Đổi câu hỏi</button>`;return;
+  }
+  if(type==='pick_color'){
+    const colors=[['🔴','Đỏ'],['🔵','Xanh dương'],['🟢','Xanh lá'],['🟡','Vàng'],['🟠','Cam'],['🟣','Tím'],['⚫','Đen'],['⚪','Trắng']];
+    const pick=colors[randomInt(0,colors.length-1)];captchaAnswer=pick[0];qEl.textContent=`🎨 Chọn màu: ${pick[1]}`;
+    const shuffled=[...colors].sort(()=>Math.random()-.5).slice(0,4);if(!shuffled.find(a=>a[0]===pick[0]))shuffled[0]=pick;shuffled.sort(()=>Math.random()-.5);
+    box.innerHTML=`<div class="captcha-options">${shuffled.map(a=>`<div class="captcha-opt" onclick="selectOpt(this,'${a[0]}')">${a[0]} ${a[1]}</div>`).join('')}</div><button class="captcha-refresh" style="margin-top:8px;width:100%" onclick="generateCaptcha()">🔄 Đổi câu hỏi</button>`;return;
+  }
+  if(type==='odd_one_out'){
+    const groups=[
+      {q:'Tìm đồ vật KHÔNG phải phương tiện giao thông',correct:'🍎',opts:['🚗','🏍','🍎','✈️','🚢','🚲']},
+      {q:'Tìm thứ KHÔNG phải con số',correct:'A',opts:['1','5','A','3','7','9']},
+      {q:'Tìm thứ KHÔNG phải đồ ăn',correct:'📱',opts:['🍕','🍔','📱','🍣','🍜','🍦']},
+      {q:'Tìm thứ KHÔNG phải màu sắc',correct:'🔔',opts:['🔴','🔵','🟢','🔔','🟡','🟣']},
+      {q:'Tìm thứ KHÔNG phải loài hoa',correct:'🐟',opts:['🌹','🌸','🐟','🌻','🌺','🌼']},
+    ];
+    const g=groups[randomInt(0,groups.length-1)];captchaAnswer=g.correct;qEl.textContent='🔍 '+g.q;
+    const opts=[...g.opts].sort(()=>Math.random()-.5);
+    box.innerHTML=`<div class="captcha-options">${opts.map(o=>`<div class="captcha-opt" onclick="selectOpt(this,'${o}')">${o}</div>`).join('')}</div><button class="captcha-refresh" style="margin-top:8px;width:100%" onclick="generateCaptcha()">🔄 Đổi câu hỏi</button>`;return;
+  }
+  if(type==='emoji_count'){
+    const emojis=['⭐','❤️','🔥','💎','🎯'];const em=emojis[randomInt(0,emojis.length-1)];const count=randomInt(2,8);
+    captchaAnswer=String(count);qEl.textContent=`🔢 Đếm số ${em} trong hình:`;
+    const noises=['🌀','💫','✨','🎪','🎭','🎨'];let items=Array(count).fill(em);
+    for(let i=0;i<randomInt(3,6);i++)items.push(noises[randomInt(0,noises.length-1)]);
+    items.sort(()=>Math.random()-.5);
+    box.innerHTML=`<div style="font-size:22px;letter-spacing:4px;text-align:center;padding:10px 0;line-height:1.8">${items.join(' ')}</div><div class="captcha-input-row"><input class="captcha-input" id="cap-input" type="number" placeholder="Nhập số lượng" min="1"><button class="captcha-refresh" onclick="generateCaptcha()">🔄</button></div>`;return;
+  }
+  if(type==='drag_order'){
+    const seqs=[
+      {q:'Chọn số tiếp theo: 2, 4, 6, ?',items:['7','8','9','10'],answer:'8'},
+      {q:'Chọn số tiếp theo: 1, 3, 5, ?',items:['6','7','8','9'],answer:'7'},
+      {q:'Chọn số tiếp theo: 10, 20, 30, ?',items:['35','40','45','50'],answer:'40'},
+      {q:'Chọn số tiếp theo: 5, 10, 15, ?',items:['18','20','22','25'],answer:'20'},
+      {q:'Chọn số tiếp theo: 3, 6, 9, ?',items:['10','11','12','13'],answer:'12'},
+    ];
+    const seq=seqs[randomInt(0,seqs.length-1)];captchaAnswer=seq.answer;qEl.textContent='📊 '+seq.q;
+    const opts=[...seq.items].sort(()=>Math.random()-.5);
+    box.innerHTML=`<div class="captcha-options">${opts.map(o=>`<div class="captcha-opt" onclick="selectOpt(this,'${o}')">${o}</div>`).join('')}</div><button class="captcha-refresh" style="margin-top:8px;width:100%" onclick="generateCaptcha()">🔄 Đổi câu hỏi</button>`;return;
+  }
+  // fallback
+  captchaType='math_add';const a=randomInt(1,20),b=randomInt(1,20);captchaAnswer=String(a+b);
+  qEl.textContent=`🔢 Tính: ${a} + ${b} = ?`;
+  box.innerHTML=`<div class="captcha-input-row"><input class="captcha-input" id="cap-input" type="number" placeholder="Nhập kết quả"><button class="captcha-refresh" onclick="generateCaptcha()">🔄</button></div>`;
+}
+
+let selectedOptValue = null;
+function selectOpt(el,val){
+  document.querySelectorAll('#captcha-content .captcha-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected'); selectedOptValue=val;
+}
+function verifyCaptcha(){
+  if(!captchaAnswer) return false;
+  if(['math_add','math_sub','math_mul','emoji_count'].includes(captchaType)){
+    const inp=document.getElementById('cap-input');return inp&&String(inp.value.trim())===captchaAnswer;
+  }
+  if(captchaType==='canvas_text'){const inp=document.getElementById('cap-input');return inp&&inp.value.trim().toUpperCase()===captchaAnswer;}
+  return selectedOptValue===captchaAnswer;
+}
+
+// ═══════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════
+function switchAuthTab(tab){
+  document.getElementById('auth-login-form').style.display=tab==='login'?'flex':'none';
+  document.getElementById('auth-register-form').style.display=tab==='register'?'flex':'none';
+  document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');
+  document.getElementById('tab-reg-btn').classList.toggle('active',tab==='register');
+  if(tab==='register'){selectedOptValue=null;generateCaptcha();}
+}
+
+let _forgotEmail='',_forgotOtp='';
+function openForgotModal(){
+  _forgotEmail='';_forgotOtp='';
+  ['forgot-step1','forgot-step2','forgot-step3'].forEach((id,i)=>document.getElementById(id).style.display=i===0?'block':'none');
+  ['forgot-email','forgot-otp','forgot-newpw','forgot-confirmpw'].forEach(id=>document.getElementById(id).value='');
+  ['forgot-err1','forgot-err2','forgot-err3'].forEach(id=>document.getElementById(id).textContent='');
+  openModal('forgot-modal');
+}
+async function doForgotSend(){
+  const email=document.getElementById('forgot-email').value.trim();
+  const err=document.getElementById('forgot-err1');const btn=document.getElementById('forgot-btn1');
+  if(!email){err.textContent='Vui lòng nhập Gmail';return;}
+  if(!email.toLowerCase().endsWith('@gmail.com')){err.textContent='Chỉ chấp nhận @gmail.com';return;}
+  btn.disabled=true;btn.textContent='⏳ Đang gửi...';err.textContent='';
+  try{
+    const r=await fetch('/api/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Lỗi gửi OTP');
+    _forgotEmail=email;
+    document.getElementById('forgot-step1').style.display='none';
+    document.getElementById('forgot-step2').style.display='block';
+    startOtpCountdown(300);
+  }catch(e){err.textContent=e.message;}
+  finally{btn.disabled=false;btn.textContent='📧 Gửi mã OTP';}
+}
+async function doVerifyOtp(){
+  const otp=document.getElementById('forgot-otp').value.trim();
+  const err=document.getElementById('forgot-err2');const btn=document.getElementById('forgot-btn2');
+  if(!otp||otp.length!==6){err.textContent='OTP gồm 6 số';return;}
+  btn.disabled=true;btn.textContent='⏳...';err.textContent='';
+  try{
+    const r=await fetch('/api/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:_forgotEmail,otp})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'OTP không đúng');
+    _forgotOtp=otp;stopOtpCountdown();
+    document.getElementById('forgot-step2').style.display='none';
+    document.getElementById('forgot-step3').style.display='block';
+  }catch(e){err.textContent=e.message;}
+  finally{btn.disabled=false;btn.textContent='✅ Xác nhận OTP';}
+}
+async function doResetPassword(){
+  const pw=document.getElementById('forgot-newpw').value.trim();
+  const pw2=document.getElementById('forgot-confirmpw').value.trim();
+  const err=document.getElementById('forgot-err3');const btn=document.getElementById('forgot-btn3');
+  if(!pw||pw.length<6){err.textContent='Mật khẩu tối thiểu 6 ký tự';return;}
+  if(pw!==pw2){err.textContent='Mật khẩu không khớp';return;}
+  btn.disabled=true;btn.textContent='⏳...';err.textContent='';
+  try{
+    const r=await fetch('/api/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:_forgotEmail,otp:_forgotOtp,new_password:pw})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Lỗi đặt lại');
+    closeModal('forgot-modal');showToast('✅ Đổi mật khẩu thành công! Đăng nhập lại.','#00e676');
+  }catch(e){err.textContent=e.message;}
+  finally{btn.disabled=false;btn.textContent='🔐 Đặt lại mật khẩu';}
+}
+
+async function doLogin(){
+  const u=document.getElementById('login-user').value.trim();
+  const p=document.getElementById('login-pass').value.trim();
+  const err=document.getElementById('login-err');const btn=document.getElementById('login-btn');
+  if(!u||!p){err.style.display='block';err.textContent='Vui lòng nhập đầy đủ';return;}
+  btn.disabled=true;btn.textContent='⏳ Đang đăng nhập...';err.style.display='none';
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Sai thông tin');
+    SESSION_TOKEN=d.token;CURRENT_USER=d.username;IS_ADMIN=d.is_admin||false;
+    const store=rememberMe?localStorage:sessionStorage;
+    store.setItem('zct_token',SESSION_TOKEN);store.setItem('zct_user',CURRENT_USER);
+    store.setItem('zct_admin',IS_ADMIN?'1':'0');
+    playSfx('success');showApp();
+  }catch(e){err.style.display='block';err.textContent=e.message;playSfx('error');}
+  finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
+}
+
+async function doRegister(){
+  const u=document.getElementById('reg-user').value.trim();
+  const p=document.getElementById('reg-pass').value.trim();
+  const em=document.getElementById('reg-email').value.trim();
+  const err=document.getElementById('reg-err');const btn=document.getElementById('reg-btn');
+  if(!u||!p||!em){err.style.display='block';err.textContent='Vui lòng nhập đầy đủ';return;}
+  if(u.length<6||p.length<6){err.style.display='block';err.textContent='Username & mật khẩu tối thiểu 6 ký tự';return;}
+  if(!em.toLowerCase().endsWith('@gmail.com')){err.style.display='block';err.textContent='Chỉ chấp nhận @gmail.com';return;}
+  if(!verifyCaptcha()){err.style.display='block';err.textContent='❌ CAPTCHA sai! Thử lại.';generateCaptcha();return;}
+  btn.disabled=true;btn.textContent='⏳ Đang đăng ký...';err.style.display='none';
+  try{
+    const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,email:em})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Lỗi đăng ký');
+    showToast('✅ Đăng ký thành công! Đăng nhập ngay.','#00e676');switchAuthTab('login');
+  }catch(e){err.style.display='block';err.textContent=e.message;}
+  finally{btn.disabled=false;btn.textContent='📝 Đăng ký';}
+}
+
+function toggleRemember(){
+  rememberMe=!rememberMe;
+  localStorage.setItem('zct_remember',rememberMe?'1':'0');
+  const el=document.getElementById('remember-check');
+  el.classList.toggle('checked',rememberMe);el.textContent=rememberMe?'✓':'';
+}
+
+function showApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  const badge=document.getElementById('user-badge-el');
+  if(badge)badge.textContent=(IS_ADMIN?'👑 ':'👤 ')+CURRENT_USER;
+  const mgmt=document.getElementById('mgmt-menu-item');
+  if(mgmt)mgmt.style.display=IS_ADMIN?'flex':'none';
+  startClock();loadHistory();
+}
+
+function doLogout(){
+  const _tok=SESSION_TOKEN;
+  SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;
+  ['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});
+  stopDame();
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  if(_tok) fetch('/api/logout',{method:'POST',headers:{'Authorization':'Bearer '+_tok}}).catch(()=>{});
+}
+
+// ═══════════════════════════════════════════════════════
+//  DAME STATE
+// ═══════════════════════════════════════════════════════
+let _cookieStr   = '', _accName = '', _accUid = '';
+let _targetUrl   = '', _targetName = '', _targetUid = '';
+
+function hideBox(id){ const el=document.getElementById(id); if(el) el.style.display='none'; }
+function showBox(id){ const el=document.getElementById(id); if(el) el.style.display='block'; }
+
+// ── CẬP NHẬT PROGRESS BAR BƯỚC ──
+function setActiveStep(n){
+  for(let i=1;i<=3;i++){
+    const el=document.getElementById('step-bar-'+i);
+    if(!el) continue;
+    if(i===n){
+      el.style.background='linear-gradient(135deg,var(--blue2),var(--purple))';
+      el.style.color='#fff';
+    } else if(i<n){
+      el.style.background='rgba(0,230,118,.15)';
+      el.style.color='var(--green)';
+    } else {
+      el.style.background='none';
+      el.style.color='var(--muted)';
+    }
+  }
+  ['step1','step2','step3'].forEach((id,idx)=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=(idx+1===n)?'block':'none';
+  });
+}
+
+// ── RESET VỀ BƯỚC ──
+function resetToStep1(){
+  _cookieStr=''; _accName=''; _accUid='';
+  _targetUrl=''; _targetName=''; _targetUid='';
+  hideBox('cookie-verify-box');
+  const ta=document.getElementById('fb-cookie-input');
+  if(ta) ta.value='';
+  document.getElementById('step1-err').style.display='none';
+  setActiveStep(1);
+}
+function resetToStep2(){
+  _targetUrl=''; _targetName=''; _targetUid='';
+  const inp=document.getElementById('fb-target-input');
+  if(inp) inp.value='';
+  hideBox('target-verify-box');
+  document.getElementById('step2-err').style.display='none';
+  setActiveStep(2);
+}
+
+// ── BƯỚC 1: XÁC NHẬN COOKIE ──
+
+// ── LOGIN MODE SWITCH ──
+function detectCookieFormat(val){
+    resEl.innerHTML = '<div style="color:var(--blue)">⏳ Đang xác minh OTP...</div>';
+    try{
+      const r = await fetch('/api/fb-login-pass/otp',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+        body: JSON.stringify({session_id, otp_code, _token: SESSION_TOKEN})
+      });
+      const {job_id} = await r.json();
+      for(let i=0;i<40;i++){
+        await new Promise(r=>setTimeout(r,3000));
+        const pr = await fetch('/api/fb-login-pass/poll/'+job_id,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+        const pd = await pr.json();
+        if(pd.status==='done'||pd.status==='error'){
+          const d = pd.result;
+          if(d.screenshot_b64){ scImg.src='data:image/jpeg;base64,'+d.screenshot_b64; scBox.style.display='block'; }
+          if(d.status==='success'){
+            resEl.style.color='#2ecc71';
+            resEl.innerHTML='✅ Đăng nhập thành công! Cookie đã được lưu.';
+            window._fbCookieFromLogin = d.cookie;
+          } else if(d.status==='2fa'){
+            resEl.innerHTML=`<div style="color:var(--blue)">🔐 ${d.message}</div>
+              <input id="otp-input" type="text" inputmode="numeric" maxlength="8" placeholder="Nhập lại OTP..." style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin:8px 0"/>
+              <button onclick="submitOTP('${d.session_id}','${job_id}')" style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#4f9eff,#9b59b6);color:#fff;font-weight:700;border:none;cursor:pointer">✅ Xác nhận OTP</button>`;
+          } else {
+            resEl.style.color='#e74c3c';
+            resEl.innerHTML=d.message;
+          }
+          break;
+        }
+      }
+    }catch(e){ document.getElementById('pass-login-err').style.display='block'; document.getElementById('pass-login-err').textContent='Lỗi: '+e.message; }
+  }
+
+function detectCookieFormat(val){
+  const hint = document.getElementById('cookie-format-hint');
+  if(!hint) return;
+  val = val.trim();
+  if(!val){ hint.textContent=''; return; }
+  if(val.startsWith('[')){
+    hint.textContent='✅ Phát hiện: JSON array (Cookie-Editor)';
+  } else if(val.startsWith('{')){
+    hint.textContent='✅ Phát hiện: JSON object';
+  } else if(val.includes('	')){
+    hint.textContent='✅ Phát hiện: Netscape format';
+  } else if(val.includes('c_user=') || val.includes('datr=') || val.includes('xs=')){
+    const keys = (val.match(/\w+=\S*/g)||[]).length;
+    hint.textContent=`✅ Phát hiện: Header string (~${keys} cookie)`;
+  } else {
+    hint.textContent='⚠️ Không rõ format — thử xác nhận xem sao';
+  }
+}
+
+async function pasteCookie(){
+  try{
+    const t=await navigator.clipboard.readText();
+    document.getElementById('fb-cookie-input').value=t;
+    detectCookieFormat(t);
+  }
+  catch{ showToast('Ctrl+V để dán thủ công','#ff9100'); }
+}
+
+async function stepVerifyCookie(){
+  const cookie = document.getElementById('fb-cookie-input').value.trim();
+  const box    = document.getElementById('cookie-verify-box');
+  const err    = document.getElementById('step1-err');
+  const btn    = document.getElementById('btn-verify-cookie');
+  err.style.display='none';
+
+  if(!cookie){ err.style.display='block'; err.textContent='⚠️ Chưa nhập cookie!'; return; }
+
+  showBox('cookie-verify-box');
+  box.style.background='rgba(79,158,255,.08)';
+  box.style.border='1px solid rgba(79,158,255,.2)';
+  box.style.color='var(--blue)';
+  box.innerHTML='<div style="display:flex;align-items:center;gap:10px"><div class="spinner" style="width:18px;height:18px;display:inline-block"></div> Đang kiểm tra cookie...</div>';
+  btn.disabled=true; btn.textContent='⏳ Đang xác nhận...';
+
+  try{
+    if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='✅ Xác nhận Cookie'; return; }
+    let r;
+    try {
+      r = await fetch('/api/verify-fb-cookie',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({cookie, _token: SESSION_TOKEN})
+      });
+    } catch(fetchErr) {
+      r = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/verify-fb-cookie');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = () => resolve({
+          ok: xhr.status < 400,
+          json: () => Promise.resolve(JSON.parse(xhr.responseText))
+        });
+        xhr.onerror = () => reject(new Error('XHR failed: ' + xhr.status));
+        xhr.send(JSON.stringify({cookie, _token: SESSION_TOKEN}));
+      });
+    }
+    const d = await r.json();
+
+    if(d.ok){
+      _cookieStr = cookie;
+      _accName   = document.getElementById('tab-name-input').value.trim() || '(Cookie ' + cookie.substring(0,8) + '...)';
+      _accUid    = '';
+
+      box.style.background='rgba(0,230,118,.08)';
+      box.style.border='1px solid rgba(0,230,118,.25)';
+      box.style.color='var(--green)';
+      box.innerHTML=`<div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:26px">🍪</div>
+          <div>
+            <div style="font-weight:700;font-size:14px">${_accName}</div>
+            <div style="font-size:11px;margin-top:2px">✅ Cookie hợp lệ!</div>
+          </div>
+        </div>`;
+      playSfx('success');
+      setTimeout(()=>{
+        document.getElementById('acc-confirmed-name').textContent = _accName;
+        setActiveStep(2);
+      }, 900);
+    } else {
+      box.style.background='rgba(255,82,82,.08)';
+      box.style.border='1px solid rgba(255,82,82,.2)';
+      box.style.color='var(--red)';
+      box.innerHTML='❌ Cookie die hoặc không hợp lệ! Lấy lại cookie mới.';
+      playSfx('error');
+    }
+  } catch(e){
+    box.style.background='rgba(255,145,0,.08)';
+    box.style.border='1px solid rgba(255,145,0,.2)';
+    box.style.color='var(--orange)';
+    box.innerHTML='⚠️ Lỗi kiểm tra: '+e.message;
+  } finally {
+    btn.disabled=false;
+    btn.textContent='✅ Xác nhận Cookie';
+  }
+}
+
+// ── BƯỚC 2: XÁC NHẬN TARGET ──
+async function stepVerifyTarget(){
+  let target = document.getElementById('fb-target-input').value.trim();
+  const err  = document.getElementById('step2-err');
+  const btn  = document.getElementById('btn-verify-target');
+  err.style.display='none';
+
+  if(!target){ err.style.display='block'; err.textContent='⚠️ Chưa nhập link target!'; return; }
+
+  // Chuẩn hóa URL
+  if(target.match(/^\d{6,}$/)) target = 'https://www.facebook.com/profile.php?id='+target;
+  else if(!target.startsWith('http')) target = 'https://www.facebook.com/'+target;
+  _targetUrl = target;
+  _targetName = document.getElementById('victim-name-input').value.trim() || target;
+
+  playSfx('success');
+  document.getElementById('sum-tab-name').textContent    = _accName;
+  document.getElementById('sum-acc-name').textContent    = _accName;
+  document.getElementById('sum-target-name').textContent = _targetName;
+  document.getElementById('sum-target-url').textContent  = _targetUrl;
+  setActiveStep(3);
+}
+
+// ── BƯỚC 3: BẮT ĐẦU DAME ──
+async function startDame(){
+  const speed = document.getElementById('speed-select').value;
+  const err   = document.getElementById('step3-err');
+  const btn   = document.getElementById('btn-start-dame');
+  err.style.display='none';
+  btn.disabled=true; btn.textContent='⏳ Đang khởi động...';
+
+  try{
+    const r = await fetch('/api/dame/start',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+      body: JSON.stringify({
+        cookie: _cookieStr, target_url: _targetUrl, speed,
+        acc_name: _accName, acc_uid: _accUid, target_name: _targetName
+      })
+    });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail||'Lỗi khởi động');
+
+    dameRunning=true; damePaused=false; dameStop=false;
+    dameTotal=0; dameLoops=0; dameStartTime=Date.now();
+
+    // Cập nhật tab trạng thái
+    document.getElementById('run-acc-info').style.display='block';
+    document.getElementById('run-acc-name').textContent    = _accName;
+    document.getElementById('run-victim-name').textContent = '👤 '+_targetName;
+    document.getElementById('run-target-url').textContent  = '🔗 '+_targetUrl;
+    document.getElementById('run-dot').className='dot active';
+    document.getElementById('run-status-text').textContent='🐬 Đang dame '+_targetName+'...';
+
+    switchMainTab('run');
+    addLog('🚀 Bắt đầu dame: '+_targetName);
+    addLog('👤 Cookie: '+_accName+' | UID: '+(_accUid||'?'));
+
+    if(dameTimer) clearInterval(dameTimer);
+    dameTimer = setInterval(async()=>{
+      if(dameStop){ clearInterval(dameTimer); return; }
+      try{
+        const rs = await fetch('/api/dame/status',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+        const ds = await rs.json();
+        if(ds.logs && ds.logs.length) ds.logs.forEach(l=>addLog(l));
+        dameTotal = ds.total || dameTotal;
+        dameLoops = ds.loops || dameLoops;
+        const prog=document.getElementById('run-progress');
+        if(prog) prog.style.width=((dameTotal%13)/13*100)+'%';
+        updateRunUI();
+        // Detect DIE
+        if(ds.died){
+          dameRunning=false; clearInterval(dameTimer);
+          document.getElementById('run-dot').className='dot';
+          document.getElementById('run-dot').style.background='#ff4444';
+          document.getElementById('run-status-text').textContent='💀 ACC ĐÃ DIE!';
+          document.getElementById('run-status-text').style.color='#ff4444';
+          const dieBadge = document.getElementById('die-badge');
+          if(dieBadge) dieBadge.style.display='block';
+          if(ds.die_screenshot){
+            const dieImg = document.getElementById('die-screenshot');
+            if(dieImg){ dieImg.src='data:image/jpeg;base64,'+ds.die_screenshot; dieImg.style.display='block'; }
+          }
+          addLog('💀 ACC DIE · Dừng dame');
+          showToast('💀 ACC DIE!','#ff4444');
+          playSfx('error');
+        } else if(ds.stopped){
+          dameRunning=false; clearInterval(dameTimer);
+          document.getElementById('run-dot').className='dot ok';
+          document.getElementById('run-status-text').textContent='✅ Hoàn thành · '+dameTotal+' báo cáo đã gửi';
+          addLog('✅ Done · tổng '+dameTotal+' báo cáo');
+          showToast('✅ Dame xong! Tổng: '+dameTotal+' báo cáo','#00e676');
+        }
+      } catch{}
+    }, 2000);
+
+    updateRunUI();
+    playSfx('success');
+    showToast('🐬 Dame đang chạy...','#9b59b6');
+
+  } catch(e){
+    err.style.display='block';
+    err.textContent='❌ '+e.message;
+    playSfx('error');
+  } finally {
+    btn.disabled=false;
+    btn.textContent='🐬 Bắt đầu Dame';
+  }
+}
+
+function addLog(msg){
+  const el=document.getElementById('run-log'); if(!el) return;
+  const ts=new Date().toLocaleTimeString('vi-VN');
+  el.innerHTML+=`<div><span style="color:var(--muted)">[${ts}]</span> ${msg}</div>`;
+  el.scrollTop=el.scrollHeight;
+}
+
+function updateRunUI(){
+  document.getElementById('run-total').textContent=dameTotal;
+  document.getElementById('run-loops').textContent=dameLoops;
+  if(dameStartTime){
+    const s=Math.floor((Date.now()-dameStartTime)/1000);
+    const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;
+    document.getElementById('run-uptime').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  }
+  const pause=document.getElementById('btn-pause');
+  const resume=document.getElementById('btn-resume');
+  const stop=document.getElementById('btn-stop');
+  if(pause)  pause.style.display  = dameRunning&&!damePaused?'flex':'none';
+  if(resume) resume.style.display = dameRunning&&damePaused?'flex':'none';
+  if(stop)   stop.style.display   = dameRunning?'flex':'none';
+}
+
+function togglePause(){
+  damePaused=!damePaused;
+  fetch('/api/dame/'+(damePaused?'pause':'resume'),{method:'POST',headers:{'Authorization':'Bearer '+SESSION_TOKEN}}).catch(()=>{});
+  document.getElementById('run-status-text').textContent=damePaused?'⏸️ Tạm dừng':'🐬 Đang dame '+_targetName+'...';
+  addLog(damePaused?'⏸ Tạm dừng':'▶ Tiếp tục');
+  updateRunUI();
+}
+
+function stopDame(){
+  dameStop=true; dameRunning=false;
+  if(dameTimer) clearInterval(dameTimer);
+  fetch('/api/dame/stop',{method:'POST',headers:{'Authorization':'Bearer '+SESSION_TOKEN}}).catch(()=>{});
+  document.getElementById('run-dot').className='dot';
+  document.getElementById('run-status-text').textContent='⏹️ Đã dừng · Tổng: '+dameTotal+' báo cáo';
+  addLog('⏹ Dừng · tổng '+dameTotal);
+  updateRunUI();
+}
+
+function switchMainTab(tab){
+  document.getElementById('main-tab-input').style.display = tab==='input'?'block':'none';
+  document.getElementById('main-tab-run').style.display   = tab==='run'?'block':'none';
+  document.getElementById('tab-input-btn').classList.toggle('active',tab==='input');
+  document.getElementById('tab-run-btn').classList.toggle('active',tab==='run');
+}
+
+// ═══════════════════════════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════════════════════════
+let histData=[],histPage=0;const HIST_PER_PAGE=8;
+async function loadHistory(){
+  try{
+    const r=await fetch('/api/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(r.ok){histData=await r.json();renderHistBadge();}
+  }catch{}
+}
+function renderHistBadge(){
+  const b=document.getElementById('hist-badge');
+  if(b&&histData.length){b.style.display='flex';b.textContent=histData.length>99?'99+':histData.length;}
+}
+function openHistory(){
+  histPage=0;renderHistList();openModal('history-modal');
+}
+function renderHistList(){
+  const count=document.getElementById('hist-count');
+  const list=document.getElementById('hist-list');
+  const pages=document.getElementById('hist-pages');
+  if(count)count.textContent=`(${histData.length})`;
+  if(!histData.length){if(list)list.innerHTML='<div class="hist-empty">📭 Chưa có lịch sử</div>';return;}
+  const start=histPage*HIST_PER_PAGE;
+  const chunk=histData.slice(start,start+HIST_PER_PAGE);
+  if(list)list.innerHTML=chunk.map((h,i)=>`
+    <div class="hist-item" onclick="openHistDetail(${start+i})">
+      <div class="hist-head"><span class="hist-name">${h.acc_name||h.name||'(ẩn)'}</span><span class="hist-time">${h.time||''}</span></div>
+      <div class="hist-phone">Target: ${h.target_name||'?'} · UID: ${h.acc_uid||h.uid||'?'}</div>
+      <div class="hist-actions">
+        <div class="hist-btn" onclick="event.stopPropagation();copyHistCookie(${start+i},this)">📋 Copy</div>
+        <div class="hist-btn dl" onclick="event.stopPropagation();downloadHist(${start+i})">⬇️ Tải</div>
+      </div>
+    </div>`).join('');
+  const totalPages=Math.ceil(histData.length/HIST_PER_PAGE);
+  if(pages)pages.innerHTML=Array.from({length:totalPages},(_,i)=>`<button class="page-btn${i===histPage?' active':''}" onclick="histPage=${i};renderHistList()">${i+1}</button>`).join('');
+}
+function openHistDetail(idx){
+  viewingHistItem=histData[idx];
+  const c=document.getElementById('hist-detail-content');
+  if(c)c.innerHTML=`<div class="info-row"><div class="info-label">Cookie</div><div class="info-value" style="white-space:pre-wrap">${viewingHistItem.cookie||'(trống)'}</div></div>`;
+  openModal('hist-detail-modal');
+}
+function copyHistDetailCookie(btn){
+  if(!viewingHistItem)return;
+  navigator.clipboard.writeText(viewingHistItem.cookie||'').then(()=>{btn.textContent='✅ Đã copy!';setTimeout(()=>btn.textContent='📋 Copy Cookie',2000);});
+}
+function downloadHistDetail(){
+  if(!viewingHistItem)return;
+  const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(viewingHistItem.cookie||'');
+  a.download=`cookie_${viewingHistItem.name||'fb'}_${Date.now()}.txt`;a.click();
+}
+function copyHistCookie(idx,btn){
+  navigator.clipboard.writeText(histData[idx].cookie||'').then(()=>{btn.textContent='✅';setTimeout(()=>btn.textContent='📋 Copy',2000);});
+}
+function downloadHist(idx){
+  const h=histData[idx];const a=document.createElement('a');
+  a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(h.cookie||'');
+  a.download=`cookie_${h.name||'fb'}_${Date.now()}.txt`;a.click();
+}
+
+// ═══════════════════════════════════════════════════════
+//  ADMIN MANAGEMENT
+// ═══════════════════════════════════════════════════════
+let mgmtData=[],mgmtPage=0;const MGMT_PER_PAGE=10;
+async function openMgmt(){
+  try{
+    const r=await fetch('/api/admin/users',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(r.ok)mgmtData=await r.json();
+  }catch{}
+  mgmtPage=0;renderMgmtList();openModal('mgmt-modal');
+}
+function renderMgmtList(){
+  const count=document.getElementById('mgmt-count');
+  const list=document.getElementById('mgmt-list');
+  const pages=document.getElementById('mgmt-pages');
+  if(count)count.textContent=`(${mgmtData.length} tài khoản)`;
+  const start=mgmtPage*MGMT_PER_PAGE;
+  const chunk=mgmtData.slice(start,start+MGMT_PER_PAGE);
+  if(list)list.innerHTML=`<table class="user-table"><thead><tr><th>#</th><th>Username</th><th>Email</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
+  ${chunk.map((u,i)=>`<tr>
+    <td>${start+i+1}</td>
+    <td><b>${u.username}</b>${u.is_admin?'&nbsp;<span style="color:var(--yellow);font-size:10px">ADMIN</span>':''}</td>
+    <td style="color:var(--muted);font-size:11px">${u.email||'—'}</td>
+    <td><span class="u-active ${u.active!==false?'yes':'no'}">${u.active!==false?'Hoạt động':'Khóa'}</span></td>
+    <td>
+      <button class="u-action" onclick="toggleUserActive('${u.username}',${u.active!==false})">${u.active!==false?'🔒 Khóa':'🔓 Mở'}</button>
+      <button class="u-action del" onclick="deleteUser('${u.username}')">🗑</button>
+    </td>
+  </tr>`).join('')}</tbody></table>`;
+  const totalPages=Math.ceil(mgmtData.length/MGMT_PER_PAGE);
+  if(pages)pages.innerHTML=Array.from({length:totalPages},(_,i)=>`<button class="page-btn${i===mgmtPage?' active':''}" onclick="mgmtPage=${i};renderMgmtList()">${i+1}</button>`).join('');
+}
+async function toggleUserActive(username,currentActive){
+  await fetch('/api/admin/toggle-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username,active:!currentActive})});
+  openMgmt();
+}
+async function deleteUser(username){
+  if(!confirm(`Xóa tài khoản "${username}"?`))return;
+  await fetch('/api/admin/delete-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username})});
+  openMgmt();
+}
+function openUserDetail(username){
+  const d=mgmtData.find(u=>u.username===username);
+  if(!d)return;
+  document.getElementById('user-detail-content').innerHTML=`
+    <div class="info-row"><div class="info-label">Username</div><div class="info-value">${d.username}</div></div>
+    <div class="info-row"><div class="info-label">Email</div><div class="info-value">${d.email||'—'}</div></div>
+    <div class="info-row"><div class="info-label">Ngày tạo</div><div class="info-value">${d.created||'—'}</div></div>
+    <div class="info-row"><div class="info-label">Trạng thái</div><div class="info-value">${d.active!==false?'✅ Hoạt động':'🔒 Bị khóa'}</div></div>`;
+  openModal('user-detail-modal');
+}
+
+// ═══════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function toggleMenu(){document.getElementById('main-menu').classList.toggle('open');}
+function closeMenu(){document.getElementById('main-menu').classList.remove('open');}
+document.addEventListener('click',e=>{const m=document.getElementById('main-menu');if(m&&m.classList.contains('open')&&!e.target.closest('.dropdown'))closeMenu();});
+
+let _theme='dark';
+function toggleTheme(){
+  _theme=_theme==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',_theme);
+  const lbl=document.getElementById('theme-label');const tog=document.getElementById('theme-toggle');
+  if(lbl)lbl.textContent=_theme==='dark'?'🌙 Chế độ tối':'☀️ Chế độ sáng';
+  if(tog)tog.classList.toggle('on',_theme==='dark');
+}
+let musicOn=false;
+const bgMusic=document.getElementById('bg-music');
+function toggleMusic(){
+  musicOn=!musicOn;document.getElementById('music-toggle').classList.toggle('on',musicOn);
+  if(musicOn)bgMusic.play().catch(()=>{});else bgMusic.pause();
+}
+let sfxOn=true;
+function toggleSfx(){sfxOn=!sfxOn;document.getElementById('sfx-toggle').classList.toggle('on',sfxOn);if(sfxOn)playSfx('click');}
+function playSfx(type){
+  if(!sfxOn)return;
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator(),gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    if(type==='click'){osc.frequency.setValueAtTime(880,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(440,ctx.currentTime+.08);gain.gain.setValueAtTime(.15,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.12);osc.start(ctx.currentTime);osc.stop(ctx.currentTime+.12);}
+    else if(type==='success'){[523,659,784,1047].forEach((f,i)=>{const o2=ctx.createOscillator(),g2=ctx.createGain();o2.connect(g2);g2.connect(ctx.destination);o2.frequency.value=f;g2.gain.setValueAtTime(.12,ctx.currentTime+i*.1);g2.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+i*.1+.15);o2.start(ctx.currentTime+i*.1);o2.stop(ctx.currentTime+i*.1+.15);});}
+    else if(type==='error'){osc.frequency.setValueAtTime(300,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(150,ctx.currentTime+.2);gain.gain.setValueAtTime(.15,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.2);osc.start(ctx.currentTime);osc.stop(ctx.currentTime+.2);}
+  }catch{}
+}
+document.addEventListener('click',e=>{if(!sfxOn)return;const el=e.target.closest('button,.btn,.support-btn,.d-item,.d-toggle,.hist-btn,.tab,.page-btn,.captcha-opt,.auth-tab');if(el)playSfx('click');});
+
+function showToast(msg,bg='#4f9eff'){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;t.style.background=bg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+function startClock(){
+  setInterval(()=>{const el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleTimeString('vi-VN');},1000);
+}
+
+// Khởi động nếu đã có session
+(function init(){
+  const el=document.getElementById('remember-check');
+  if(el){el.classList.toggle('checked',rememberMe);el.textContent=rememberMe?'✓':'';}
+  if(rememberMe&&CURRENT_USER){const u=document.getElementById('login-user');if(u)u.value=CURRENT_USER;}
+  if(SESSION_TOKEN&&CURRENT_USER){
+    fetch('/api/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}})
+      .then(r=>{if(r.ok)showApp();else{SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});}})
+      .catch(()=>showApp());
+  }
+  setActiveStep(1);
+  setInterval(()=>{if(dameRunning)updateRunUI();},1000);
+})();
+
+// Countdown timers (dùng cho forgot password)
+let qrCountdownTimer=null,otpCountdownTimer=null;
+function startOtpCountdown(seconds){
+  clearInterval(otpCountdownTimer);
+  const label=document.getElementById('otp-timer-val');const bar=document.getElementById('otp-bar-fill');
+  if(!label)return;const total=seconds;let remaining=seconds;
+  function tick(){
+    const pct=(remaining/total)*100;const m=Math.floor(remaining/60);const s=remaining%60;
+    label.textContent=m+':'+String(s).padStart(2,'0');bar.style.width=pct+'%';
+    if(pct>50){bar.style.background='var(--blue)';label.style.color='var(--blue)';}
+    else if(pct>20){bar.style.background='var(--yellow)';label.style.color='var(--yellow)';}
+    else{bar.style.background='var(--red)';label.style.color='var(--red)';}
+    if(remaining<=0){clearInterval(otpCountdownTimer);label.textContent='Hết hạn!';label.style.color='var(--red)';bar.style.width='0%';}
+    remaining--;
+  }
+  tick();otpCountdownTimer=setInterval(tick,1000);
+}
+function stopOtpCountdown(){clearInterval(otpCountdownTimer);}
+
+// ═══════════════════════════════════════════════════════
+//  SCREENSHOT TAB MÁY ẢO
+// ═══════════════════════════════════════════════════════
+let _ssTimer = null;
+
+function openScreenshotModal(){
+  openModal('screenshot-modal');
+  refreshScreenshot();
+  _ssTimer = setInterval(refreshScreenshot, 2500);
+}
+
+function closeScreenshotModal(){
+  closeModal('screenshot-modal');
+  if(_ssTimer){ clearInterval(_ssTimer); _ssTimer=null; }
+}
+
+async function refreshScreenshot(){
+  try{
+    const r  = await fetch('/api/dame/screenshot',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const d  = await r.json();
+    const b64 = d.screenshot;
+    const img = document.getElementById('ss-img');
+    const ph  = document.getElementById('ss-placeholder');
+    const dot = document.getElementById('ss-live-dot');
+    const lbl = document.getElementById('ss-live-label');
+    const ttl = document.getElementById('ss-total-label');
+
+    if(ttl) ttl.textContent = dameTotal+' báo cáo';
+
+    if(b64){
+      if(img){ img.src='data:image/jpeg;base64,'+b64; img.style.display='block'; }
+      if(ph)  ph.style.display='none';
+      if(dot) dot.style.background='var(--green)';
+      if(lbl) lbl.textContent='LIVE';
+      // Cập nhật URL bar
+      const urlBar = document.getElementById('ss-url-bar');
+      if(urlBar && _targetUrl) urlBar.textContent = _targetUrl;
+    } else {
+      if(dot) dot.style.background='var(--red)';
+      if(lbl) lbl.textContent=dameRunning?'Đang khởi động...':'Chưa chạy';
+    }
+  } catch(e){
+    const lbl=document.getElementById('ss-live-label');
+    if(lbl) lbl.textContent='Lỗi kết nối';
+  }
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    const m=document.getElementById('screenshot-modal');
+    if(m && m.classList.contains('open')) closeScreenshotModal();
+  }
+  if(e.key==='Enter'){
+    const loginTab=document.getElementById('tab-login-btn');
+    const regTab=document.getElementById('tab-reg-btn');
+    if(loginTab&&loginTab.classList.contains('active')) doLogin();
+    else if(regTab&&regTab.classList.contains('active')) doRegister();
+  }
+});
+
+</script>
+</body>
+</html>
