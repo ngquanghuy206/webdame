@@ -1,0 +1,453 @@
+"""
+dame_runner.py — Playwright headless dame FB
+Inject cookie theo bookmark JS từ ảnh → navigate target → auto 13 report
+Hỗ trợ: screenshot tab máy ảo realtime
+"""
+import asyncio, json, re, time, base64
+from typing import Optional
+
+try:
+    from playwright.async_api import async_playwright, Page, BrowserContext
+    PLAYWRIGHT_OK = True
+except ImportError:
+    PLAYWRIGHT_OK = False
+
+# ══════════════════════════════════════
+# SESSION STATE
+# ══════════════════════════════════════
+class DameSession:
+    def __init__(self):
+        self.running   = False
+        self.paused    = False
+        self.stopped   = False
+        self.total     = 0
+        self.loops     = 0
+        self.log       = ""
+        self.name      = ""
+        self.uid       = ""
+        self.target    = ""
+        self.speed     = "normal"
+        self.screenshot_b64: str = ""      # ảnh base64 tab máy ảo
+        self._task: Optional[asyncio.Task] = None
+        self._logs: list = []
+        self._page: Optional[object] = None  # giữ ref page đang chạy
+
+    def add_log(self, msg: str):
+        ts = time.strftime("%H:%M:%S")
+        entry = f"[{ts}] {msg}"
+        self._logs.append(entry)
+        if len(self._logs) > 300:
+            self._logs = self._logs[-300:]
+        self.log = entry
+
+    def pop_logs(self) -> list:
+        logs = list(self._logs)
+        self._logs.clear()
+        return logs
+
+DAME_SESSION = DameSession()
+
+# ══════════════════════════════════════
+# INJECT COOKIE JS (từ bookmark trong ảnh)
+# ══════════════════════════════════════
+def build_inject_js(cookie_str: str) -> str:
+    escaped = json.dumps(cookie_str)
+    return f"""
+(function() {{
+    var cookieStr = {escaped};
+    document.cookie.split(";").forEach(function(c) {{
+        document.cookie = c.replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString()
+            + ";path=/;domain=.facebook.com");
+    }});
+    var cookies = cookieStr.split(';');
+    cookies.forEach(function(cookie) {{
+        cookie = cookie.trim();
+        if (cookie) {{
+            if (!cookie.includes('domain=')) cookie += '; domain=.facebook.com';
+            if (!cookie.includes('path='))   cookie += '; path=/';
+            document.cookie = cookie;
+        }}
+    }});
+    return 'OK';
+}})();
+"""
+
+# ══════════════════════════════════════
+# SPEED CONFIG
+# ══════════════════════════════════════
+SPEED_CONFIG = {
+    "fast":   {"click": 100, "action": 200, "done": 80,  "loop": 500,  "inter": 150},
+    "normal": {"click": 200, "action": 400, "done": 150, "loop": 900,  "inter": 350},
+    "slow":   {"click": 350, "action": 700, "done": 250, "loop": 1500, "inter": 650},
+}
+def cfg(speed): return SPEED_CONFIG.get(speed, SPEED_CONFIG["normal"])
+
+# ══════════════════════════════════════
+# CHỤP SCREENSHOT TAB MÁY ẢO
+# ══════════════════════════════════════
+async def _take_screenshot():
+    try:
+        page = DAME_SESSION._page
+        if page and not page.is_closed():
+            data = await page.screenshot(type="jpeg", quality=60, full_page=False)
+            DAME_SESSION.screenshot_b64 = base64.b64encode(data).decode()
+    except:
+        pass
+
+async def _screenshot_loop():
+    while DAME_SESSION.running and not DAME_SESSION.stopped:
+        await _take_screenshot()
+        await asyncio.sleep(2)  # chụp mỗi 2s
+
+# ══════════════════════════════════════
+# VERIFY COOKIE
+# ══════════════════════════════════════
+async def verify_fb_cookie(cookie_str: str) -> dict:
+    if not PLAYWRIGHT_OK:
+        return {"ok": False, "name": "", "uid": "", "error": "Playwright chưa cài"}
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox","--disable-gpu","--disable-dev-shm-usage"]
+            )
+            ctx = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
+            page = await ctx.new_page()
+            await page.goto("https://www.facebook.com", wait_until="domcontentloaded", timeout=25000)
+            await page.evaluate(build_inject_js(cookie_str))
+            await page.reload(wait_until="domcontentloaded", timeout=25000)
+            await asyncio.sleep(2.5)
+
+            url = page.url
+            if "login" in url or "checkpoint" in url:
+                await browser.close()
+                return {"ok": False, "name": "", "uid": "", "error": "Cookie die hoặc checkpoint"}
+
+            # Lấy tên + UID qua GraphQL
+            result = await page.evaluate("""
+                async () => {
+                    try {
+                        const r = await fetch('https://www.facebook.com/api/graphql/', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                            body: 'variables=%7B%7D&doc_id=3919904814718296'
+                        });
+                        const t = await r.text();
+                        const m = t.match(/"name":"([^"]+)"/);
+                        const u = t.match(/"id":"(\d{10,})"/);
+                        return {name: m?m[1]:'', uid: u?u[1]:''};
+                    } catch(e) { return {name:'',uid:''}; }
+                }
+            """)
+
+            # Fallback DOM
+            if not result.get("name"):
+                try:
+                    el = await page.query_selector('[aria-label*="account" i], [aria-label*="tài khoản" i]')
+                    if el:
+                        lbl = (await el.get_attribute("aria-label") or "")
+                        result["name"] = lbl.replace("Tài khoản của ","").replace("account","").strip()
+                except: pass
+
+            # Fallback title
+            if not result.get("name"):
+                title = await page.title()
+                if title and "Facebook" not in title:
+                    result["name"] = title.split("–")[0].split("|")[0].strip()
+
+            # Fallback c_user từ cookie
+            if not result.get("uid"):
+                try:
+                    cookies = await ctx.cookies()
+                    c_user = next((c["value"] for c in cookies if c["name"]=="c_user"), "")
+                    if c_user: result["uid"] = c_user
+                except: pass
+
+            await browser.close()
+            return {"ok": True, "name": result.get("name",""), "uid": result.get("uid","")}
+    except Exception as e:
+        return {"ok": False, "name": "", "uid": "", "error": str(e)[:200]}
+
+# ══════════════════════════════════════
+# LẤY TÊN TARGET
+# ══════════════════════════════════════
+async def get_target_name(cookie_str: str, target_url: str) -> dict:
+    if not PLAYWRIGHT_OK:
+        return {"ok": False, "name": "Không xác định", "uid": ""}
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox","--disable-gpu","--disable-dev-shm-usage"]
+            )
+            ctx = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            )
+            page = await ctx.new_page()
+            await page.goto("https://www.facebook.com", wait_until="domcontentloaded", timeout=20000)
+            await page.evaluate(build_inject_js(cookie_str))
+            await page.reload(wait_until="domcontentloaded", timeout=15000)
+            await page.goto(target_url, wait_until="domcontentloaded", timeout=25000)
+            await asyncio.sleep(2.5)
+
+            name = ""
+            uid  = ""
+
+            # Lấy tên từ h1
+            try:
+                h1 = await page.query_selector("h1")
+                if h1: name = (await h1.inner_text()).strip()
+            except: pass
+
+            # Fallback title
+            if not name:
+                title = await page.title()
+                name = title.split("|")[0].split("–")[0].strip()
+                if "Facebook" in name: name = ""
+
+            # UID từ URL
+            m = re.search(r'profile\.php\?id=(\d+)', page.url)
+            if m: uid = m.group(1)
+
+            # UID từ source
+            if not uid:
+                try:
+                    content = await page.content()
+                    for pattern in [r'"userID":"(\d+)"', r'"ownerID":"(\d+)"', r'"actorID":"(\d+)"']:
+                        m2 = re.search(pattern, content)
+                        if m2: uid = m2.group(1); break
+                except: pass
+
+            await browser.close()
+            return {"ok": True, "name": name or "Không xác định", "uid": uid}
+    except Exception as e:
+        return {"ok": False, "name": "Lỗi lấy tên", "uid": "", "error": str(e)[:200]}
+
+# ══════════════════════════════════════
+# REPORT FLOW — 13 loại
+# ══════════════════════════════════════
+REPORT_FLOW = [
+    ("Violent · Terrorism",        ["Violent or graphic content","Bạo lực hoặc nội dung đồ họa"], ["Terrorism","Khủng bố"]),
+    ("Violent · Calling violence", ["Violent or graphic content","Bạo lực hoặc nội dung đồ họa"], ["Calling for violence","Kêu gọi bạo lực"]),
+    ("Violent · Organized crime",  ["Violent or graphic content","Bạo lực hoặc nội dung đồ họa"], ["Organized crime","Tội phạm có tổ chức"]),
+    ("Suicide · Eating disorder",  ["Suicide or self-injury","Tự tử hoặc tự làm hại bản thân"],   ["Eating disorder","Rối loạn ăn uống"]),
+    ("Scam · Fraud",               ["Scam, fraud or false news","Lừa đảo, gian lận hoặc tin giả"], ["Fraud or scam","Lừa đảo hoặc gian lận"]),
+    ("Scam · Spam",                ["Scam, fraud or false news","Lừa đảo, gian lận hoặc tin giả"], ["Spam","Tin rác"]),
+    ("Fake · Not real person",     ["Fake account","Tài khoản giả mạo"],                           ["Not a real person","Không phải người thật"]),
+    ("Bullying · Harassment",      ["Bullying or harassment","Bắt nạt hoặc quấy rối"],             ["Me","Tôi"]),
+    ("Adult · Prostitution",       ["Adult content","Nội dung người lớn"],                         ["Prostitution","Mại dâm"]),
+    ("Physical abuse",             ["Violence","Bạo lực"],                                         ["Physical abuse","Bạo hành thể chất"]),
+    ("Credible threat",            ["Violent or graphic content","Bạo lực hoặc nội dung đồ họa"], ["Credible threat","Đe dọa đáng tin cậy"]),
+    ("Something else",             ["Something else","Điều gì đó khác"],                           []),
+    ("Harassment · Other",         ["Bullying or harassment","Bắt nạt hoặc quấy rối"],             ["Someone else","Người khác"]),
+]
+
+async def find_and_click(page: Page, texts: list, timeout_ms: int = 5000) -> bool:
+    deadline = time.time() + timeout_ms / 1000
+    sels = ['button','div[role="button"]','a[role="button"]','span[role="button"]',
+            'div[role="menuitem"]','li[role="menuitem"]','div[tabindex="0"]']
+    while time.time() < deadline:
+        for sel in sels:
+            try:
+                for el in await page.query_selector_all(sel):
+                    try:
+                        if not await el.is_visible(): continue
+                        txt = (await el.inner_text()).strip().lower()
+                        for kw in texts:
+                            if kw.lower() in txt:
+                                await el.scroll_into_view_if_needed()
+                                await el.click()
+                                return True
+                    except: continue
+            except: continue
+        await asyncio.sleep(0.15)
+    return False
+
+async def click_3dot_menu(page: Page) -> bool:
+    for lbl in ["Profile settings see more options","More options","More","See more"]:
+        try:
+            el = await page.query_selector(f'[aria-label="{lbl}"]')
+            if el and await el.is_visible():
+                await el.click(); return True
+        except: pass
+    try:
+        for el in await page.query_selector_all('div[aria-haspopup="menu"]'):
+            try:
+                if await el.is_visible():
+                    await el.click(); return True
+            except: pass
+    except: pass
+    return False
+
+async def do_one_report(page: Page, report: tuple, speed: str) -> bool:
+    c = cfg(speed)
+    rname, first_texts, second_texts = report
+    DAME_SESSION.add_log(f"▶ {rname}")
+
+    await click_3dot_menu(page)
+    await asyncio.sleep(c["click"] / 1000)
+
+    ok = await find_and_click(page, ["Report profile","Báo cáo trang cá nhân","Báo cáo","Report"], 5000)
+    if not ok:
+        DAME_SESSION.add_log(f"⚠ Bỏ qua {rname} (không tìm được nút Report)")
+        return False
+    await asyncio.sleep(c["action"] / 1000)
+
+    await find_and_click(page, ["Something about this profile","Có gì đó về trang cá nhân này"], 2500)
+    await asyncio.sleep(c["click"] / 1000)
+
+    if first_texts:
+        await find_and_click(page, first_texts, 5000)
+        await asyncio.sleep(c["action"] / 1000)
+
+    if second_texts:
+        await find_and_click(page, second_texts, 5000)
+        await asyncio.sleep(c["action"] / 1000)
+
+    for btns in [["Submit","Gửi","Gửi báo cáo"],["Next","Tiếp","Tiếp tục"],["Done","Xong","Close","Đóng"]]:
+        await find_and_click(page, btns, 4000)
+        await asyncio.sleep(c["done"] / 1000)
+
+    DAME_SESSION.total += 1
+    DAME_SESSION.add_log(f"✅ {rname} ✓ · tổng: {DAME_SESSION.total}")
+    return True
+
+# ══════════════════════════════════════
+# MAIN DAME LOOP
+# ══════════════════════════════════════
+async def _dame_loop(cookie_str: str, target_url: str, speed: str):
+    if not PLAYWRIGHT_OK:
+        DAME_SESSION.add_log("❌ Playwright chưa cài!")
+        DAME_SESSION.stopped = True; DAME_SESSION.running = False
+        return
+
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox","--disable-gpu","--disable-dev-shm-usage",
+                      "--disable-blink-features=AutomationControlled",
+                      "--window-size=1280,800"]
+            )
+            ctx: BrowserContext = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                viewport={"width": 1280, "height": 800}
+            )
+            page = await ctx.new_page()
+            DAME_SESSION._page = page  # lưu ref để screenshot
+
+            # Bắt đầu vòng chụp screenshot nền
+            screenshot_task = asyncio.create_task(_screenshot_loop())
+
+            # Inject cookie
+            DAME_SESSION.add_log("🍪 Inject cookie...")
+            await page.goto("https://www.facebook.com", wait_until="domcontentloaded", timeout=25000)
+            await page.evaluate(build_inject_js(cookie_str))
+            await page.reload(wait_until="domcontentloaded", timeout=25000)
+            await asyncio.sleep(2.5)
+
+            if "login" in page.url or "checkpoint" in page.url:
+                DAME_SESSION.add_log("❌ Cookie die / checkpoint!")
+                DAME_SESSION.stopped = True; DAME_SESSION.running = False
+                screenshot_task.cancel()
+                await browser.close(); return
+
+            DAME_SESSION.add_log("✅ Login OK · Đang mở target...")
+            await page.goto(target_url, wait_until="domcontentloaded", timeout=25000)
+            await asyncio.sleep(2.5)
+
+            if "login" in page.url:
+                DAME_SESSION.add_log("❌ Không mở được target!")
+                DAME_SESSION.stopped = True; DAME_SESSION.running = False
+                screenshot_task.cancel()
+                await browser.close(); return
+
+            DAME_SESSION.add_log(f"🎯 Target OK: {page.url}")
+            c = cfg(speed)
+            loop_n = 0
+
+            while not DAME_SESSION.stopped:
+                loop_n += 1
+                DAME_SESSION.loops = loop_n
+                DAME_SESSION.add_log(f"━━━ Vòng {loop_n} ━━━")
+
+                for report in REPORT_FLOW:
+                    if DAME_SESSION.stopped: break
+                    while DAME_SESSION.paused and not DAME_SESSION.stopped:
+                        await asyncio.sleep(0.5)
+                    if DAME_SESSION.stopped: break
+
+                    try:
+                        await page.goto(target_url, wait_until="domcontentloaded", timeout=20000)
+                        await asyncio.sleep(1.2)
+                    except: pass
+
+                    try:
+                        await do_one_report(page, report, speed)
+                    except Exception as e:
+                        DAME_SESSION.add_log(f"⚠ {report[0]}: {str(e)[:60]}")
+
+                    await asyncio.sleep(c["inter"] / 1000)
+
+                if not DAME_SESSION.stopped:
+                    DAME_SESSION.add_log(f"🔄 Xong vòng {loop_n} · Tổng: {DAME_SESSION.total} báo cáo")
+                    await asyncio.sleep(c["loop"] / 1000)
+
+            screenshot_task.cancel()
+            await browser.close()
+            DAME_SESSION.add_log(f"⏹ Kết thúc · Tổng: {DAME_SESSION.total} báo cáo")
+
+    except Exception as e:
+        DAME_SESSION.add_log(f"❌ Lỗi: {str(e)[:120]}")
+    finally:
+        DAME_SESSION.running = False
+        DAME_SESSION.stopped = True
+        DAME_SESSION._page   = None
+
+# ══════════════════════════════════════
+# PUBLIC API
+# ══════════════════════════════════════
+async def start_dame(cookie_str, target_url, speed="normal", name="", uid="", target_name=""):
+    global DAME_SESSION
+    DAME_SESSION = DameSession()
+    DAME_SESSION.running = True
+    DAME_SESSION.speed   = speed
+    DAME_SESSION.name    = name
+    DAME_SESSION.uid     = uid
+    DAME_SESSION.target  = target_url
+    DAME_SESSION._task   = asyncio.create_task(_dame_loop(cookie_str, target_url, speed))
+    DAME_SESSION.add_log(f"🚀 Bắt đầu · Cookie: {name} · Target: {target_name or target_url}")
+
+def pause_dame():
+    DAME_SESSION.paused = True
+    DAME_SESSION.add_log("⏸ Tạm dừng")
+
+def resume_dame():
+    DAME_SESSION.paused = False
+    DAME_SESSION.add_log("▶ Tiếp tục")
+
+def stop_dame():
+    DAME_SESSION.stopped = True
+    DAME_SESSION.paused  = False
+    DAME_SESSION.running = False
+    DAME_SESSION.add_log("⏹ Dừng")
+
+def get_status() -> dict:
+    return {
+        "running":  DAME_SESSION.running,
+        "paused":   DAME_SESSION.paused,
+        "stopped":  DAME_SESSION.stopped,
+        "total":    DAME_SESSION.total,
+        "loops":    DAME_SESSION.loops,
+        "log":      DAME_SESSION.log,
+        "logs":     DAME_SESSION.pop_logs(),
+        "name":     DAME_SESSION.name,
+        "uid":      DAME_SESSION.uid,
+    }
+
+def get_screenshot() -> str:
+    """Trả về ảnh JPEG base64 của tab máy ảo, hoặc '' nếu chưa có"""
+    return DAME_SESSION.screenshot_b64
