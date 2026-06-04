@@ -4,9 +4,10 @@ dame_runner.py — Playwright headless dame FB
 Inject cookie theo bookmark JS từ ảnh → navigate target → auto 13 report
 Hỗ trợ: screenshot tab máy ảo realtime
 """
-import httpx
 import asyncio, json, re, time, base64
 from typing import Optional
+try: import httpx; HAS_HTTPX = True
+except: HAS_HTTPX = False
 
 try:
     from playwright.async_api import async_playwright, Page, BrowserContext
