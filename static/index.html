@@ -1112,6 +1112,67 @@ function switchLoginMode(mode){
 }
 
 // ── LOGIN BẰNG EMAIL + PASS ──
+  async function submitCaptcha(session_id){
+    const captcha_text = (document.getElementById('captcha-input')||{}).value.trim();
+    if(!captcha_text){ alert('Nhập text captcha!'); return; }
+    const resEl = document.getElementById('pass-login-res');
+    const scImg = document.getElementById('pass-login-img');
+    const scBox = document.getElementById('pass-login-sc');
+    resEl.innerHTML = '<div style="color:var(--orange)">⏳ Đang gửi captcha...</div>';
+    try{
+      const r = await fetch('/api/fb-login-pass/captcha',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+        body: JSON.stringify({session_id, captcha_text, _token: SESSION_TOKEN})
+      });
+      const {job_id} = await r.json();
+      for(let i=0;i<40;i++){
+        await new Promise(r=>setTimeout(r, i===0 ? 5000 : 3000));
+        const pr = await fetch('/api/fb-login-pass/poll/'+job_id,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+        const pd = await pr.json();
+        if(pd.status==='done'||pd.status==='error'){
+          const d = pd.result;
+          if(d.screenshot_b64){ scImg.src='data:image/jpeg;base64,'+d.screenshot_b64; scBox.style.display='block'; }
+          if(d.status==='success'){
+            resEl.style.color='var(--green)';
+            resEl.innerHTML='✅ Đăng nhập thành công! Cookie đã được lưu.';
+            switchLoginMode('cookie');
+            document.getElementById('fb-cookie-input').value = d.cookie||'';
+            detectCookieFormat(d.cookie||'');
+            setTimeout(()=>stepVerifyCookie(), 600);
+            if(typeof playSfx==='function') playSfx('success');
+          } else if(d.status==='captcha'){
+            // Captcha sai → hiện lại ảnh mới
+            resEl.style.background='rgba(255,145,0,.08)';
+            resEl.style.border='1px solid rgba(255,145,0,.3)';
+            resEl.style.color='var(--orange)';
+            resEl.innerHTML = `
+              <div style="font-weight:700;margin-bottom:8px">🤖 ${d.message}</div>
+              <input id="captcha-input" type="text" placeholder="Nhập text captcha..."
+                style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:15px;margin-bottom:10px;box-sizing:border-box"/>
+              <button onclick="submitCaptcha('${d.session_id}')"
+                style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;font-weight:700;border:none;cursor:pointer;font-size:15px">
+                ✅ Gửi lại captcha
+              </button>`;
+          } else if(d.status==='2fa'){
+            resEl.style.color='var(--blue)';
+            resEl.innerHTML = `<div style="font-weight:700;margin-bottom:8px">🔐 ${d.message}</div>
+              <input id="otp-input" type="text" inputmode="numeric" maxlength="8" placeholder="Nhập mã OTP..."
+                style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin-bottom:10px;box-sizing:border-box"/>
+              <button onclick="submitOTP('${d.session_id}','')" style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#4f9eff,#9b59b6);color:#fff;font-weight:700;border:none;cursor:pointer">✅ Xác nhận OTP</button>`;
+          } else {
+            resEl.style.color='var(--red)';
+            resEl.innerHTML = d.message || 'Lỗi không xác định';
+          }
+          break;
+        }
+      }
+    }catch(e){
+      resEl.style.color='var(--red)';
+      resEl.innerHTML='⚠️ Lỗi: '+e.message;
+    }
+  }
+
   async function submitOTP(session_id, old_job_id){
     const otp_code = (document.getElementById('otp-input')||{}).value || '';
     if(!otp_code){ alert('Nhập mã OTP!'); return; }
@@ -1127,8 +1188,7 @@ function switchLoginMode(mode){
       });
       const {job_id} = await r.json();
       for(let i=0;i<40;i++){
-        // Lần poll đầu đợi 9s (khớp với sleep backend), các lần sau 3s
-        await new Promise(r=>setTimeout(r, i===0 ? 9000 : 3000));
+        await new Promise(r=>setTimeout(r,3000));
         const pr = await fetch('/api/fb-login-pass/poll/'+job_id,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
         const pd = await pr.json();
         if(pd.status==='done'||pd.status==='error'){
@@ -1136,40 +1196,12 @@ function switchLoginMode(mode){
           if(d.screenshot_b64){ scImg.src='data:image/jpeg;base64,'+d.screenshot_b64; scBox.style.display='block'; }
           if(d.status==='success'){
             resEl.style.color='#2ecc71';
-            resEl.innerHTML='✅ Đăng nhập thành công! Cookie đã được lưu.<br><span style="font-size:12px;opacity:.7">⏩ Đang chuyển bước...</span>';
+            resEl.innerHTML='✅ Đăng nhập thành công! Cookie đã được lưu.';
             window._fbCookieFromLogin = d.cookie;
-            // Auto fill cookie vào textarea và chuyển về tab cookie + verify
-            setTimeout(() => {
-              switchLoginMode('cookie');
-              const ci = document.getElementById('fb-cookie-input');
-              if(ci){ ci.value = d.cookie||''; detectCookieFormat(d.cookie||''); }
-              setTimeout(()=>stepVerifyCookie(), 600);
-              if(typeof playSfx === 'function') playSfx('success');
-            }, 1000);
           } else if(d.status==='2fa'){
-            const tfaLabels2 = {
-              'authenticator_app':     {icon:'🔐', label:'Authenticator App', hint:'Mã 6 số từ Google/MS Authenticator'},
-              'sms_whatsapp':          {icon:'📱', label:'SMS / WhatsApp',     hint:'Mã gửi qua SMS/WhatsApp'},
-              'facebook_notification': {icon:'📘', label:'Facebook Notify',    hint:'Xác nhận qua thiết bị khác'},
-              'email_code':            {icon:'📧', label:'Email / Gmail',      hint:'Mã gửi về email'},
-            };
-            const opts2 = d.tfa_options || ['authenticator_app','sms_whatsapp','facebook_notification','email_code'];
-            let selType2 = d.tfa_type || 'sms_whatsapp';
-            const rebuild2 = () => {
-              const info2 = tfaLabels2[selType2] || {icon:'🔐', hint:'Nhập mã xác minh'};
-              const bts2 = opts2.map(t => {
-                const lb2 = tfaLabels2[t] || {icon:'🔑', label:t};
-                const act2 = t===selType2;
-                return `<button onclick="window._selTfa2('${t}')" style="flex:1;min-width:120px;padding:8px;border-radius:10px;border:1.5px solid ${act2?'rgba(79,158,255,.8)':'rgba(255,255,255,.15)'};background:${act2?'rgba(79,158,255,.18)':'rgba(255,255,255,.05)'};color:${act2?'#4f9eff':'rgba(255,255,255,.7)'};font-size:12px;font-weight:${act2?800:600};cursor:pointer">${lb2.icon}<br>${lb2.label}</button>`;
-              }).join('');
-              resEl.innerHTML=`<div style="color:var(--blue)">🔐 ${d.message}</div>
-                <div style="display:flex;flex-wrap:wrap;gap:7px;margin:10px 0">${bts2}</div>
-                <div style="font-size:12px;opacity:.7;margin-bottom:8px">${info2.icon} ${info2.hint}</div>
-                <input id="otp-input" type="text" inputmode="numeric" maxlength="8" placeholder="${info2.hint}..." style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin-bottom:8px;box-sizing:border-box"/>
-                <button onclick="submitOTP('${d.session_id}','${job_id}')" style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#4f9eff,#9b59b6);color:#fff;font-weight:700;border:none;cursor:pointer">✅ Xác nhận mã</button>`;
-            };
-            window._selTfa2 = (t) => { selType2=t; rebuild2(); };
-            rebuild2();
+            resEl.innerHTML=`<div style="color:var(--blue)">🔐 ${d.message}</div>
+              <input id="otp-input" type="text" inputmode="numeric" maxlength="8" placeholder="Nhập lại OTP..." style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin:8px 0"/>
+              <button onclick="submitOTP('${d.session_id}','${job_id}')" style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#4f9eff,#9b59b6);color:#fff;font-weight:700;border:none;cursor:pointer">✅ Xác nhận OTP</button>`;
           } else {
             resEl.style.color='#e74c3c';
             resEl.innerHTML=d.message;
@@ -1222,80 +1254,65 @@ async function doFbLoginPass(){
       const pollData = await pollRes.json();
       if(pollData.status === 'done' || pollData.status === 'error'){
         d = pollData.result;
-        // ── Captcha đang giải → poll riêng với live status ──
+        // Captcha đang giải → poll riêng
         if(d && d.status === 'captcha_solving'){
           const capId = d.cap_id;
           const showCapStatus = (msg, sc) => {
             res.style.background='rgba(243,156,18,.08)';
             res.style.border='1px solid rgba(243,156,18,.3)';
             res.style.color='#f39c12';
-            res.innerHTML = `<div style="display:flex;align-items:center;gap:10px">
-              <div class="spinner" style="width:16px;height:16px;display:inline-block;flex-shrink:0"></div>
-              <span>${msg}</span></div>`;
+            res.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><div class="spinner" style="width:16px;height:16px;display:inline-block;flex-shrink:0"></div><span>${msg}</span></div>`;
             if(sc){ scImg.src='data:image/jpeg;base64,'+sc; scBox.style.display='block'; }
           };
           showCapStatus('🤖 Đang giải CAPTCHA bằng Gemini AI...', d.screenshot_b64||'');
           let capResult = null;
-          for(let j=0; j<40; j++){
+          for(let j=0;j<40;j++){
             await new Promise(r=>setTimeout(r,3000));
             try{
               const capRes = await fetch('/api/fb-captcha/poll/'+capId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
               const capData = await capRes.json();
-              if(capData.status === 'solving'){
-                showCapStatus(capData.msg || '🤖 Đang giải CAPTCHA...', capData.screenshot_b64||'');
-              } else if(capData.status === 'done' || capData.status === 'error'){
-                // Hiện message cuối trước khi xử lý
+              if(capData.status==='solving'){
+                showCapStatus(capData.msg||'🤖 Đang giải CAPTCHA...', capData.screenshot_b64||'');
+              } else if(capData.status==='done'||capData.status==='error'){
                 if(capData.msg) showCapStatus(capData.msg, capData.screenshot_b64||'');
-                await new Promise(r=>setTimeout(r,800));
+                await new Promise(r=>setTimeout(r,600));
                 capResult = capData.result;
                 break;
               }
             }catch(e){}
           }
-          if(!capResult){ throw new Error('Quá thời gian giải captcha (2 phút)'); }
+          if(!capResult){ throw new Error('Quá thời gian giải captcha'); }
           d = capResult;
-          // Nếu captcha xong mà vào 2FA → xử lý tiếp bên dưới
         }
-        // ── 2FA: hiện nút chọn loại + ô nhập mã ──
+        // Nếu gặp 2FA - hiện ô nhập OTP
         if(d && d.status === '2fa'){
-          const tfaType = d.tfa_type || 'sms_whatsapp';
-          const tfaOptions = d.tfa_options || ['authenticator_app','sms_whatsapp','facebook_notification','email_code'];
-          const tfaLabels = {
-            'authenticator_app':      {icon:'🔐', label:'Authenticator App', hint:'Nhập mã 6 số từ Google/MS Authenticator'},
-            'sms_whatsapp':           {icon:'📱', label:'SMS / WhatsApp',     hint:'Nhập mã gửi qua SMS hoặc WhatsApp'},
-            'facebook_notification':  {icon:'📘', label:'Facebook Notify',    hint:'Xác nhận qua thiết bị khác của bạn'},
-            'email_code':             {icon:'📧', label:'Email / Gmail',      hint:'Nhập mã gửi về email của bạn'},
-          };
-          // Đánh dấu loại được Gemini phát hiện là active mặc định
-          let selectedTfaType = tfaType;
-          const buildTfaUI = () => {
-            const info = tfaLabels[selectedTfaType] || {icon:'🔐', label:'Mã xác minh', hint:'Nhập mã xác minh'};
-            const btns = tfaOptions.map(t => {
-              const lb = tfaLabels[t] || {icon:'🔑', label: t};
-              const active = t === selectedTfaType;
-              return `<button onclick="window._selectTfa('${t}')"
-                style="flex:1;min-width:120px;padding:9px 8px;border-radius:10px;border:1.5px solid ${active?'rgba(79,158,255,.8)':'rgba(255,255,255,.15)'};
-                background:${active?'rgba(79,158,255,.18)':'rgba(255,255,255,.05)'};color:${active?'#4f9eff':'rgba(255,255,255,.7)'};
-                font-size:12px;font-weight:${active?'800':'600'};cursor:pointer;transition:all .15s">
-                ${lb.icon}<br>${lb.label}</button>`;
-            }).join('');
-            res.style.background='rgba(79,158,255,.08)';
-            res.style.border='1px solid rgba(79,158,255,.25)';
-            res.style.color='var(--blue)';
-            res.innerHTML = `
-              <div style="font-weight:700;margin-bottom:8px">🔐 ${d.message}</div>
-              <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px">${btns}</div>
-              <div style="font-size:12px;opacity:.7;margin-bottom:8px">${info.icon} ${info.hint}</div>
+          res.innerHTML = `<div style="color:var(--blue)">🔐 ${d.message}</div>
+            <div style="margin-top:12px">
               <input id="otp-input" type="text" inputmode="numeric" maxlength="8"
-                placeholder="${info.hint}..."
-                style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin-bottom:10px;box-sizing:border-box"/>
+                placeholder="Nhập mã OTP..."
+                style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:16px;margin-bottom:10px"/>
               <button onclick="submitOTP('${d.session_id}','${current_job_id}')"
                 style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#4f9eff,#9b59b6);color:#fff;font-weight:700;border:none;cursor:pointer;font-size:15px">
-                ✅ Xác nhận mã
-              </button>`;
-          };
-          window._selectTfa = (t) => { selectedTfaType = t; buildTfaUI(); };
-          buildTfaUI();
+                ✅ Xác nhận OTP
+              </button>
+            </div>`;
+          if(d.screenshot_b64) { scImg.src='data:image/jpeg;base64,'+d.screenshot_b64; scBox.style.display='block'; }
+          btn.disabled=false; btn.textContent='🔑 Đăng nhập';
+          d = null;
+        }
+        // Nếu gặp CAPTCHA - hiện ảnh cho user giải
+        if(d && d.status === 'captcha'){
+          res.style.background='rgba(255,145,0,.08)';
+          res.style.border='1px solid rgba(255,145,0,.3)';
+          res.style.color='var(--orange)';
+          res.innerHTML = `
+            <div style="font-weight:700;margin-bottom:8px">🤖 ${d.message}</div>
+            <input id="captcha-input" type="text" placeholder="Nhập text trong ảnh captcha..."
+              style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:15px;margin-bottom:10px;box-sizing:border-box"/>
+            <button onclick="submitCaptcha('${d.session_id}')"
+              style="width:100%;padding:11px;border-radius:10px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;font-weight:700;border:none;cursor:pointer;font-size:15px">
+              ✅ Gửi captcha
+            </button>`;
           if(d.screenshot_b64){ scImg.src='data:image/jpeg;base64,'+d.screenshot_b64; scBox.style.display='block'; }
           btn.disabled=false; btn.textContent='🔑 Đăng nhập';
           d = null;
@@ -1319,7 +1336,6 @@ async function doFbLoginPass(){
       '2fa':      ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
       checkpoint: ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
       captcha:    ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
-      captcha_fail:['rgba(255,82,82,.08)','rgba(255,82,82,.2)','var(--red)'],
       unknown:    ['rgba(255,145,0,.08)','rgba(255,145,0,.2)','var(--orange)'],
       error:      ['rgba(255,82,82,.08)','rgba(255,82,82,.2)','var(--red)'],
     };
