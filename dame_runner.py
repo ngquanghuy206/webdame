@@ -636,12 +636,18 @@ async def fb_login_by_pass(email: str, password: str) -> dict:
                 await asyncio.sleep(0.4)
 
                 # Thử nhiều selector cho nút login
-                for sel in ["[name='login']", "button[type='submit']", "[data-testid='royal_login_button']"]:
+                login_clicked = False
+                for sel in ["[name='login']", "button[type='submit']", "[data-testid='royal_login_button']", "button:has-text('Đăng nhập')", "input[value='Log In']", "input[value='Đăng nhập']"]:
                     try:
+                        await page.wait_for_selector(sel, timeout=2000)
                         await page.click(sel, timeout=3000)
+                        login_clicked = True
                         break
                     except:
                         continue
+                if not login_clicked:
+                    # Fallback: nhấn Enter
+                    await page.keyboard.press("Enter")
 
             except Exception as e:
                 sc = await snap()
