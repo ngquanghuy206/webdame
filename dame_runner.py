@@ -18,13 +18,27 @@ except ImportError:
 # Auto-install Chromium nếu chưa có
 import subprocess as _sp2, sys as _sys2, threading as _threading
 
+_playwright_ready = threading.Event()
+
 def _install_playwright_bg():
     try:
         _sp2.run([_sys2.executable, "-m", "playwright", "install", "chromium", "--with-deps"],
                  check=False, capture_output=True, timeout=300)
     except: pass
+    finally:
+        _playwright_ready.set()
 
-_threading.Thread(target=_install_playwright_bg, daemon=True).start()
+# Check nếu chromium đã có sẵn thì set ready luôn, không cần chờ
+import os as _os
+_chromium_path = _os.path.expanduser("~/.cache/ms-playwright")
+_render_path = "/opt/render/.cache/ms-playwright"
+if ((_os.path.exists(_chromium_path) and any("chromium" in d for d in _os.listdir(_chromium_path) if _os.path.isdir(_os.path.join(_chromium_path, d))))
+    or (_os.path.exists(_render_path) and any("chromium" in d for d in _os.listdir(_render_path) if _os.path.isdir(_os.path.join(_render_path, d))))):
+    _playwright_ready.set()
+    _install_playwright_bg_thread = _threading.Thread(target=_install_playwright_bg, daemon=True)
+    _install_playwright_bg_thread.start()
+else:
+    _threading.Thread(target=_install_playwright_bg, daemon=True).start()
 
 # ══════════════════════════════════════
 # SESSION STATE
@@ -908,6 +922,9 @@ async def fb_login_by_pass(email: str, password: str, session_id: str = None, ot
 
     if not PLAYWRIGHT_OK:
         return {"status": "error", "message": "Playwright chưa cài", "screenshot_b64": ""}
+    # Chờ chromium install xong (tối đa 3 phút)
+    if not _playwright_ready.wait(timeout=180):
+        return {"status": "error", "message": "⏳ Chromium đang được cài đặt, vui lòng thử lại sau 1-2 phút.", "screenshot_b64": ""}
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch(
