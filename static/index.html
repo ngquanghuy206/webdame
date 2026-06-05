@@ -196,7 +196,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .otp-timer{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
 .otp-timer-val{font-weight:800;font-variant-numeric:tabular-nums;color:var(--blue)}
 /* ── SERVER CARDS SWIPE ── */
-.sv-rail{display:flex;gap:8px;overflow-x:auto;padding:4px 4px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%;box-sizing:border-box}
+.sv-rail{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%;box-sizing:border-box}
 .sv-rail::-webkit-scrollbar{display:none}
 .sv-card{min-width:260px;max-width:260px;background:linear-gradient(145deg,#0d1322,#111827);border:1px solid rgba(79,158,255,.22);border-radius:18px;scroll-snap-align:start;overflow:hidden;flex-shrink:0;position:relative;transition:transform .15s,box-shadow .15s}
 .sv-card:active{transform:scale(.97)}
@@ -263,7 +263,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:520px;box-shadow:0 30px 80px var(--shadow);margin:auto;animation:popIn .2s ease}
 @keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
 .modal-title{font-size:18px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:10px}
-.close-btn{width:100%;padding:11px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff;font-weight:700;cursor:pointer;margin-top:16px;font-size:14px}
+.close-btn{width:100%;padding:8px;border:none;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:var(--muted);font-weight:600;cursor:pointer;margin-top:10px;font-size:12px}
 
 /* ── ADMIN MODAL ─────────────────────────────────────── */
 .admin-avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 14px;background:linear-gradient(135deg,var(--blue2),var(--purple));display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 8px 30px rgba(79,158,255,.4)}
@@ -346,7 +346,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .welcome-or-divider{text-align:center;font-size:12px;color:var(--muted);margin:8px 0;letter-spacing:1px}
 /* ── SERVER LIST REDESIGN ─────────────────────────────── */
 .sv-grid{display:flex;flex-direction:column;gap:8px;padding:4px 0;width:100%}
-.sv2-card{background:linear-gradient(145deg,rgba(13,19,34,.95),rgba(8,13,24,.98));border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;transition:all .18s;position:relative;min-width:calc(50vw - 16px);max-width:calc(50vw - 16px);scroll-snap-align:start;flex-shrink:0}
+.sv2-card{background:linear-gradient(145deg,rgba(13,19,34,.95),rgba(8,13,24,.98));border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;transition:all .18s;position:relative;min-width:calc(50vw - 22px);max-width:calc(50vw - 22px);scroll-snap-align:start;flex-shrink:0}
 .sv2-card:hover{border-color:rgba(79,158,255,.35);transform:translateY(-2px)}
 .sv2-card.running{border-color:rgba(0,230,118,.4);box-shadow:0 0 14px rgba(0,230,118,.15)}
 .sv2-card.stopped{opacity:.7}
@@ -853,7 +853,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
   <div class="modal-box" style="max-width:98vw;width:98vw;padding-bottom:8px;padding-left:10px;padding-right:10px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="modal-title" style="margin:0">🖥 Máy chủ của bạn</div>
-      <button class="btn btn-primary" style="padding:6px 12px;font-size:11px;border-radius:8px" onclick="openCreateServerModal()">+ Tạo mới</button>
+      <button class="btn btn-primary" style="padding:4px 10px;font-size:10px;border-radius:7px;min-width:0;flex:0" onclick="openCreateServerModal()">+ Tạo mới</button>
     </div>
     <div id="server-list-body" style="min-height:80px;overflow-x:hidden;overflow-y:visible;padding:4px 0;margin:0 -10px;padding:4px 10px">
       <div style="text-align:center;color:var(--muted);padding:24px">⏳ Đang tải...</div>
