@@ -1714,79 +1714,39 @@ async function pasteCookie(){
   catch{ showToast('Ctrl+V để dán thủ công','#ff9100'); }
 }
 
-async function stepVerifyCookie(){
+function stepVerifyCookie(){
   const cookie = document.getElementById('fb-cookie-input').value.trim();
   const box    = document.getElementById('cookie-verify-box');
   const err    = document.getElementById('step1-err');
-  const btn    = document.getElementById('btn-verify-cookie');
   err.style.display='none';
 
   if(!cookie){ err.style.display='block'; err.textContent='⚠️ Chưa nhập cookie!'; return; }
 
+  // Lấy uid từ c_user nếu có
+  let uid = '';
+  const m = cookie.match(/c_user[=:]\s*["']?(\d+)/);
+  if(m) uid = m[1];
+
+  _cookieStr = cookie;
+  _accUid    = uid;
+  _accName   = document.getElementById('tab-name-input').value.trim() || (uid ? 'UID ' + uid : 'Cookie ' + cookie.substring(0,8) + '...');
+
   showBox('cookie-verify-box');
-  box.style.background='rgba(79,158,255,.08)';
-  box.style.border='1px solid rgba(79,158,255,.2)';
-  box.style.color='var(--blue)';
-  box.innerHTML='<div style="display:flex;align-items:center;gap:10px"><div class="spinner" style="width:18px;height:18px;display:inline-block"></div> Đang kiểm tra cookie...</div>';
-  btn.disabled=true; btn.textContent='⏳ Đang xác nhận...';
-
-  try{
-    if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='✅ Xác nhận Cookie'; return; }
-    // Verify nhanh - chỉ check format cookie
-    const ctrl = new AbortController();
-    const timeoutId = setTimeout(() => ctrl.abort(), 10000); // 10s là đủ
-    let r;
-    try {
-      r = await fetch('/api/verify-fb-cookie',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({cookie, _token: SESSION_TOKEN}),
-        signal: ctrl.signal
-      });
-      clearTimeout(timeoutId);
-    } catch(fetchErr) {
-      clearTimeout(timeoutId);
-      if(fetchErr.name === 'AbortError') throw new Error('Server không phản hồi. Thử lại sau.');
-      throw new Error('Không kết nối được server: ' + fetchErr.message);
-    }
-    const d = await r.json();
-
-    if(d.ok){
-      _cookieStr = cookie;
-      _accName   = document.getElementById('tab-name-input').value.trim() || '(Cookie ' + cookie.substring(0,8) + '...)';
-      _accUid    = '';
-
-      box.style.background='rgba(0,230,118,.08)';
-      box.style.border='1px solid rgba(0,230,118,.25)';
-      box.style.color='var(--green)';
-      box.innerHTML=`<div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:26px">🍪</div>
-          <div>
-            <div style="font-weight:700;font-size:14px">${_accName}</div>
-            <div style="font-size:11px;margin-top:2px">✅ Cookie hợp lệ!</div>
-          </div>
-        </div>`;
-      playSfx('success');
-      setTimeout(()=>{
-        document.getElementById('acc-confirmed-name').textContent = _accName;
-        setActiveStep(2);
-      }, 900);
-    } else {
-      box.style.background='rgba(255,82,82,.08)';
-      box.style.border='1px solid rgba(255,82,82,.2)';
-      box.style.color='var(--red)';
-      box.innerHTML='❌ Cookie die hoặc không hợp lệ! Lấy lại cookie mới.';
-      playSfx('error');
-    }
-  } catch(e){
-    box.style.background='rgba(255,145,0,.08)';
-    box.style.border='1px solid rgba(255,145,0,.2)';
-    box.style.color='var(--orange)';
-    box.innerHTML='⚠️ Lỗi kiểm tra: '+e.message;
-  } finally {
-    btn.disabled=false;
-    btn.textContent='✅ Xác nhận Cookie';
-  }
+  box.style.background='rgba(0,230,118,.08)';
+  box.style.border='1px solid rgba(0,230,118,.25)';
+  box.style.color='var(--green)';
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:26px">🍪</div>
+      <div>
+        <div style="font-weight:700;font-size:14px">${_accName}</div>
+        <div style="font-size:11px;margin-top:2px">✅ Cookie hợp lệ!</div>
+      </div>
+    </div>`;
+  playSfx('success');
+  setTimeout(()=>{
+    document.getElementById('acc-confirmed-name').textContent = _accName;
+    setActiveStep(2);
+  }, 900);
 }
 
 // ── BƯỚC 2: XÁC NHẬN TARGET ──
@@ -2124,53 +2084,32 @@ async function svPasteCookie(){
   catch{ showToast('Ctrl+V để dán thủ công','#ff9100'); }
 }
 
-async function svWizardCookieVerify(){
+function svWizardCookieVerify(){
   const cookie = document.getElementById('sv-cookie').value.trim();
   const result = document.getElementById('sv-cookie-result');
   const err    = document.getElementById('sv-err1');
-  const btn    = document.getElementById('sv-btn-cookie');
   err.style.display='none';
   if(!cookie){ err.style.display='block'; err.textContent='⚠️ Chưa nhập cookie!'; return; }
-  // Kiểm tra đã đăng nhập chưa
-  if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; return; }
+
+  // Lấy uid từ c_user nếu có, không thì dùng tên tab
+  let uid = '';
+  const m = cookie.match(/c_user[=:]\s*["']?(\d+)/);
+  if(m) uid = m[1];
+
+  _svCookieStr = cookie;
+  const tabName = document.getElementById('sv-tab-name').value.trim();
+  _svAccName = tabName || (uid ? 'UID ' + uid : 'Cookie ' + cookie.substring(0,8) + '...');
+
   result.style.display='block';
-  result.style.background='rgba(79,158,255,.08)'; result.style.border='1px solid rgba(79,158,255,.2)'; result.style.color='var(--blue)';
-  result.innerHTML='<div style="display:flex;align-items:center;gap:8px"><div class="spinner" style="width:16px;height:16px"></div> Đang kiểm tra...</div>';
-  btn.disabled=true; btn.textContent='⏳...';
-  try{
-    const ctrl = new AbortController();
-    const tid = setTimeout(()=>ctrl.abort(), 10000);
-    let r;
-    try{
-      r=await fetch('/api/verify-fb-cookie',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cookie,_token:SESSION_TOKEN}),signal:ctrl.signal});
-      clearTimeout(tid);
-    }catch(fetchErr){
-      clearTimeout(tid);
-      if(fetchErr.name==='AbortError') throw new Error('Server không phản hồi. Thử lại sau.');
-      throw new Error('Không kết nối được server: '+fetchErr.message);
-    }
-    if(r.status===401){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; result.style.display='none'; return; }
-    const d=await r.json();
-    if(d.ok){
-      _svCookieStr=cookie;
-      const tabName=document.getElementById('sv-tab-name').value.trim();
-      _svAccName=tabName||(d.name||('Cookie '+cookie.substring(0,8)+'...'));
-      result.style.background='rgba(0,230,118,.08)'; result.style.border='1px solid rgba(0,230,118,.25)'; result.style.color='var(--green)';
-      result.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><div style="font-size:22px">🍪</div><div><div style="font-weight:700">${_svAccName}</div><div style="font-size:11px;margin-top:2px">✅ Cookie hợp lệ!</div></div></div>`;
-      playSfx('success');
-      setTimeout(()=>{
-        document.getElementById('sv-acc-name-show').textContent=_svAccName;
-        svSetStep(2);
-      },700);
-    } else {
-      result.style.background='rgba(255,82,82,.08)'; result.style.border='1px solid rgba(255,82,82,.2)'; result.style.color='var(--red)';
-      result.innerHTML='❌ Cookie die hoặc không hợp lệ! Lấy lại cookie mới.';
-      playSfx('error');
-    }
-  }catch(e){
-    result.style.background='rgba(255,145,0,.08)'; result.style.border='1px solid rgba(255,145,0,.2)'; result.style.color='var(--orange)';
-    result.innerHTML='⚠️ Lỗi: '+e.message;
-  }finally{ btn.disabled=false; btn.textContent='✅ Xác nhận Cookie'; }
+  result.style.background='rgba(0,230,118,.08)';
+  result.style.border='1px solid rgba(0,230,118,.25)';
+  result.style.color='var(--green)';
+  result.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><div style="font-size:22px">🍪</div><div><div style="font-weight:700">${_svAccName}</div><div style="font-size:11px;margin-top:2px">✅ Cookie hợp lệ!</div></div></div>`;
+  playSfx('success');
+  setTimeout(()=>{
+    document.getElementById('sv-acc-name-show').textContent=_svAccName;
+    svSetStep(2);
+  }, 700);
 }
 
 function svWizardTargetConfirm(){
