@@ -190,7 +190,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .otp-timer{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
 .otp-timer-val{font-weight:800;font-variant-numeric:tabular-nums;color:var(--blue)}
 /* ── SERVER CARDS SWIPE ── */
-.sv-rail{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.sv-rail{display:flex;gap:8px;overflow-x:auto;padding:4px 4px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .sv-rail::-webkit-scrollbar{display:none}
 .sv-card{min-width:260px;max-width:260px;background:linear-gradient(145deg,#0d1322,#111827);border:1px solid rgba(79,158,255,.22);border-radius:18px;scroll-snap-align:start;overflow:hidden;flex-shrink:0;position:relative;transition:transform .15s,box-shadow .15s}
 .sv-card:active{transform:scale(.97)}
@@ -340,46 +340,47 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .welcome-or-divider{text-align:center;font-size:12px;color:var(--muted);margin:8px 0;letter-spacing:1px}
 /* ── SERVER LIST REDESIGN ─────────────────────────────── */
 .sv-grid{display:grid;grid-template-columns:1fr;gap:12px;padding:4px 0}
-.sv2-card{background:linear-gradient(145deg,rgba(13,19,34,.9),rgba(11,18,29,.95));border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;transition:all .2s;position:relative;min-width:240px;max-width:270px;scroll-snap-align:start}
-.sv2-card:hover{border-color:rgba(79,158,255,.3);box-shadow:0 8px 30px rgba(79,158,255,.1)}
-.sv2-card.running{border-color:rgba(0,230,118,.35);box-shadow:0 0 20px rgba(0,230,118,.12)}
-.sv2-card.stopped{opacity:.75}
-.sv2-uptime-row{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 0;font-size:11px;color:var(--muted)}
-.sv2-uptime-val{font-weight:700;color:var(--cyan);font-family:monospace;font-size:12px}
-.sv2-progress{height:3px;background:rgba(255,255,255,.07);border-radius:2px;margin:6px 14px 0;overflow:hidden}
+.sv2-card{background:linear-gradient(145deg,rgba(13,19,34,.95),rgba(8,13,24,.98));border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;transition:all .18s;position:relative;min-width:150px;max-width:160px;scroll-snap-align:start;flex-shrink:0}
+.sv2-card:hover{border-color:rgba(79,158,255,.35);transform:translateY(-2px)}
+.sv2-card.running{border-color:rgba(0,230,118,.4);box-shadow:0 0 14px rgba(0,230,118,.15)}
+.sv2-card.stopped{opacity:.7}
+.sv2-uptime-row{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 0;font-size:10px;color:var(--muted)}
+.sv2-uptime-val{font-weight:700;color:var(--cyan);font-family:monospace;font-size:10px}
+.sv2-progress{height:2px;background:rgba(255,255,255,.07);border-radius:2px;margin:4px 8px 0;overflow:hidden}
 .sv2-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue2),var(--cyan));border-radius:2px;transition:width .5s;width:0%}
-.sv2-header{display:flex;align-items:center;gap:12px;padding:14px 16px 10px}
-.sv2-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.sv2-status-dot.running{background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse-dot 1.2s infinite}
+.sv2-header{display:flex;align-items:center;gap:6px;padding:8px 10px 6px}
+.sv2-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sv2-status-dot.running{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse-dot 1.2s infinite}
 .sv2-status-dot.stopped{background:#444}
 .sv2-status-dot.ready{background:var(--blue)}
 .sv2-name{font-size:14px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sv2-status-badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.sv2-status-badge{padding:2px 6px;border-radius:20px;font-size:9px;font-weight:700}
 .sv2-status-badge.running{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)}
 .sv2-status-badge.stopped{background:rgba(255,255,255,.07);color:var(--muted);border:1px solid rgba(255,255,255,.1)}
 .sv2-status-badge.ready{background:rgba(79,158,255,.15);color:var(--blue);border:1px solid rgba(79,158,255,.25)}
-.sv2-screenshot{width:100%;height:90px;object-fit:cover;object-position:top;display:block;background:linear-gradient(to bottom,#070b14,#0d1220);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;position:relative}
-.sv2-screenshot-ph{width:100%;height:90px;background:linear-gradient(to bottom,#070b14,#0d1220);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:rgba(79,158,255,.3);font-size:11px;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
-.sv2-body{padding:12px 16px}
-.sv2-meta-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.sv2-meta-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:8px 10px}
-.sv2-meta-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);opacity:.6;margin-bottom:2px}
-.sv2-meta-val{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sv2-stats-row{display:flex;gap:8px;margin-bottom:12px}
+.sv2-screenshot{width:100%;height:80px;object-fit:cover;object-position:top;display:block;background:linear-gradient(to bottom,#070b14,#0d1220);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;position:relative}
+.sv2-screenshot-ph{width:100%;height:80px;background:linear-gradient(to bottom,#070b14,#0d1220);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:rgba(79,158,255,.3);font-size:10px;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
+.sv2-body{padding:6px 8px 4px}
+.sv2-meta-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px}
+.sv2-meta-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:7px;padding:4px 6px}
+.sv2-meta-label{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue);opacity:.6;margin-bottom:1px}
+.sv2-meta-val{font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv2-stats-row{display:flex;gap:5px;margin-bottom:5px}
+.sv2-stat{flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:7px;padding:5px 4px;text-align:center}
 .sv2-stat{flex:1;background:rgba(79,158,255,.06);border:1px solid rgba(79,158,255,.12);border-radius:10px;padding:8px 10px;text-align:center}
 .sv2-stat-val{font-size:18px;font-weight:800;color:var(--blue)}
 .sv2-stat-label{font-size:9px;color:var(--muted);margin-top:2px}
 .sv2-btn.detail{background:rgba(79,158,255,.12);color:var(--blue);border:1px solid rgba(79,158,255,.25);}
-.sv2-log{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:7px 10px;font-size:10px;font-family:monospace;color:rgba(79,158,255,.5);min-height:20px;white-space:pre-wrap;overflow-y:auto;max-height:90px;margin-bottom:12px;scrollbar-width:thin}
-.sv2-actions{display:flex;gap:7px}
-.sv2-btn{flex:1;padding:9px 8px;border-radius:11px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.sv2-log{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);border-radius:6px;padding:4px 6px;font-size:9px;font-family:monospace;color:rgba(79,158,255,.5);min-height:16px;white-space:pre-wrap;overflow-y:auto;max-height:52px;margin-bottom:5px;scrollbar-width:thin}
+.sv2-actions{display:flex;gap:4px}
+.sv2-btn{flex:1;padding:6px 4px;border-radius:8px;border:none;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:3px}
 .sv2-btn:hover{opacity:.85;transform:translateY(-1px)}
 .sv2-btn.play{background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff;box-shadow:0 4px 14px rgba(41,121,255,.3)}
 .sv2-btn.pause{background:rgba(255,193,0,.12);border:1px solid rgba(255,193,0,.3);color:#ffc100}
 .sv2-btn.stop{background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.3);color:var(--red)}
 .sv2-btn.resume{background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.3);color:var(--green)}
-.sv2-btn.del{flex:0 0 38px;padding:9px;background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);color:var(--red)}
-.sv2-id{font-size:9px;color:rgba(79,158,255,.35);font-family:monospace;padding:0 16px 10px}
+.sv2-btn.del{flex:0 0 28px;padding:5px;background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);color:var(--red)}
+.sv2-id{font-size:8px;color:rgba(79,158,255,.3);font-family:monospace;padding:0 8px 6px}
 /* ── FOOTER ──────────────────────────────────────────── */
 .footer{text-align:center;font-size:11px;color:var(--muted);margin-top:28px;opacity:.5}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4);pointer-events:none;max-width:90vw;text-align:center}
@@ -843,7 +844,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
 <!-- SERVER LIST MODAL - SWIPE CARDS -->
 <div class="modal-overlay" id="server-list-modal" onclick="if(event.target===this)closeModal('server-list-modal')">
-  <div class="modal-box" style="max-width:98vw;width:98vw;padding-bottom:8px">
+  <div class="modal-box" style="max-width:98vw;width:98vw;padding-bottom:8px;padding-left:10px;padding-right:10px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="modal-title" style="margin:0">🖥 Máy chủ của bạn</div>
       <button class="btn btn-primary" style="padding:6px 12px;font-size:11px;border-radius:8px" onclick="openCreateServerModal()">+ Tạo mới</button>
@@ -2217,41 +2218,50 @@ function buildServerCard2(sv){
   const cookieEsc = (sv.cookie||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   const targetEsc = (sv.target_url||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   return `
-  <div class="sv2-card ${st}" id="svcard2-${sv.id}">
+  <div class="sv2-card ${st}" id="svcard2-${sv.id}" onclick="event.stopPropagation();openDetailModal('${sv.id}')" style="cursor:pointer">
+    <!-- Header: dot + tên + badge -->
     <div class="sv2-header">
       <div class="sv2-status-dot ${st}" id="sv2-dot-${sv.id}"></div>
-      <div class="sv2-name">${sv.name||'Máy chủ ảo'}</div>
+      <div class="sv2-name" style="font-size:11px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sv.name||'Máy chủ'}</div>
       <span class="sv2-status-badge ${st}" id="sv2-badge-${sv.id}">${sLabel[st]||st}</span>
     </div>
-    <div id="sv2-ph-${sv.id}" class="sv2-screenshot-ph"><div style="font-size:32px;opacity:.3">🖥️</div><div>Chưa có ảnh</div></div>
-    <img id="sv2-img-${sv.id}" class="sv2-screenshot" style="display:none" onclick="openServerScreenshot('${sv.id}')" alt="screenshot"/>
+    <!-- Screenshot -->
+    <div id="sv2-ph-${sv.id}" class="sv2-screenshot-ph"><div style="font-size:22px;opacity:.25">🖥️</div></div>
+    <img id="sv2-img-${sv.id}" class="sv2-screenshot" style="display:none" alt="screenshot"/>
+    <!-- Body nhỏ gọn -->
     <div class="sv2-body">
-      <div class="sv2-meta-row">
-        <div class="sv2-meta-item"><div class="sv2-meta-label">🎯 Nạn nhân</div><div class="sv2-meta-val">${sv.target_name||sv.target_url||'?'}</div></div>
-        <div class="sv2-meta-item"><div class="sv2-meta-label">🍪 Acc</div><div class="sv2-meta-val">${sv.acc_name||'?'}</div></div>
-        <div class="sv2-meta-item"><div class="sv2-meta-label">🚀 Tốc độ</div><div class="sv2-meta-val">${{fast:'🏎 Nhanh',normal:'⚡ T.bình',slow:'🐢 Chậm'}[sv.speed||'normal']}</div></div>
-        <div class="sv2-meta-item"><div class="sv2-meta-label">📅 Tạo lúc</div><div class="sv2-meta-val">${sv.created||'?'}</div></div>
+      <!-- Victim + Acc 1 dòng -->
+      <div style="display:flex;gap:3px;margin-bottom:4px">
+        <div class="sv2-meta-item" style="flex:1;min-width:0"><div class="sv2-meta-label">🎯 Nạn nhân</div><div class="sv2-meta-val">${sv.target_name||'?'}</div></div>
+        <div class="sv2-meta-item" style="flex:1;min-width:0"><div class="sv2-meta-label">🍪 Acc</div><div class="sv2-meta-val">${sv.acc_name||'?'}</div></div>
       </div>
-      <div class="sv2-stats-row">
-        <div class="sv2-stat"><div class="sv2-stat-val" id="sv2-total-${sv.id}">0</div><div class="sv2-stat-label">Báo cáo</div></div>
-        <div class="sv2-stat"><div class="sv2-stat-val" id="sv2-loops-${sv.id}" style="color:var(--cyan)">0</div><div class="sv2-stat-label">Vòng lặp</div></div>
+      <!-- Stats: báo cáo + uptime -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 2px 3px">
+        <div style="display:flex;gap:8px">
+          <div style="text-align:center">
+            <div style="font-size:13px;font-weight:800;color:var(--green)" id="sv2-total-${sv.id}">0</div>
+            <div style="font-size:8px;color:var(--muted)">Báo cáo</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:13px;font-weight:800;color:var(--cyan)" id="sv2-loops-${sv.id}">0</div>
+            <div style="font-size:8px;color:var(--muted)">Vòng</div>
+          </div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:var(--cyan);font-family:monospace" id="sv2-uptime-${sv.id}">--:--:--</div>
       </div>
-      <div class="sv2-uptime-row">
-        <span>⏱ Uptime</span>
-        <span class="sv2-uptime-val" id="sv2-uptime-${sv.id}">--:--:--</span>
-      </div>
-      <div class="sv2-progress"><div class="sv2-progress-bar" id="sv2-prog-${sv.id}"></div></div>
-      <div class="sv2-log" id="sv2-log-${sv.id}" style="white-space:pre-wrap;overflow-y:auto;max-height:110px;text-overflow:clip;font-size:11px;font-family:monospace">⏳ Chờ dữ liệu...</div>
-      <div class="sv2-actions">
-        ${!isRunning && !isPaused ? `<button class="sv2-btn play" onclick="serverAction('start','${sv.id}','${cookieEsc}','${targetEsc}','${sv.speed||'normal'}','${sv.acc_name||''}','${sv.acc_uid||''}','${sv.target_name||''}')">▶ Chạy ngay</button>` : ''}
-        ${isRunning ? `<button class="sv2-btn pause" onclick="serverAction('pause','${sv.id}')">⏸ Tạm dừng</button>` : ''}
-        ${isPaused  ? `<button class="sv2-btn resume" onclick="serverAction('resume','${sv.id}')">▶ Tiếp tục</button>` : ''}
-        ${isRunning||isPaused ? `<button class="sv2-btn stop" onclick="serverAction('stop','${sv.id}')">⏹ Dừng hẳn</button>` : ''}
-        <button class="sv2-btn detail" onclick="event.stopPropagation();openDetailModal('${sv.id}')" title="Chi tiết">🔍 Chi tiết</button>
-        <button class="sv2-btn del" onclick="deleteServer('${sv.id}')" title="Xóa">🗑</button>
+      <div class="sv2-progress" style="margin:2px 0 4px"><div class="sv2-progress-bar" id="sv2-prog-${sv.id}"></div></div>
+      <!-- Log 1 dòng -->
+      <div id="sv2-log-${sv.id}" style="font-size:9px;font-family:monospace;color:rgba(79,158,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 0;min-height:14px">⏳ Chờ...</div>
+      <!-- Nút hành động: icon nhỏ -->
+      <div class="sv2-actions" style="margin-top:5px" onclick="event.stopPropagation()">
+        ${!isRunning && !isPaused ? `<button class="sv2-btn play" style="font-size:11px;padding:5px" onclick="serverAction('start','${sv.id}','${cookieEsc}','${targetEsc}','${sv.speed||'normal'}','${sv.acc_name||''}','${sv.acc_uid||''}','${sv.target_name||''}')">▶</button>` : ''}
+        ${isRunning ? `<button class="sv2-btn pause" style="font-size:11px;padding:5px" onclick="serverAction('pause','${sv.id}')">⏸</button>` : ''}
+        ${isPaused  ? `<button class="sv2-btn resume" style="font-size:11px;padding:5px" onclick="serverAction('resume','${sv.id}')">▶</button>` : ''}
+        ${isRunning||isPaused ? `<button class="sv2-btn stop" style="font-size:11px;padding:5px" onclick="serverAction('stop','${sv.id}')">⏹</button>` : ''}
+        <button class="sv2-btn detail" style="font-size:11px;padding:5px" onclick="event.stopPropagation();openDetailModal('${sv.id}')">🔍</button>
+        <button class="sv2-btn del" style="font-size:11px;padding:5px;flex:0 0 auto" onclick="event.stopPropagation();deleteServer('${sv.id}')">🗑</button>
       </div>
     </div>
-    <div class="sv2-id">🆔 ${sv.id}</div>
   </div>`;
 }
 
