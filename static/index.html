@@ -956,7 +956,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
 <!-- SERVER DETAIL MODAL -->
 <div class="modal-overlay" id="sv-detail-modal" onclick="if(event.target===this)closeDetailModal()" style="z-index:10000">
-  <div class="modal-box" style="max-width:480px;max-height:88vh;overflow-y:auto;padding:0">
+  <div class="modal-box" style="max-width:480px;max-height:88vh;overflow-y:auto;padding:0;box-sizing:border-box;width:calc(100vw - 40px)">
     <div style="background:linear-gradient(135deg,rgba(13,19,34,.98),rgba(11,18,29,.98));border-radius:18px;overflow:hidden">
       <!-- Header -->
       <div style="display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,.07)">
@@ -1259,7 +1259,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       <div style="margin-top:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <div style="font-size:12px;font-weight:700;color:var(--blue)">🖥 Máy chủ của bạn</div>
-          <button class="btn btn-primary" style="padding:5px 12px;font-size:11px" onclick="openCreateServerModal()">+ Tạo mới</button>
+          <button class="btn btn-primary" style="padding:5px 10px;font-size:14px;min-width:unset;flex:none;width:32px;height:32px;border-radius:50%" onclick="openCreateServerModal()">+</button>
         </div>
         <div class="sv-rail" id="sv-status-rail">
           <div class="sv-empty">⏳ Đang tải...</div>
@@ -2221,7 +2221,8 @@ function buildServerCard2(sv){
   const sLabel = {ready:'Sẵn sàng',running:'Đang chạy',stopped:'Đã dừng',paused:'Tạm dừng'};
   const st = sv.status||'ready';
   const dotColor = st==='running'?'var(--green)':st==='paused'?'#ffc800':'#555';
-  const created = sv.created_at ? sv.created_at.split(' ')[0] : '?';
+  const rawDate = sv.created_at || sv.created || sv.created_time || sv.createdAt || null;
+  const created = rawDate ? (String(rawDate).includes('T') ? String(rawDate).replace('T',' ').substring(0,16) : String(rawDate).substring(0,16)) : 'Chưa rõ';
   return `
   <div class="sv2-card ${st}" id="svcard2-${sv.id}" onclick="event.stopPropagation();openDetailModal('${sv.id}')" style="cursor:pointer">
     <!-- Tên tab nổi bật -->
@@ -2237,15 +2238,15 @@ function buildServerCard2(sv){
     <div style="padding:4px 9px 4px;display:flex;flex-direction:column">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">
         <span style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Acc</span>
-        <span style="font-size:9px;font-weight:700;color:#c9d8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%">${sv.acc_name||'?'}</span>
+        <span class="sv2-meta-val" style="font-size:9px;font-weight:700;color:#c9d8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%">${sv.acc_name||'?'}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">
         <span style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Nạn nhân</span>
-        <span style="font-size:9px;font-weight:700;color:#c9d8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%">${sv.target_name||'?'}</span>
+        <span class="sv2-meta-val" style="font-size:9px;font-weight:700;color:#c9d8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%">${sv.target_name||'?'}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">
         <span style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Tạo lúc</span>
-        <span style="font-size:9px;font-weight:600;color:#c9d8f0">${created}</span>
+        <span class="sv2-meta-val" style="font-size:9px;font-weight:600;color:#c9d8f0">${created}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">
         <span style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Uptime</span>
@@ -2550,23 +2551,41 @@ window._detailLogStore = {}; // svId → log lines array
 async function openDetailModal(svId){
   window._detailOpenId = svId;
   if(!window._detailLogStore[svId]) window._detailLogStore[svId] = [];
-  // Fill static info from card
+  // Fill static info from API
+  try{
+    const svr = await fetch('/api/servers',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(svr.ok){
+      const svList = await svr.json();
+      const sv = svList.find(s=>s.id===svId || s.id===parseInt(svId));
+      if(sv){
+        const detName = document.getElementById('det-name');
+        if(detName) detName.textContent = sv.name || ('Máy chủ ' + svId);
+        if(document.getElementById('det-acc'))     document.getElementById('det-acc').textContent     = sv.acc_name    || '?';
+        if(document.getElementById('det-victim'))  document.getElementById('det-victim').textContent  = sv.target_name || '?';
+        if(document.getElementById('det-speed'))   document.getElementById('det-speed').textContent   = sv.speed       || '?';
+        const rawDate = sv.created_at || sv.created || sv.created_time || sv.createdAt || null;
+        const created = rawDate ? (String(rawDate).includes('T') ? String(rawDate).replace('T',' ').substring(0,16) : String(rawDate).substring(0,16)) : '?';
+        if(document.getElementById('det-created')) document.getElementById('det-created').textContent = created;
+      }
+    }
+  }catch(e){}
+  // Also try to fill from card as fallback
   const card = document.getElementById('svcard2-'+svId);
   if(card){
     const badge = document.getElementById('sv2-badge-'+svId);
     const dot   = document.getElementById('sv2-dot-'+svId);
     const detBadge = document.getElementById('det-badge');
     const detDot   = document.getElementById('det-dot');
-    const detName  = document.getElementById('det-name');
     if(badge && detBadge){ detBadge.textContent=badge.textContent; detBadge.className=badge.className; }
     if(dot && detDot){ detDot.className=dot.className; }
-    // Meta from card text
-    const metas = card.querySelectorAll('.sv2-meta-val');
-    if(metas[0] && document.getElementById('det-victim')) document.getElementById('det-victim').textContent=metas[0].textContent;
-    if(metas[1] && document.getElementById('det-acc'))    document.getElementById('det-acc').textContent=metas[1].textContent;
-    if(metas[2] && document.getElementById('det-speed'))  document.getElementById('det-speed').textContent=metas[2].textContent;
-    if(metas[3] && document.getElementById('det-created'))document.getElementById('det-created').textContent=metas[3].textContent;
-    if(detName) detName.textContent = card.querySelector('.sv2-name')?.textContent || ('Máy chủ ' + svId);
+    const detName = document.getElementById('det-name');
+    if(detName && detName.textContent===''){
+      const metas = card.querySelectorAll('.sv2-meta-val');
+      if(metas[1] && !document.getElementById('det-victim').textContent) document.getElementById('det-victim').textContent=metas[1].textContent;
+      if(metas[0] && !document.getElementById('det-acc').textContent)    document.getElementById('det-acc').textContent=metas[0].textContent;
+      if(metas[2] && !document.getElementById('det-created').textContent)document.getElementById('det-created').textContent=metas[2].textContent;
+      detName.textContent = ('Máy chủ ' + svId);
+    }
   }
   // Fetch fresh status với since=0 để lấy toàn bộ log
   try{
