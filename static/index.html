@@ -88,15 +88,64 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .icon-btn:hover{border-color:var(--blue)}
 .badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 
-/* ── DROPDOWN ────────────────────────────────────────── */
+/* ── SIDEBAR MENU ─────────────────────────────────────── */
 .dropdown{position:relative}
-.dropdown-menu{display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--bg2);border:1px solid var(--border);border-radius:14px;min-width:220px;box-shadow:0 20px 60px var(--shadow);z-index:9999;overflow:hidden;backdrop-filter:blur(20px)}
-.dropdown-menu.open{display:block;animation:fadeDown .15s ease}
-@keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+/* Overlay mờ phía sau sidebar */
+#sidebar-overlay{display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.55);backdrop-filter:blur(4px)}
+#sidebar-overlay.open{display:block;animation:fadeOverlay .2s ease}
+@keyframes fadeOverlay{from{opacity:0}to{opacity:1}}
+/* Sidebar panel */
+#main-sidebar{position:fixed;top:0;left:-280px;width:270px;height:100%;z-index:9995;background:linear-gradient(180deg,#0d1322 0%,#0a0f1e 100%);border-right:1px solid rgba(79,158,255,.15);box-shadow:8px 0 40px rgba(0,0,0,.6);display:flex;flex-direction:column;transition:left .28s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+#main-sidebar.open{left:0}
+.sb-header{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.sb-logo{display:flex;align-items:center;gap:10px}
+.sb-logo-img{font-size:22px}
+.sb-logo-text{font-size:13px;font-weight:800;color:#fff;letter-spacing:.5px}
+.sb-close{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted)}
+.sb-close:hover{background:rgba(255,255,255,.12);color:#fff}
+.sb-user{margin:14px 16px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(79,158,255,.12),rgba(124,77,255,.08));border:1px solid rgba(79,158,255,.2);display:flex;align-items:center;gap:11px}
+.sb-user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue2),var(--purple));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sb-user-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:1px}
+.sb-user-role{font-size:10px;color:var(--blue);font-weight:600}
+.sb-section-label{padding:14px 18px 6px;font-size:9.5px;font-weight:700;letter-spacing:1.8px;color:rgba(79,158,255,.55);text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:13px;padding:12px 18px;font-size:13.5px;font-weight:600;color:rgba(255,255,255,.82);cursor:pointer;position:relative;transition:all .15s;border-left:3px solid transparent}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#fff;border-left-color:var(--blue)}
+.sb-item.active{background:rgba(79,158,255,.1);color:var(--blue);border-left-color:var(--blue)}
+.sb-item-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0}
+.sb-item-icon svg{width:17px;height:17px}
+.ic-blue{background:rgba(41,121,255,.22)}
+.ic-green{background:rgba(0,200,130,.2)}
+.ic-orange{background:rgba(255,150,50,.2)}
+.ic-purple{background:rgba(149,76,255,.22)}
+.ic-cyan{background:rgba(0,212,255,.18)}
+.ic-red{background:rgba(255,80,80,.2)}
+.ic-yellow{background:rgba(255,200,0,.2)}
+.ic-teal{background:rgba(0,188,188,.2)}
+.ic-pink{background:rgba(255,80,160,.18)}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;min-width:17px;height:17px;border-radius:50%;display:none;align-items:center;justify-content:center;padding:0 3px}
+.sb-item-tag{margin-left:auto;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:.5px}
+.sb-item-tag.hot{background:rgba(255,89,89,.2);color:#ff5959;border:1px solid rgba(255,89,89,.3)}
+.sb-item-tag.new{background:rgba(0,200,150,.15);color:#00c896;border:1px solid rgba(0,200,150,.25)}
+.sb-divider{height:1px;background:rgba(255,255,255,.06);margin:8px 16px}
+.sb-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;cursor:pointer}
+.sb-toggle-row:hover{background:rgba(255,255,255,.05)}
+.sb-toggle-label{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;color:rgba(255,255,255,.75)}
+.sb-toggle-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0}
+.sb-toggle-icon svg{width:17px;height:17px}
+.sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.sb-logout{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:12px;background:rgba(255,89,89,.08);border:1px solid rgba(255,89,89,.2);cursor:pointer;font-size:13px;font-weight:700;color:#ff5959;transition:all .15s}
+.sb-logout:hover{background:rgba(255,89,89,.15)}
+/* Welcome topbar */
+.welcome-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0;position:relative;z-index:1}
+.welcome-topbar-logo{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--blue);letter-spacing:.5px}
+.welcome-topbar-right{display:flex;align-items:center;gap:10px}
+.welcome-clock{font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.hamburger-btn{width:38px;height:38px;border-radius:11px;border:1px solid rgba(79,158,255,.25);background:rgba(79,158,255,.08);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.hamburger-btn span{display:block;width:18px;height:2px;background:var(--blue);border-radius:2px;transition:all .2s}
+.hamburger-btn:hover{border-color:var(--blue);background:rgba(79,158,255,.15)}
 .d-section{padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--blue);opacity:.6;text-transform:uppercase;margin-top:4px}
 .d-item{padding:11px 16px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:10px;border-top:1px solid var(--border)}
 .d-item:hover{background:var(--glass2)}
-.d-item:first-of-type{border-top:none}
 .d-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;font-size:13px;cursor:pointer;border-top:1px solid var(--border)}
 .d-toggle:hover{background:var(--glass2)}
 .toggle-switch{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:background .2s}
@@ -406,12 +455,104 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 <!-- ═══════════════════════════════════════════════════════
      WELCOME SCREEN (shown after login)
 ════════════════════════════════════════════════════════ -->
+<!-- SIDEBAR OVERLAY -->
+<div id="sidebar-overlay" onclick="closeMenu()"></div>
+
+<!-- SIDEBAR PANEL -->
+<div id="main-sidebar">
+  <div class="sb-header">
+    <div class="sb-logo">
+      <span class="sb-logo-img">🐬</span>
+      <span class="sb-logo-text">FB DAME TOOL</span>
+    </div>
+    <div class="sb-close" onclick="closeMenu()">✕</div>
+  </div>
+
+  <div class="sb-user">
+    <div class="sb-user-avatar" id="sb-avatar-el">👤</div>
+    <div>
+      <div class="sb-user-name" id="sb-name-el">...</div>
+      <div class="sb-user-role" id="sb-role-el">Thành viên</div>
+    </div>
+  </div>
+
+  <div class="sb-section-label">Tính năng</div>
+  <div class="sb-item" onclick="openIntroModal();closeMenu()">
+    <span class="sb-item-icon ic-blue"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M9.1 3.4C10 3.1 11 3 12 3"/></svg></span>
+    Giới thiệu &amp; Chức năng
+  </div>
+  <div class="sb-item" onclick="openServerListModal();closeMenu()">
+    <span class="sb-item-icon ic-purple"><svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+    Danh sách máy chủ
+  </div>
+  <div class="sb-item" onclick="openHistory();closeMenu()">
+    <span class="sb-item-icon ic-teal"><svg viewBox="0 0 24 24" fill="none" stroke="#00bcbc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg></span>
+    Lịch sử
+    <span class="sb-badge" id="sb-hist-badge"></span>
+  </div>
+  <div class="sb-item" onclick="openModal('admin-modal');closeMenu()">
+    <span class="sb-item-icon ic-orange"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9632" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+    Thông tin Admin
+  </div>
+  <div class="sb-item" onclick="openModal('guide-modal');closeMenu()">
+    <span class="sb-item-icon ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="#00c882" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+    Hướng dẫn
+  </div>
+  <div class="sb-item" id="mgmt-menu-item" style="display:none" onclick="openMgmt();closeMenu()">
+    <span class="sb-item-icon ic-yellow"><svg viewBox="0 0 24 24" fill="none" stroke="#ffc800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+    Quản lý tài khoản
+  </div>
+
+  <div class="sb-divider"></div>
+  <div class="sb-section-label">Cài đặt</div>
+  <div class="sb-toggle-row" onclick="toggleTheme()">
+    <div class="sb-toggle-label">
+      <span class="sb-toggle-icon ic-cyan"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+      <span id="theme-label">Chế độ tối</span>
+    </div>
+    <div class="toggle-switch on" id="theme-toggle"><div class="toggle-knob"></div></div>
+  </div>
+  <div class="sb-toggle-row" onclick="toggleMusic()">
+    <div class="sb-toggle-label">
+      <span class="sb-toggle-icon ic-pink"><svg viewBox="0 0 24 24" fill="none" stroke="#ff50a0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+      Nhạc nền
+    </div>
+    <div class="toggle-switch" id="music-toggle"><div class="toggle-knob"></div></div>
+  </div>
+  <div class="sb-toggle-row" onclick="toggleSfx()">
+    <div class="sb-toggle-label">
+      <span class="sb-toggle-icon ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="#00c882" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></span>
+      Âm thanh
+    </div>
+    <div class="toggle-switch on" id="sfx-toggle"><div class="toggle-knob"></div></div>
+  </div>
+
+  <div class="sb-footer">
+    <div class="sb-logout" onclick="doLogout()">
+      <span class="sb-toggle-icon ic-red" style="background:rgba(255,80,80,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#ff5050" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+      Đăng xuất
+    </div>
+  </div>
+</div>
+
 <div id="welcome-screen">
   <div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+  <!-- TOPBAR WELCOME -->
+  <div class="welcome-topbar">
+    <div class="welcome-topbar-logo">🐬 FB Dame Tool</div>
+    <div class="welcome-topbar-right">
+      <div class="welcome-clock" id="clock-welcome">--:--:--</div>
+      <div class="hamburger-btn" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
   <div class="welcome-wrap">
 
     <!-- HERO -->
-    <div class="welcome-hero">
+    <div class="welcome-hero" style="padding-top:24px">
       <div class="welcome-hero-badge">🐬 &nbsp;FB DAME TOOL</div>
       <div class="welcome-title">Chào mừng trở lại! 👋</div>
       <div class="welcome-sub">Công cụ dame acc Facebook tự động — báo cáo liên tục, chạy trên máy chủ ảo 24/7, không cần giữ máy bật.</div>
@@ -438,22 +579,22 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">⚡ Tính năng nổi bật</div>
     <div class="feature-grid">
       <div class="feature-card">
-        <div class="feature-icon">🖥️</div>
+        <div class="feature-icon" style="width:46px;height:46px;border-radius:13px;background:rgba(149,76,255,.2);display:flex;align-items:center;justify-content:center;margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
         <div class="feature-title">Máy chủ ảo 24/7</div>
         <div class="feature-desc">Cấu hình lưu vĩnh viễn, chạy liên tục không cần giữ máy tính bật.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">📊</div>
+        <div class="feature-icon" style="width:46px;height:46px;border-radius:13px;background:rgba(41,121,255,.2);display:flex;align-items:center;justify-content:center;margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
         <div class="feature-title">Theo dõi realtime</div>
         <div class="feature-desc">Xem log, số báo cáo, screenshot tab máy ảo trực tiếp.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">🍪</div>
+        <div class="feature-icon" style="width:46px;height:46px;border-radius:13px;background:rgba(255,150,50,.2);display:flex;align-items:center;justify-content:center;margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff9632" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
         <div class="feature-title">Đa dạng cookie</div>
         <div class="feature-desc">Hỗ trợ header string, JSON array, nhiều dòng từ Cookie-Editor.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">🎯</div>
+        <div class="feature-icon" style="width:46px;height:46px;border-radius:13px;background:rgba(0,200,130,.2);display:flex;align-items:center;justify-content:center;margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00c882" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
         <div class="feature-title">Nhiều tốc độ</div>
         <div class="feature-desc">Chọn nhanh/trung bình/chậm tùy nhu cầu và sức khoẻ cookie.</div>
       </div>
@@ -465,12 +606,12 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">🚀 Bắt đầu ngay</div>
     <div class="welcome-actions">
       <button class="welcome-action-btn primary full" onclick="welcomeCreateServer()">
-        <span class="wab-icon">➕</span>
-        <div class="wab-title">Tạo máy chủ & Chạy ngay</div>
-        <div class="wab-desc">Nhập tên → cookie → target → lưu & chạy hoặc chạy sau. Hỗ trợ nhiều máy chủ song song 24/7.</div>
+        <span class="wab-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        <div class="wab-title">Tạo máy chủ &amp; Chạy ngay</div>
+        <div class="wab-desc">Nhập tên → cookie → target → lưu &amp; chạy hoặc chạy sau. Hỗ trợ nhiều máy chủ song song 24/7.</div>
       </button>
       <button class="welcome-action-btn secondary full" onclick="welcomeServerList()">
-        <span class="wab-icon">📋</span>
+        <span class="wab-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
         <div class="wab-title">Danh sách máy chủ</div>
         <div class="wab-desc">Xem, quản lý, khởi động lại các máy chủ đã tạo. Theo dõi trạng thái realtime.</div>
       </button>
@@ -478,6 +619,15 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
     <div style="text-align:center">
       <span onclick="closeWelcome()" style="color:var(--blue);font-size:13px;cursor:pointer;opacity:.7">Bỏ qua, vào thẳng app →</span>
+    </div>
+
+    <!-- COPYRIGHT -->
+    <div style="text-align:center;margin-top:32px;padding:20px 0 8px;border-top:1px solid rgba(255,255,255,.06)">
+      <div style="font-size:11px;color:rgba(255,255,255,.25);line-height:1.8;letter-spacing:.3px">
+        © 2026 · Bản quyền thuộc về<br>
+        <span style="color:rgba(79,158,255,.6);font-weight:700">Nguyễn Hoàng Khánh Nam · Dzi Meo Meo</span><br>
+        <span style="opacity:.6">IT Automation Developer · FB Dame Tool</span>
+      </div>
     </div>
   </div>
 </div>
@@ -818,39 +968,15 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div class="topbar-right">
       <div class="clock" id="clock">--:--:--</div>
       <div class="user-badge" id="user-badge-el">👤 ...</div>
-      <div class="dropdown">
-        <div class="icon-btn" onclick="toggleMenu()" title="Menu">☰</div>
-        <div class="dropdown-menu" id="main-menu">
-          <div class="d-section">Tài khoản</div>
-          <div class="d-item" onclick="doLogout()">🚪 Đăng xuất</div>
-          <div class="d-section">Tính năng</div>
-          <div class="d-item" onclick="openIntroModal();closeMenu()">🐬 Giới thiệu & Chức năng</div>
-          <div class="d-item" onclick="openServerListModal();closeMenu()">🖥 Danh sách máy chủ</div>
-          <div class="d-item" onclick="openHistory();closeMenu()">📋 Lịch sử <span id="hist-badge" class="badge" style="position:static;margin-left:auto;display:none"></span></div>
-          <div class="d-item" onclick="openModal('admin-modal');closeMenu()">🔐 Thông tin Admin</div>
-          <div class="d-item" onclick="openModal('guide-modal');closeMenu()">📚 Hướng dẫn</div>
-          <div class="d-item" id="mgmt-menu-item" style="display:none" onclick="openMgmt();closeMenu()">👑 Quản lý tài khoản</div>
-          <div class="d-section">Cài đặt</div>
-          <div class="d-toggle" onclick="toggleTheme()">
-            <span><span id="theme-label">🌙 Chế độ tối</span></span>
-            <div class="toggle-switch on" id="theme-toggle"><div class="toggle-knob"></div></div>
-          </div>
-          <div class="d-toggle" onclick="toggleMusic()">
-            <span>🎵 Nhạc nền</span>
-            <div class="toggle-switch" id="music-toggle"><div class="toggle-knob"></div></div>
-          </div>
-          <div class="d-toggle" onclick="toggleSfx()">
-            <span>🔊 Âm thanh</span>
-            <div class="toggle-switch on" id="sfx-toggle"><div class="toggle-knob"></div></div>
-          </div>
-        </div>
+      <div class="hamburger-btn" onclick="toggleMenu()" title="Menu">
+        <span></span><span></span><span></span>
       </div>
     </div>
   </div>
 
   <!-- MARQUEE -->
   <div class="marquee-wrap">
-    <div class="marquee">🐬 FB Dame Tool · Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi Meo Meo) · IT Automation Developer · Nhập cookie Facebook + link target để dame acc · Không chia sẻ cookie với người khác · 2026</div>
+    <div class="marquee">🐬 FB Dame Tool · © 2026 Bản quyền thuộc về Nguyễn Hoàng Khánh Nam (Dzi Meo Meo) · IT Automation Developer · Nhập cookie Facebook + link target để dame acc · Không chia sẻ cookie với người khác · All rights reserved.</div>
   </div>
 
   <!-- SUPPORT BUTTONS -->
@@ -1367,6 +1493,13 @@ function showApp(){
   if(badge)badge.textContent=(IS_ADMIN?'👑 ':'👤 ')+CURRENT_USER;
   const mgmt=document.getElementById('mgmt-menu-item');
   if(mgmt)mgmt.style.display=IS_ADMIN?'flex':'none';
+  // Sidebar user info
+  const sbName=document.getElementById('sb-name-el');
+  if(sbName)sbName.textContent=CURRENT_USER;
+  const sbRole=document.getElementById('sb-role-el');
+  if(sbRole)sbRole.textContent=IS_ADMIN?'👑 Admin':'Thành viên';
+  const sbAv=document.getElementById('sb-avatar-el');
+  if(sbAv)sbAv.textContent=IS_ADMIN?'👑':'👤';
   // Welcome greeting
   const titleEl=document.querySelector('#welcome-screen .welcome-title');
   if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
@@ -1837,8 +1970,16 @@ function openUserDetail(username){
 // ═══════════════════════════════════════════════════════
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-function toggleMenu(){document.getElementById('main-menu').classList.toggle('open');}
-function closeMenu(){document.getElementById('main-menu').classList.remove('open');}
+function toggleMenu(){
+  const sb=document.getElementById('main-sidebar');
+  const ov=document.getElementById('sidebar-overlay');
+  if(sb.classList.contains('open')){closeMenu();}
+  else{sb.classList.add('open');ov.classList.add('open');}
+}
+function closeMenu(){
+  document.getElementById('main-sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
 
 // ── Admin clock realtime ──
 function startAdminClock(){
@@ -2326,7 +2467,7 @@ async function deleteServer(id){
   await loadServerList();
   showToast('🗑 Đã xóa máy chủ','var(--muted)');
 }
-document.addEventListener('click',e=>{const m=document.getElementById('main-menu');if(m&&m.classList.contains('open')&&!e.target.closest('.dropdown'))closeMenu();});
+document.addEventListener('click',e=>{if(!sfxOn)return;const el=e.target.closest('button,.btn,.support-btn,.sb-item,.sb-toggle-row,.sb-logout,.hist-btn,.tab,.page-btn,.captcha-opt,.auth-tab');if(el)playSfx('click');});
 
 let _theme='dark';
 function toggleTheme(){
@@ -2355,14 +2496,18 @@ function playSfx(type){
     else if(type==='error'){osc.frequency.setValueAtTime(300,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(150,ctx.currentTime+.2);gain.gain.setValueAtTime(.15,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.2);osc.start(ctx.currentTime);osc.stop(ctx.currentTime+.2);}
   }catch{}
 }
-document.addEventListener('click',e=>{if(!sfxOn)return;const el=e.target.closest('button,.btn,.support-btn,.d-item,.d-toggle,.hist-btn,.tab,.page-btn,.captcha-opt,.auth-tab');if(el)playSfx('click');});
+// sfx click handled above
 
 function showToast(msg,bg='#4f9eff'){
   const t=document.createElement('div');t.className='toast';t.textContent=msg;t.style.background=bg;
   document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
 }
 function startClock(){
-  setInterval(()=>{const el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleTimeString('vi-VN');},1000);
+  setInterval(()=>{
+    const t=new Date().toLocaleTimeString('vi-VN');
+    const el=document.getElementById('clock');if(el)el.textContent=t;
+    const el2=document.getElementById('clock-welcome');if(el2)el2.textContent=t;
+  },1000);
 }
 
 // Khởi động nếu đã có session
