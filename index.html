@@ -2,14 +2,14 @@
 <html lang="vi" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>FB Dame Tool — Dzi Meo Meo</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="🐬 FB Dame Tool — by Dzi Meo Meo">
 <meta property="og:description" content="Công cụ dame acc Facebook. Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi) · IT Automation Developer · 2026">
-<meta property="og:image" content="https://i.imgur.com/vacr9kd.jpeg">
+<meta property="og:image" content="https://i.imgur.com/1qYFul7.jpeg">
 <meta name="description" content="Công cụ dame acc Facebook">
-<link rel="icon" href="https://i.imgur.com/vacr9kd.jpeg" type="image/jpeg">
+<link rel="icon" href="https://i.imgur.com/1qYFul7.jpeg" type="image/jpeg">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;transition:background .3s,color .3s,border-color .3s}
 :root{
@@ -39,6 +39,21 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .auth-card{width:100%;max-width:420px;background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:24px;padding:30px 28px;box-shadow:0 20px 60px var(--shadow)}
 .auth-logo{text-align:center;margin-bottom:22px}
 .auth-logo-icon{font-size:42px;margin-bottom:8px}
+
+/* Rainbow border logo for login */
+@keyframes rainbowSpin{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.rainbow-logo-wrap{
+  width:76px;height:76px;border-radius:18px;padding:3px;
+  background:linear-gradient(135deg,#ff0000,#ff7700,#ffff00,#00ff00,#00ffff,#0077ff,#8800ff,#ff0000);
+  background-size:300% 300%;
+  animation:rainbowSpin 2.5s linear infinite;
+  box-shadow:0 0 22px rgba(124,77,255,.45),0 0 8px rgba(0,229,255,.3);
+  display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px;
+}
+.rainbow-logo-img{width:70px;height:70px;border-radius:15px;object-fit:cover;display:block}
+
+/* Circular logo for sidebar */
+.sb-logo-circle{width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid rgba(79,158,255,.4);display:block}
 .auth-logo-title{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .auth-logo-sub{font-size:11px;color:var(--muted);margin-top:4px}
 .auth-tabs{display:flex;gap:0;background:var(--glass2);border-radius:12px;padding:4px;margin-bottom:24px}
@@ -55,6 +70,10 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .auth-err{background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.3);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--red);display:none}
 .remember-row{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--muted);user-select:none}
+.pw-eye-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--muted);backdrop-filter:blur(4px);transition:all .18s;padding:0}
+.pw-eye-btn svg{width:16px;height:16px;transition:all .18s}
+.pw-eye-btn:hover{background:rgba(79,158,255,0.15);border-color:rgba(79,158,255,0.4);color:var(--blue);transform:translateY(-50%) scale(1.08)}
+.pw-eye-btn.active{background:rgba(79,158,255,0.18);border-color:rgba(79,158,255,0.5);color:var(--blue)}
 .remember-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);background:var(--glass2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:12px}
 .remember-check.checked{background:linear-gradient(135deg,var(--blue2),var(--purple));border-color:transparent;color:#fff}
 
@@ -84,19 +103,74 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .admin-badge{background:linear-gradient(135deg,rgba(255,215,64,.2),rgba(255,145,0,.2));border-color:rgba(255,215,64,.4);color:var(--yellow)}
 
 /* ── ICON BUTTONS ────────────────────────────────────── */
-.icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--glass2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text);position:relative}
-.icon-btn:hover{border-color:var(--blue)}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:none;background:var(--glass2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text);position:relative;transition:all .15s}
+.icon-btn:hover{background:rgba(79,158,255,.18);transform:scale(1.07)}
+
+/* ── SUPPORT BUTTONS → sidebar style ─────────────────── */
+.support-btn{flex:1;padding:10px 12px;border-radius:13px;background:var(--glass);border:1px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;text-align:left;color:var(--text);display:flex;align-items:center;gap:10px;transition:all .15s}
+.support-btn:hover{border-color:var(--blue);background:rgba(79,158,255,.08);transform:translateY(-1px)}
+.support-btn .sb-item-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.support-btn .sb-item-icon svg{width:17px;height:17px}
 .badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 
-/* ── DROPDOWN ────────────────────────────────────────── */
+/* ── SIDEBAR MENU ─────────────────────────────────────── */
 .dropdown{position:relative}
-.dropdown-menu{display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--bg2);border:1px solid var(--border);border-radius:14px;min-width:220px;box-shadow:0 20px 60px var(--shadow);z-index:9999;overflow:hidden;backdrop-filter:blur(20px)}
-.dropdown-menu.open{display:block;animation:fadeDown .15s ease}
-@keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+/* Overlay mờ phía sau sidebar */
+#sidebar-overlay{display:none;position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.55);backdrop-filter:blur(4px)}
+#sidebar-overlay.open{display:block;animation:fadeOverlay .2s ease}
+@keyframes fadeOverlay{from{opacity:0}to{opacity:1}}
+/* Sidebar panel */
+#main-sidebar{position:fixed;top:0;left:-280px;width:270px;height:100%;z-index:9995;background:linear-gradient(180deg,#0d1322 0%,#0a0f1e 100%);border-right:1px solid rgba(79,158,255,.15);box-shadow:8px 0 40px rgba(0,0,0,.6);display:flex;flex-direction:column;transition:left .28s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+#main-sidebar.open{left:0}
+.sb-header{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.sb-logo{display:flex;align-items:center;gap:10px}
+.sb-logo-img{font-size:22px}
+.sb-logo-text{font-size:13px;font-weight:800;color:#fff;letter-spacing:.5px}
+.sb-close{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted)}
+.sb-close:hover{background:rgba(255,255,255,.12);color:#fff}
+.sb-user{margin:14px 16px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(79,158,255,.12),rgba(124,77,255,.08));border:1px solid rgba(79,158,255,.2);display:flex;align-items:center;gap:11px}
+.sb-user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue2),var(--purple));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sb-user-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:1px}
+.sb-user-role{font-size:10px;color:var(--blue);font-weight:600}
+.sb-section-label{padding:14px 18px 6px;font-size:9.5px;font-weight:700;letter-spacing:1.8px;color:rgba(79,158,255,.55);text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:13px;padding:12px 18px;font-size:13.5px;font-weight:600;color:rgba(255,255,255,.82);cursor:pointer;position:relative;transition:all .15s;border-left:3px solid transparent}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#fff;border-left-color:var(--blue)}
+.sb-item.active{background:rgba(79,158,255,.1);color:var(--blue);border-left-color:var(--blue)}
+.sb-item-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0}
+.sb-item-icon svg{width:17px;height:17px}
+.ic-blue{background:rgba(41,121,255,.22)}
+.ic-green{background:rgba(0,200,130,.2)}
+.ic-orange{background:rgba(255,150,50,.2)}
+.ic-purple{background:rgba(149,76,255,.22)}
+.ic-cyan{background:rgba(0,212,255,.18)}
+.ic-red{background:rgba(255,80,80,.2)}
+.ic-yellow{background:rgba(255,200,0,.2)}
+.ic-teal{background:rgba(0,188,188,.2)}
+.ic-pink{background:rgba(255,80,160,.18)}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;min-width:17px;height:17px;border-radius:50%;display:none;align-items:center;justify-content:center;padding:0 3px}
+.sb-item-tag{margin-left:auto;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:.5px}
+.sb-item-tag.hot{background:rgba(255,89,89,.2);color:#ff5959;border:1px solid rgba(255,89,89,.3)}
+.sb-item-tag.new{background:rgba(0,200,150,.15);color:#00c896;border:1px solid rgba(0,200,150,.25)}
+.sb-divider{height:1px;background:rgba(255,255,255,.06);margin:8px 16px}
+.sb-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;cursor:pointer}
+.sb-toggle-row:hover{background:rgba(255,255,255,.05)}
+.sb-toggle-label{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;color:rgba(255,255,255,.75)}
+.sb-toggle-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0}
+.sb-toggle-icon svg{width:17px;height:17px}
+.sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.sb-logout{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:12px;background:rgba(255,89,89,.08);border:1px solid rgba(255,89,89,.2);cursor:pointer;font-size:13px;font-weight:700;color:#ff5959;transition:all .15s}
+.sb-logout:hover{background:rgba(255,89,89,.15)}
+/* Welcome topbar */
+.welcome-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0;position:relative;z-index:1}
+.welcome-topbar-logo{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--blue);letter-spacing:.5px}
+.welcome-topbar-right{display:flex;align-items:center;gap:10px}
+.welcome-clock{font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.hamburger-btn{width:38px;height:38px;border-radius:11px;border:1px solid rgba(79,158,255,.25);background:rgba(79,158,255,.08);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.hamburger-btn span{display:block;width:18px;height:2px;background:var(--blue);border-radius:2px;transition:all .2s}
+.hamburger-btn:hover{border-color:var(--blue);background:rgba(79,158,255,.15)}
 .d-section{padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--blue);opacity:.6;text-transform:uppercase;margin-top:4px}
 .d-item{padding:11px 16px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:10px;border-top:1px solid var(--border)}
 .d-item:hover{background:var(--glass2)}
-.d-item:first-of-type{border-top:none}
 .d-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;font-size:13px;cursor:pointer;border-top:1px solid var(--border)}
 .d-toggle:hover{background:var(--glass2)}
 .toggle-switch{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:background .2s}
@@ -141,7 +215,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .otp-timer{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
 .otp-timer-val{font-weight:800;font-variant-numeric:tabular-nums;color:var(--blue)}
 /* ── SERVER CARDS SWIPE ── */
-.sv-rail{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.sv-rail{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%;box-sizing:border-box}
 .sv-rail::-webkit-scrollbar{display:none}
 .sv-card{min-width:260px;max-width:260px;background:linear-gradient(145deg,#0d1322,#111827);border:1px solid rgba(79,158,255,.22);border-radius:18px;scroll-snap-align:start;overflow:hidden;flex-shrink:0;position:relative;transition:transform .15s,box-shadow .15s}
 .sv-card:active{transform:scale(.97)}
@@ -208,7 +282,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:520px;box-shadow:0 30px 80px var(--shadow);margin:auto;animation:popIn .2s ease}
 @keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
 .modal-title{font-size:18px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:10px}
-.close-btn{width:100%;padding:11px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff;font-weight:700;cursor:pointer;margin-top:16px;font-size:14px}
+.close-btn{width:100%;padding:8px;border:none;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:var(--muted);font-weight:600;cursor:pointer;margin-top:10px;font-size:12px}
 
 /* ── ADMIN MODAL ─────────────────────────────────────── */
 .admin-avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 14px;background:linear-gradient(135deg,var(--blue2),var(--purple));display:flex;align-items:center;justify-content:center;font-size:36px;box-shadow:0 8px 30px rgba(79,158,255,.4)}
@@ -290,42 +364,48 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .welcome-action-btn.full{grid-column:span 2}
 .welcome-or-divider{text-align:center;font-size:12px;color:var(--muted);margin:8px 0;letter-spacing:1px}
 /* ── SERVER LIST REDESIGN ─────────────────────────────── */
-.sv-grid{display:grid;grid-template-columns:1fr;gap:12px;padding:4px 0}
-.sv2-card{background:linear-gradient(145deg,rgba(13,19,34,.9),rgba(11,18,29,.95));border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden;transition:all .2s;position:relative}
-.sv2-card:hover{border-color:rgba(79,158,255,.3);box-shadow:0 8px 30px rgba(79,158,255,.1)}
-.sv2-card.running{border-color:rgba(0,230,118,.35);box-shadow:0 0 20px rgba(0,230,118,.12)}
-.sv2-card.stopped{opacity:.75}
-.sv2-header{display:flex;align-items:center;gap:12px;padding:14px 16px 10px}
-.sv2-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.sv2-status-dot.running{background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse-dot 1.2s infinite}
+.sv-grid{display:flex;flex-direction:column;gap:8px;padding:4px 0;width:100%}
+.sv2-card{background:linear-gradient(145deg,rgba(13,19,34,.95),rgba(8,13,24,.98));border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;transition:all .18s;position:relative;min-width:calc(50vw - 22px);max-width:calc(50vw - 22px);scroll-snap-align:start;flex-shrink:0}
+.sv2-card:hover{border-color:rgba(79,158,255,.35);transform:translateY(-2px)}
+.sv2-card.running{border-color:rgba(0,230,118,.4);box-shadow:0 0 14px rgba(0,230,118,.15)}
+.sv2-card.stopped{opacity:.7}
+.sv2-uptime-row{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 0;font-size:10px;color:var(--muted)}
+.sv2-uptime-val{font-weight:700;color:var(--cyan);font-family:monospace;font-size:10px}
+.sv2-progress{height:2px;background:rgba(255,255,255,.07);border-radius:2px;margin:4px 8px 0;overflow:hidden}
+.sv2-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue2),var(--cyan));border-radius:2px;transition:width .5s;width:0%}
+.sv2-header{display:flex;align-items:center;gap:4px;padding:7px 8px 5px}
+.sv2-status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sv2-status-dot.running{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse-dot 1.2s infinite}
 .sv2-status-dot.stopped{background:#444}
 .sv2-status-dot.ready{background:var(--blue)}
-.sv2-name{font-size:14px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sv2-status-badge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.sv2-name{font-size:11px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv2-status-badge{padding:2px 5px;border-radius:20px;font-size:8px;font-weight:700}
 .sv2-status-badge.running{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)}
 .sv2-status-badge.stopped{background:rgba(255,255,255,.07);color:var(--muted);border:1px solid rgba(255,255,255,.1)}
 .sv2-status-badge.ready{background:rgba(79,158,255,.15);color:var(--blue);border:1px solid rgba(79,158,255,.25)}
-.sv2-screenshot{width:100%;height:120px;object-fit:cover;object-position:top;display:block;background:linear-gradient(to bottom,#070b14,#0d1220);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;position:relative}
-.sv2-screenshot-ph{width:100%;height:120px;background:linear-gradient(to bottom,#070b14,#0d1220);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:rgba(79,158,255,.3);font-size:11px;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
-.sv2-body{padding:12px 16px}
-.sv2-meta-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.sv2-meta-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:8px 10px}
-.sv2-meta-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);opacity:.6;margin-bottom:2px}
-.sv2-meta-val{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sv2-stats-row{display:flex;gap:8px;margin-bottom:12px}
+.sv2-screenshot{width:100%;height:60px;object-fit:cover;object-position:top;display:block;background:linear-gradient(to bottom,#070b14,#0d1220);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;position:relative}
+.sv2-screenshot-ph{width:100%;height:60px;background:linear-gradient(to bottom,#070b14,#0d1220);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:rgba(79,158,255,.3);font-size:10px;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
+.sv2-body{padding:5px 7px 4px}
+.sv2-meta-row{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px}
+.sv2-meta-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:6px;padding:3px 5px}
+.sv2-meta-label{font-size:7px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--blue);opacity:.6;margin-bottom:1px}
+.sv2-meta-val{font-size:9px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv2-stats-row{display:flex;gap:5px;margin-bottom:5px}
+.sv2-stat{flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:7px;padding:5px 4px;text-align:center}
 .sv2-stat{flex:1;background:rgba(79,158,255,.06);border:1px solid rgba(79,158,255,.12);border-radius:10px;padding:8px 10px;text-align:center}
 .sv2-stat-val{font-size:18px;font-weight:800;color:var(--blue)}
 .sv2-stat-label{font-size:9px;color:var(--muted);margin-top:2px}
-.sv2-log{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:7px 10px;font-size:10px;font-family:monospace;color:rgba(79,158,255,.5);min-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:12px}
-.sv2-actions{display:flex;gap:7px}
-.sv2-btn{flex:1;padding:9px 8px;border-radius:11px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.sv2-btn.detail{background:rgba(79,158,255,.12);color:var(--blue);border:1px solid rgba(79,158,255,.25);}
+.sv2-log{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);border-radius:6px;padding:4px 6px;font-size:9px;font-family:monospace;color:rgba(79,158,255,.5);min-height:16px;white-space:pre-wrap;overflow-y:auto;max-height:52px;margin-bottom:5px;scrollbar-width:thin}
+.sv2-actions{display:flex;gap:2px}
+.sv2-btn{flex:1;padding:3px 2px;border-radius:5px;border:none;font-size:9px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:2px}
 .sv2-btn:hover{opacity:.85;transform:translateY(-1px)}
 .sv2-btn.play{background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff;box-shadow:0 4px 14px rgba(41,121,255,.3)}
 .sv2-btn.pause{background:rgba(255,193,0,.12);border:1px solid rgba(255,193,0,.3);color:#ffc100}
 .sv2-btn.stop{background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.3);color:var(--red)}
 .sv2-btn.resume{background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.3);color:var(--green)}
-.sv2-btn.del{flex:0 0 38px;padding:9px;background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);color:var(--red)}
-.sv2-id{font-size:9px;color:rgba(79,158,255,.35);font-family:monospace;padding:0 16px 10px}
+.sv2-btn.del{flex:0 0 20px;padding:3px;background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);color:var(--red)}
+.sv2-id{font-size:7px;color:rgba(79,158,255,.3);font-family:monospace;padding:0 5px 4px}
 /* ── FOOTER ──────────────────────────────────────────── */
 .footer{text-align:center;font-size:11px;color:var(--muted);margin-top:28px;opacity:.5}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4);pointer-events:none;max-width:90vw;text-align:center}
@@ -345,7 +425,11 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">
-      <div class="auth-logo-icon">🐬</div>
+      <div class="auth-logo-icon">
+        <div class="rainbow-logo-wrap">
+          <img src="https://i.imgur.com/vIkYA9e.jpeg" class="rainbow-logo-img" alt="FB Dame Tool">
+        </div>
+      </div>
       <div class="auth-logo-title">FB Dame Tool</div>
       <div class="auth-logo-sub">Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi) · 2026</div>
     </div>
@@ -362,7 +446,20 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       </div>
       <div class="field-group">
         <div class="field-label">Mật khẩu</div>
-        <input class="field-input" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password">
+        <div style="position:relative">
+          <input class="field-input" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password" style="padding-right:44px">
+          <button type="button" class="pw-eye-btn" onclick="togglePw('login-pass',this)" title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="remember-row" id="remember-row" onclick="toggleRemember()">
         <div class="remember-check" id="remember-check"></div>
@@ -383,7 +480,20 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       </div>
       <div class="field-group">
         <div class="field-label">Mật khẩu</div>
-        <input class="field-input" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+        <div style="position:relative">
+          <input class="field-input" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" style="padding-right:44px">
+          <button type="button" class="pw-eye-btn" onclick="togglePw('reg-pass',this)" title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="field-group">
         <div class="field-label">Gmail</div>
@@ -406,12 +516,109 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 <!-- ═══════════════════════════════════════════════════════
      WELCOME SCREEN (shown after login)
 ════════════════════════════════════════════════════════ -->
-<div id="welcome-screen">
+<!-- SIDEBAR OVERLAY -->
+<div id="sidebar-overlay" onclick="closeMenu()"></div>
+
+<!-- SIDEBAR PANEL -->
+<div id="main-sidebar">
+  <div class="sb-header">
+    <div class="sb-logo">
+      <span class="sb-logo-img"><img src="https://i.imgur.com/1qYFul7.jpeg" class="sb-logo-circle" alt="logo"></span>
+      <span class="sb-logo-text">FB DAME TOOL</span>
+    </div>
+    <div class="sb-close" onclick="closeMenu()">✕</div>
+  </div>
+
+  <div class="sb-user">
+    <div class="sb-user-avatar" id="sb-avatar-el">👤</div>
+    <div>
+      <div class="sb-user-name" id="sb-name-el">...</div>
+      <div class="sb-user-role" id="sb-role-el">Thành viên</div>
+    </div>
+  </div>
+
+  <div class="sb-item active" id="sb-home-item" onclick="goHome();closeMenu()">
+    <span class="sb-item-icon ic-blue"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+    Trang chủ
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section-label">Tính năng</div>
+  <div class="sb-item" onclick="openIntroModal();closeMenu()">
+    <span class="sb-item-icon ic-blue"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M9.1 3.4C10 3.1 11 3 12 3"/></svg></span>
+    Giới thiệu &amp; Chức năng
+  </div>
+  <div class="sb-item" onclick="openServerListModal();closeMenu()">
+    <span class="sb-item-icon ic-purple"><svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+    Danh sách máy chủ
+  </div>
+  <div class="sb-item" onclick="openHistory();closeMenu()">
+    <span class="sb-item-icon ic-teal"><svg viewBox="0 0 24 24" fill="none" stroke="#00bcbc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg></span>
+    Lịch sử
+    <span class="sb-badge" id="sb-hist-badge"></span>
+  </div>
+  <div class="sb-item" onclick="openModal('admin-modal');closeMenu()">
+    <span class="sb-item-icon ic-orange"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9632" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+    Thông tin Admin
+  </div>
+  <div class="sb-item" onclick="openModal('guide-modal');closeMenu()">
+    <span class="sb-item-icon ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="#00c882" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+    Hướng dẫn
+  </div>
+  <div class="sb-item" id="mgmt-menu-item" style="display:none" onclick="openMgmt();closeMenu()">
+    <span class="sb-item-icon ic-yellow"><svg viewBox="0 0 24 24" fill="none" stroke="#ffc800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+    Quản lý tài khoản
+  </div>
+
+  <div class="sb-divider"></div>
+  <div class="sb-section-label">Cài đặt</div>
+  <div class="sb-toggle-row" onclick="toggleTheme()">
+    <div class="sb-toggle-label">
+      <span class="sb-toggle-icon ic-cyan"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+      <span id="theme-label">Chế độ tối</span>
+    </div>
+    <div class="toggle-switch on" id="theme-toggle"><div class="toggle-knob"></div></div>
+  </div>
+  <div class="sb-toggle-row" onclick="toggleMusic()">
+    <div class="sb-toggle-label">
+      <span class="sb-toggle-icon ic-pink"><svg viewBox="0 0 24 24" fill="none" stroke="#ff50a0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+      Nhạc nền
+    </div>
+    <div class="toggle-switch" id="music-toggle"><div class="toggle-knob"></div></div>
+  </div>
+  <div class="sb-toggle-row" onclick="toggleSfx()">
+    <div class="sb-toggle-label">
+      <span class="sb-toggle-icon ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="#00c882" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></span>
+      Âm thanh
+    </div>
+    <div class="toggle-switch on" id="sfx-toggle"><div class="toggle-knob"></div></div>
+  </div>
+
+  <div class="sb-footer">
+    <div class="sb-logout" onclick="doLogout()">
+      <span class="sb-toggle-icon ic-red" style="background:rgba(255,80,80,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#ff5050" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+      Đăng xuất
+    </div>
+  </div>
+</div>
+
+<div id="welcome-screen" style="display:none">
   <div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+  <!-- TOPBAR WELCOME -->
+  <div class="welcome-topbar">
+    <div class="welcome-topbar-logo">🐬 FB Dame Tool</div>
+    <div class="welcome-topbar-right">
+      <div class="welcome-clock" id="clock-welcome">--:--:--</div>
+      <div class="hamburger-btn" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
   <div class="welcome-wrap">
 
     <!-- HERO -->
-    <div class="welcome-hero">
+    <div class="welcome-hero" style="padding-top:24px">
       <div class="welcome-hero-badge">🐬 &nbsp;FB DAME TOOL</div>
       <div class="welcome-title">Chào mừng trở lại! 👋</div>
       <div class="welcome-sub">Công cụ dame acc Facebook tự động — báo cáo liên tục, chạy trên máy chủ ảo 24/7, không cần giữ máy bật.</div>
@@ -438,22 +645,22 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">⚡ Tính năng nổi bật</div>
     <div class="feature-grid">
       <div class="feature-card">
-        <div class="feature-icon">🖥️</div>
+        <div class="feature-icon" style="width:46px;height:46px;border-radius:13px;background:rgba(149,76,255,.2);display:flex;align-items:center;justify-content:center;margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
         <div class="feature-title">Máy chủ ảo 24/7</div>
         <div class="feature-desc">Cấu hình lưu vĩnh viễn, chạy liên tục không cần giữ máy tính bật.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">📊</div>
+        <div class="feature-icon" style="width:46px;height:46px;border-radius:13px;background:rgba(41,121,255,.2);display:flex;align-items:center;justify-content:center;margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
         <div class="feature-title">Theo dõi realtime</div>
         <div class="feature-desc">Xem log, số báo cáo, screenshot tab máy ảo trực tiếp.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">🍪</div>
+        <div class="feature-icon" style="width:46px;height:46px;border-radius:13px;background:rgba(255,150,50,.2);display:flex;align-items:center;justify-content:center;margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff9632" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
         <div class="feature-title">Đa dạng cookie</div>
         <div class="feature-desc">Hỗ trợ header string, JSON array, nhiều dòng từ Cookie-Editor.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">🎯</div>
+        <div class="feature-icon" style="width:46px;height:46px;border-radius:13px;background:rgba(0,200,130,.2);display:flex;align-items:center;justify-content:center;margin-bottom:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00c882" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
         <div class="feature-title">Nhiều tốc độ</div>
         <div class="feature-desc">Chọn nhanh/trung bình/chậm tùy nhu cầu và sức khoẻ cookie.</div>
       </div>
@@ -465,19 +672,24 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">🚀 Bắt đầu ngay</div>
     <div class="welcome-actions">
       <button class="welcome-action-btn primary full" onclick="welcomeCreateServer()">
-        <span class="wab-icon">➕</span>
-        <div class="wab-title">Tạo máy chủ & Chạy ngay</div>
-        <div class="wab-desc">Nhập tên → cookie → target → lưu & chạy hoặc chạy sau. Hỗ trợ nhiều máy chủ song song 24/7.</div>
+        <span class="wab-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+        <div class="wab-title">Tạo máy chủ &amp; Chạy ngay</div>
+        <div class="wab-desc">Nhập tên → cookie → target → lưu &amp; chạy hoặc chạy sau. Hỗ trợ nhiều máy chủ song song 24/7.</div>
       </button>
       <button class="welcome-action-btn secondary full" onclick="welcomeServerList()">
-        <span class="wab-icon">📋</span>
+        <span class="wab-icon" style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
         <div class="wab-title">Danh sách máy chủ</div>
         <div class="wab-desc">Xem, quản lý, khởi động lại các máy chủ đã tạo. Theo dõi trạng thái realtime.</div>
       </button>
     </div>
 
-    <div style="text-align:center">
-      <span onclick="closeWelcome()" style="color:var(--blue);font-size:13px;cursor:pointer;opacity:.7">Bỏ qua, vào thẳng app →</span>
+    <!-- COPYRIGHT -->
+    <div style="text-align:center;margin-top:32px;padding:20px 0 8px;border-top:1px solid rgba(255,255,255,.06)">
+      <div style="font-size:11px;color:rgba(255,255,255,.25);line-height:1.8;letter-spacing:.3px">
+        © 2026 · Bản quyền thuộc về<br>
+        <span style="color:rgba(79,158,255,.6);font-weight:700">Nguyễn Hoàng Khánh Nam · Dzi Meo Meo</span><br>
+        <span style="opacity:.6">IT Automation Developer · FB Dame Tool</span>
+      </div>
     </div>
   </div>
 </div>
@@ -623,14 +835,14 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         oninput="svDetectCookieFormat(this.value)"></textarea>
       <div id="sv-cookie-hint" style="font-size:11px;color:var(--muted);margin-bottom:8px;min-height:16px"></div>
       <div style="display:flex;gap:8px;margin-bottom:10px">
-        <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="svPasteCookie()">📋 Dán</button>
-        <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('sv-cookie').value='';document.getElementById('sv-cookie-hint').textContent=''">🗑 Xóa</button>
+        <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:6px" onclick="svPasteCookie()"><span class="sb-item-icon ic-blue" style="width:22px;height:22px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>Dán</button>
+        <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:6px" onclick="document.getElementById('sv-cookie').value='';document.getElementById('sv-cookie-hint').textContent=''"><span class="sb-item-icon ic-red" style="width:22px;height:22px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#ff5050" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></span>Xóa</button>
       </div>
       <div id="sv-cookie-result" style="display:none;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7;margin-bottom:10px"></div>
       <div class="field-label" style="font-size:12px;margin-bottom:6px">🏷️ Tên tab (tuỳ chọn)</div>
       <input id="sv-tab-name" class="field-input" type="text" placeholder="VD: Acc chính, Nick dự phòng..." style="font-size:13px;margin-bottom:14px"/>
       <div id="sv-err1" class="auth-err" style="margin-bottom:8px"></div>
-      <button class="btn btn-primary" id="sv-btn-cookie" style="width:100%;padding:13px;font-size:14px" onclick="svWizardCookieVerify()">✅ Xác nhận Cookie</button>
+      <button class="btn btn-primary" id="sv-btn-cookie" style="width:100%;padding:13px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="svWizardCookieVerify()"><span class="sb-item-icon" style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg></span>Xác nhận Cookie</button>
       <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:8px" onclick="svWizardBack(1)">← Đổi tên</button>
     </div>
 
@@ -650,7 +862,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       <div class="field-label" style="font-size:12px;margin-bottom:6px">👤 Tên nạn nhân (tuỳ chọn)</div>
       <input id="sv-victim-name" class="field-input" type="text" placeholder="VD: Nguyễn Văn A..." style="font-size:13px;margin-bottom:14px"/>
       <div id="sv-err2" class="auth-err" style="margin-bottom:8px"></div>
-      <button class="btn btn-primary" style="width:100%;padding:13px;font-size:14px" onclick="svWizardTargetConfirm()">🔍 Xác nhận Target →</button>
+      <button class="btn btn-primary" style="width:100%;padding:13px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="svWizardTargetConfirm()"><span class="sb-item-icon" style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Xác nhận Target →</button>
       <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:8px" onclick="svWizardBack(2)">← Đổi cookie</button>
     </div>
 
@@ -676,7 +888,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         </div>
       </div>
       <div id="sv-err3" class="auth-err" style="margin-bottom:10px"></div>
-      <button class="btn btn-primary" id="sv-btn-start" style="width:100%;padding:14px;font-size:15px;margin-bottom:8px" onclick="svWizardStartAndSave()">🐬 Lưu & Chạy ngay</button>
+      <button class="btn btn-primary" id="sv-btn-start" style="width:100%;padding:14px;font-size:15px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="svWizardStartAndSave()"><span class="sb-item-icon" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>Lưu & Chạy ngay</button>
       <button class="btn" style="width:100%;padding:12px;font-size:13px;background:var(--glass2);border:1px solid var(--border);color:var(--muted)" onclick="svWizardSaveOnly()">💾 Chỉ lưu (chạy sau)</button>
       <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:6px" onclick="svWizardBack(3)">← Đổi target</button>
     </div>
@@ -687,12 +899,12 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
 <!-- SERVER LIST MODAL - SWIPE CARDS -->
 <div class="modal-overlay" id="server-list-modal" onclick="if(event.target===this)closeModal('server-list-modal')">
-  <div class="modal-box" style="max-width:98vw;width:580px;padding-bottom:8px">
+  <div class="modal-box" style="max-width:98vw;width:98vw;padding-bottom:8px;padding-left:10px;padding-right:10px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="modal-title" style="margin:0">🖥 Máy chủ của bạn</div>
-      <button class="btn btn-primary" style="padding:8px 16px;font-size:12px;border-radius:10px" onclick="openCreateServerModal()">➕ Tạo mới</button>
+      <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;border-radius:9px;min-width:0;flex:0;white-space:nowrap" onclick="openCreateServerModal()">+ Tạo mới</button>
     </div>
-    <div id="server-list-body" style="min-height:80px;max-height:65vh;overflow-y:auto;padding-right:2px">
+    <div id="server-list-body" style="min-height:80px;overflow-x:hidden;overflow-y:visible;padding:4px 0;margin:0 -10px;padding:4px 10px">
       <div style="text-align:center;color:var(--muted);padding:24px">⏳ Đang tải...</div>
     </div>
     <button class="close-btn" style="margin-top:10px" onclick="closeModal('server-list-modal')">✕ Đóng</button>
@@ -775,8 +987,8 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div class="modal-title">🔍 Chi tiết cookie</div>
     <div id="hist-detail-content"></div>
     <div class="btn-row" style="margin-top:14px">
-      <button class="btn btn-green" onclick="copyHistDetailCookie(this)">📋 Copy Cookie</button>
-      <button class="btn btn-primary" onclick="downloadHistDetail()">⬇️ Tải .txt</button>
+      <button class="btn btn-green" onclick="copyHistDetailCookie(this)" style="display:flex;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>Copy Cookie</button>
+      <button class="btn btn-primary" onclick="downloadHistDetail()" style="display:flex;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>Tải .txt</button>
     </div>
     <button class="close-btn" onclick="closeModal('hist-detail-modal')">Đóng</button>
   </div>
@@ -788,6 +1000,50 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div class="modal-title">🔍 Chi tiết tài khoản</div>
     <div id="user-detail-content"></div>
     <button class="close-btn" onclick="closeModal('user-detail-modal')">Đóng</button>
+  </div>
+</div>
+
+<!-- SERVER DETAIL MODAL -->
+<div class="modal-overlay" id="sv-detail-modal" onclick="if(event.target===this)closeDetailModal()" style="z-index:10000">
+  <div class="modal-box" style="max-width:480px;max-height:88vh;overflow-y:auto;padding:0;box-sizing:border-box;width:calc(100vw - 40px)">
+    <div style="background:linear-gradient(135deg,rgba(13,19,34,.98),rgba(11,18,29,.98));border-radius:18px;overflow:hidden">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div class="sv2-status-dot" id="det-dot" style="width:12px;height:12px"></div>
+        <div style="font-size:15px;font-weight:800;flex:1" id="det-name">Máy chủ</div>
+        <span class="sv2-status-badge" id="det-badge">--</span>
+      </div>
+      <!-- Screenshot -->
+      <div style="position:relative;background:#000;min-height:60px" id="det-scr-wrap">
+        <div id="det-scr-ph" style="display:flex;align-items:center;justify-content:center;height:80px;color:var(--muted);font-size:12px">📷 Chưa có ảnh</div>
+        <img id="det-scr-img" style="display:none;width:100%;object-fit:contain;max-height:220px" alt="screenshot"/>
+      </div>
+      <!-- Stats row -->
+      <div style="display:flex;gap:8px;padding:12px 14px">
+        <div class="sv2-stat" style="flex:1"><div class="sv2-stat-val" id="det-total">0</div><div class="sv2-stat-label">📊 Báo cáo</div></div>
+        <div class="sv2-stat" style="flex:1"><div class="sv2-stat-val" style="color:var(--cyan)" id="det-loops">0</div><div class="sv2-stat-label">🔄 Vòng lặp</div></div>
+        <div class="sv2-stat" style="flex:1"><div class="sv2-stat-val" style="color:var(--yellow);font-size:13px" id="det-uptime">00:00:00</div><div class="sv2-stat-label">⏱ Thời gian</div></div>
+      </div>
+      <!-- Meta info -->
+      <div style="padding:0 14px 10px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="sv2-meta-item" style="flex:1;min-width:120px"><div class="sv2-meta-label">🎯 Nạn nhân</div><div class="sv2-meta-val" id="det-victim">?</div></div>
+          <div class="sv2-meta-item" style="flex:1;min-width:120px"><div class="sv2-meta-label">🍪 Acc</div><div class="sv2-meta-val" id="det-acc">?</div></div>
+          <div class="sv2-meta-item" style="flex:1;min-width:120px"><div class="sv2-meta-label">🚀 Tốc độ</div><div class="sv2-meta-val" id="det-speed">?</div></div>
+          <div class="sv2-meta-item" style="flex:1;min-width:120px"><div class="sv2-meta-label">📅 Tạo lúc</div><div class="sv2-meta-val" id="det-created">?</div></div>
+        </div>
+      </div>
+      <!-- Full log area -->
+      <div style="padding:0 14px 10px">
+        <div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:6px">📋 Log chi tiết</div>
+        <div id="det-log" style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:8px 10px;font-size:10px;font-family:monospace;color:rgba(79,158,255,.7);max-height:220px;overflow-y:auto;line-height:1.7;scrollbar-width:thin">⏳ Đang tải log...</div>
+        <button onclick="clearDetLog()" style="margin-top:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--muted);font-size:11px;padding:4px 12px;cursor:pointer">🗑 Xóa log</button>
+      </div>
+      <!-- Actions -->
+      <div style="padding:0 14px 14px" id="det-actions"></div>
+      <!-- Close -->
+      <button class="close-btn" onclick="closeDetailModal()" style="margin:0 14px 14px">✕ Đóng</button>
+    </div>
   </div>
 </div>
 
@@ -818,52 +1074,28 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div class="topbar-right">
       <div class="clock" id="clock">--:--:--</div>
       <div class="user-badge" id="user-badge-el">👤 ...</div>
-      <div class="dropdown">
-        <div class="icon-btn" onclick="toggleMenu()" title="Menu">☰</div>
-        <div class="dropdown-menu" id="main-menu">
-          <div class="d-section">Tài khoản</div>
-          <div class="d-item" onclick="doLogout()">🚪 Đăng xuất</div>
-          <div class="d-section">Tính năng</div>
-          <div class="d-item" onclick="openIntroModal();closeMenu()">🐬 Giới thiệu & Chức năng</div>
-          <div class="d-item" onclick="openServerListModal();closeMenu()">🖥 Danh sách máy chủ</div>
-          <div class="d-item" onclick="openHistory();closeMenu()">📋 Lịch sử <span id="hist-badge" class="badge" style="position:static;margin-left:auto;display:none"></span></div>
-          <div class="d-item" onclick="openModal('admin-modal');closeMenu()">🔐 Thông tin Admin</div>
-          <div class="d-item" onclick="openModal('guide-modal');closeMenu()">📚 Hướng dẫn</div>
-          <div class="d-item" id="mgmt-menu-item" style="display:none" onclick="openMgmt();closeMenu()">👑 Quản lý tài khoản</div>
-          <div class="d-section">Cài đặt</div>
-          <div class="d-toggle" onclick="toggleTheme()">
-            <span><span id="theme-label">🌙 Chế độ tối</span></span>
-            <div class="toggle-switch on" id="theme-toggle"><div class="toggle-knob"></div></div>
-          </div>
-          <div class="d-toggle" onclick="toggleMusic()">
-            <span>🎵 Nhạc nền</span>
-            <div class="toggle-switch" id="music-toggle"><div class="toggle-knob"></div></div>
-          </div>
-          <div class="d-toggle" onclick="toggleSfx()">
-            <span>🔊 Âm thanh</span>
-            <div class="toggle-switch on" id="sfx-toggle"><div class="toggle-knob"></div></div>
-          </div>
-        </div>
+      <div class="hamburger-btn" onclick="toggleMenu()" title="Menu">
+        <span></span><span></span><span></span>
       </div>
     </div>
   </div>
 
   <!-- MARQUEE -->
   <div class="marquee-wrap">
-    <div class="marquee">🐬 FB Dame Tool · Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi Meo Meo) · IT Automation Developer · Nhập cookie Facebook + link target để dame acc · Không chia sẻ cookie với người khác · 2026</div>
+    <div class="marquee">🐬 FB Dame Tool · © 2026 Bản quyền thuộc về Nguyễn Hoàng Khánh Nam (Dzi Meo Meo) · IT Automation Developer · Nhập cookie Facebook + link target để dame acc · Không chia sẻ cookie với người khác · All rights reserved.</div>
   </div>
 
   <!-- SUPPORT BUTTONS -->
   <div class="support-wrap">
-    <div class="support-btn" onclick="openModal('admin-modal')">👤 Thông tin Admin</div>
-    <div class="support-btn" onclick="openModal('guide-modal')">📖 Hướng dẫn sử dụng</div>
+    <div class="support-btn" onclick="openModal('admin-modal')"><span class="sb-item-icon ic-orange"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9632" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Thông tin Admin</div>
+    <div class="support-btn" onclick="openModal('guide-modal')"><span class="sb-item-icon ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="#00c882" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>Hướng dẫn sử dụng</div>
   </div>
 
   <!-- MAIN CARD -->
   <div class="card">
     <div class="tabs" style="margin-bottom:18px">
-      <div class="tab active" id="tab-input-btn" onclick="switchMainTab('input')">⚙️ Nhập & Chạy</div>
-      <div class="tab" id="tab-run-btn" onclick="switchMainTab('run')">📊 Trạng thái</div>
+      <div class="tab active" id="tab-input-btn" onclick="switchMainTab('input')" style="display:flex;align-items:center;justify-content:center;gap:6px"><span class="sb-item-icon ic-blue" style="width:24px;height:24px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>Nhập & Chạy</div>
+      <div class="tab" id="tab-run-btn" onclick="switchMainTab('run')" style="display:flex;align-items:center;justify-content:center;gap:6px"><span class="sb-item-icon ic-purple" style="width:24px;height:24px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Trạng thái</div>
     </div>
 
     <!-- ════ TAB NHẬP — STEP WIZARD ════ -->
@@ -895,12 +1127,12 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
           oninput="detectCookieFormat(this.value)"></textarea>
         <div id="cookie-format-hint" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:16px"></div>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="pasteCookie()">📋 Dán</button>
-          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('fb-cookie-input').value='';hideBox('cookie-verify-box');document.getElementById('cookie-format-hint').textContent=''">🗑 Xóa</button>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:6px" onclick="pasteCookie()"><span class="sb-item-icon ic-blue" style="width:22px;height:22px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>Dán</button>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:6px" onclick="document.getElementById('fb-cookie-input').value='';hideBox('cookie-verify-box');document.getElementById('cookie-format-hint').textContent=''"><span class="sb-item-icon ic-red" style="width:22px;height:22px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#ff5050" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></span>Xóa</button>
         </div>
         <div id="cookie-verify-box" style="display:none;margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7"></div>
         <div class="btn-row" style="margin-top:14px">
-          <button class="btn btn-primary" id="btn-verify-cookie" onclick="stepVerifyCookie()">✅ Xác nhận Cookie</button>
+          <button class="btn btn-primary" id="btn-verify-cookie" onclick="stepVerifyCookie()" style="display:flex;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg></span>Xác nhận Cookie</button>
         </div>
         <div id="step1-err" class="auth-err" style="margin-top:8px"></div>
 
@@ -935,7 +1167,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
         <div id="target-verify-box" style="display:none;margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7"></div>
         <div class="btn-row" style="margin-top:14px">
-          <button class="btn btn-primary" id="btn-verify-target" onclick="stepVerifyTarget()">🔍 Xác nhận Target</button>
+          <button class="btn btn-primary" id="btn-verify-target" onclick="stepVerifyTarget()" style="display:flex;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Xác nhận Target</button>
         </div>
         <div id="step2-err" class="auth-err" style="margin-top:8px"></div>
       </div>
@@ -976,8 +1208,9 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         </div>
 
         <div class="btn-row">
-          <button class="btn btn-primary" id="btn-start-dame" onclick="startDame()" style="flex:1;padding:14px;font-size:15px;letter-spacing:.5px">
-            🐬 Bắt đầu Dame
+          <button class="btn btn-primary" id="btn-start-dame" onclick="startDame()" style="flex:1;padding:14px;font-size:15px;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;gap:8px">
+            <span class="sb-item-icon" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>
+            Bắt đầu Dame
           </button>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px">
@@ -1045,10 +1278,10 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
       <!-- ĐIỀU KHIỂN -->
       <div class="btn-row">
-        <button class="btn btn-outline" id="btn-pause" onclick="togglePause()" style="display:none">⏸️ Tạm dừng</button>
-        <button class="btn btn-danger" id="btn-stop" onclick="stopDame()" style="display:none">⏹️ Dừng</button>
-        <button class="btn btn-primary" id="btn-resume" onclick="togglePause()" style="display:none">▶️ Tiếp tục</button>
-        <button class="btn btn-outline" id="btn-back-input" onclick="switchMainTab('input')">← Quay lại</button>
+        <button class="btn btn-outline" id="btn-pause" onclick="togglePause()" style="display:none;align-items:center;gap:8px"><span class="sb-item-icon ic-yellow" style="width:24px;height:24px;border-radius:7px"><svg viewBox="0 0 24 24" fill="none" stroke="#ffc800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></span>Tạm dừng</button>
+        <button class="btn btn-danger" id="btn-stop" onclick="stopDame()" style="display:none;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></span>Dừng</button>
+        <button class="btn btn-primary" id="btn-resume" onclick="togglePause()" style="display:none;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>Tiếp tục</button>
+        <button class="btn btn-outline" id="btn-back-input" onclick="switchMainTab('input')" style="display:flex;align-items:center;gap:8px"><span class="sb-item-icon ic-blue" style="width:24px;height:24px;border-radius:7px"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="15 18 9 12 15 6"/></svg></span>Quay lại</button>
       </div>
       <!-- SERVERS INLINE + NÚT XEM TAB MÁY ẢO -->
       <div class="sv-inline-ss" id="sv-inline-wrap" style="margin-top:12px;display:none">
@@ -1075,7 +1308,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       <div style="margin-top:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <div style="font-size:12px;font-weight:700;color:var(--blue)">🖥 Máy chủ của bạn</div>
-          <button class="btn btn-primary" style="padding:5px 12px;font-size:11px" onclick="openCreateServerModal()">+ Tạo mới</button>
+          <button class="btn btn-primary" style="padding:5px 10px;font-size:14px;min-width:unset;flex:none;width:32px;height:32px;border-radius:50%" onclick="openCreateServerModal()">+</button>
         </div>
         <div class="sv-rail" id="sv-status-rail">
           <div class="sv-empty">⏳ Đang tải...</div>
@@ -1137,6 +1370,7 @@ let rememberMe    = localStorage.getItem('zct_remember') === '1';
 let SESSION_TOKEN = rememberMe ? (localStorage.getItem('zct_token')||'') : (sessionStorage.getItem('zct_token')||'');
 let CURRENT_USER  = rememberMe ? (localStorage.getItem('zct_user')||'')  : (sessionStorage.getItem('zct_user')||'');
 let IS_ADMIN      = rememberMe ? localStorage.getItem('zct_admin')==='1' : sessionStorage.getItem('zct_admin')==='1';
+if(SESSION_TOKEN){document.cookie=`session_token=${SESSION_TOKEN};path=/;SameSite=Lax;max-age=${rememberMe?60*60*24*30:60*60*8}`;}
 let currentData = null, viewingHistItem = null;
 
 // Dame state
@@ -1321,14 +1555,19 @@ async function doLogin(){
   const p=document.getElementById('login-pass').value.trim();
   const err=document.getElementById('login-err');const btn=document.getElementById('login-btn');
   if(!u||!p){err.style.display='block';err.textContent='Vui lòng nhập đầy đủ';return;}
-  btn.disabled=true;btn.textContent='⏳ Đang đăng nhập...';err.style.display='none';
+  btn.disabled=true;btn.textContent='⏳ Đang kết nối server...';err.style.display='none';
+  const _loginAc=new AbortController();
+  const _loginTid=setTimeout(()=>{_loginAc.abort();},20000);
   try{
-    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p}),signal:_loginAc.signal});
+    clearTimeout(_loginTid);
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Sai thông tin');
     SESSION_TOKEN=d.token;CURRENT_USER=d.username;IS_ADMIN=d.is_admin||false;
     const store=rememberMe?localStorage:sessionStorage;
     store.setItem('zct_token',SESSION_TOKEN);store.setItem('zct_user',CURRENT_USER);
     store.setItem('zct_admin',IS_ADMIN?'1':'0');
+    const maxAge=rememberMe?60*60*24*30:60*60*8;
+    document.cookie=`session_token=${SESSION_TOKEN};path=/;SameSite=Lax;max-age=${maxAge}`;
     playSfx('success');showApp();
   }catch(e){err.style.display='block';err.textContent=e.message;playSfx('error');}
   finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
@@ -1367,6 +1606,13 @@ function showApp(){
   if(badge)badge.textContent=(IS_ADMIN?'👑 ':'👤 ')+CURRENT_USER;
   const mgmt=document.getElementById('mgmt-menu-item');
   if(mgmt)mgmt.style.display=IS_ADMIN?'flex':'none';
+  // Sidebar user info
+  const sbName=document.getElementById('sb-name-el');
+  if(sbName)sbName.textContent=CURRENT_USER;
+  const sbRole=document.getElementById('sb-role-el');
+  if(sbRole)sbRole.textContent=IS_ADMIN?'👑 Admin':'Thành viên';
+  const sbAv=document.getElementById('sb-avatar-el');
+  if(sbAv)sbAv.textContent=IS_ADMIN?'👑':'👤';
   // Welcome greeting
   const titleEl=document.querySelector('#welcome-screen .welcome-title');
   if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
@@ -1377,12 +1623,19 @@ function closeWelcome(){
   document.getElementById('welcome-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
 }
+function goHome(){
+  // Đóng tất cả modal nếu có
+  document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+  // Về welcome-screen (sảnh chính)
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('welcome-screen').style.display='block';
+  // Active state sidebar
+  document.getElementById('sb-home-item').classList.add('active');
+}
 function welcomeCreateServer(){
-  closeWelcome();
   openCreateServerModal();
 }
 function welcomeServerList(){
-  closeWelcome();
   openServerListModal();
 }
 
@@ -1390,6 +1643,7 @@ function doLogout(){
   const _tok=SESSION_TOKEN;
   SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;
   ['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});
+  document.cookie='session_token=;path=/;max-age=0';
   stopDame();
   document.getElementById('app-screen').style.display='none';
   document.getElementById('welcome-screen').style.display='none';
@@ -1517,79 +1771,39 @@ async function pasteCookie(){
   catch{ showToast('Ctrl+V để dán thủ công','#ff9100'); }
 }
 
-async function stepVerifyCookie(){
+function stepVerifyCookie(){
   const cookie = document.getElementById('fb-cookie-input').value.trim();
   const box    = document.getElementById('cookie-verify-box');
   const err    = document.getElementById('step1-err');
-  const btn    = document.getElementById('btn-verify-cookie');
   err.style.display='none';
 
   if(!cookie){ err.style.display='block'; err.textContent='⚠️ Chưa nhập cookie!'; return; }
 
+  // Lấy uid từ c_user nếu có
+  let uid = '';
+  const m = cookie.match(/c_user[=:]\s*["']?(\d+)/);
+  if(m) uid = m[1];
+
+  _cookieStr = cookie;
+  _accUid    = uid;
+  _accName   = document.getElementById('tab-name-input').value.trim() || (uid ? 'UID ' + uid : 'Cookie ' + cookie.substring(0,8) + '...');
+
   showBox('cookie-verify-box');
-  box.style.background='rgba(79,158,255,.08)';
-  box.style.border='1px solid rgba(79,158,255,.2)';
-  box.style.color='var(--blue)';
-  box.innerHTML='<div style="display:flex;align-items:center;gap:10px"><div class="spinner" style="width:18px;height:18px;display:inline-block"></div> Đang kiểm tra cookie...</div>';
-  btn.disabled=true; btn.textContent='⏳ Đang xác nhận...';
-
-  try{
-    if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='✅ Xác nhận Cookie'; return; }
-    // Verify nhanh - chỉ check format cookie
-    const ctrl = new AbortController();
-    const timeoutId = setTimeout(() => ctrl.abort(), 10000); // 10s là đủ
-    let r;
-    try {
-      r = await fetch('/api/verify-fb-cookie',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({cookie, _token: SESSION_TOKEN}),
-        signal: ctrl.signal
-      });
-      clearTimeout(timeoutId);
-    } catch(fetchErr) {
-      clearTimeout(timeoutId);
-      if(fetchErr.name === 'AbortError') throw new Error('Server không phản hồi. Thử lại sau.');
-      throw new Error('Không kết nối được server: ' + fetchErr.message);
-    }
-    const d = await r.json();
-
-    if(d.ok){
-      _cookieStr = cookie;
-      _accName   = document.getElementById('tab-name-input').value.trim() || '(Cookie ' + cookie.substring(0,8) + '...)';
-      _accUid    = '';
-
-      box.style.background='rgba(0,230,118,.08)';
-      box.style.border='1px solid rgba(0,230,118,.25)';
-      box.style.color='var(--green)';
-      box.innerHTML=`<div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:26px">🍪</div>
-          <div>
-            <div style="font-weight:700;font-size:14px">${_accName}</div>
-            <div style="font-size:11px;margin-top:2px">✅ Cookie hợp lệ!</div>
-          </div>
-        </div>`;
-      playSfx('success');
-      setTimeout(()=>{
-        document.getElementById('acc-confirmed-name').textContent = _accName;
-        setActiveStep(2);
-      }, 900);
-    } else {
-      box.style.background='rgba(255,82,82,.08)';
-      box.style.border='1px solid rgba(255,82,82,.2)';
-      box.style.color='var(--red)';
-      box.innerHTML='❌ Cookie die hoặc không hợp lệ! Lấy lại cookie mới.';
-      playSfx('error');
-    }
-  } catch(e){
-    box.style.background='rgba(255,145,0,.08)';
-    box.style.border='1px solid rgba(255,145,0,.2)';
-    box.style.color='var(--orange)';
-    box.innerHTML='⚠️ Lỗi kiểm tra: '+e.message;
-  } finally {
-    btn.disabled=false;
-    btn.textContent='✅ Xác nhận Cookie';
-  }
+  box.style.background='rgba(0,230,118,.08)';
+  box.style.border='1px solid rgba(0,230,118,.25)';
+  box.style.color='var(--green)';
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:26px">🍪</div>
+      <div>
+        <div style="font-weight:700;font-size:14px">${_accName}</div>
+        <div style="font-size:11px;margin-top:2px">✅ Cookie hợp lệ!</div>
+      </div>
+    </div>`;
+  playSfx('success');
+  setTimeout(()=>{
+    document.getElementById('acc-confirmed-name').textContent = _accName;
+    setActiveStep(2);
+  }, 900);
 }
 
 // ── BƯỚC 2: XÁC NHẬN TARGET ──
@@ -1837,8 +2051,16 @@ function openUserDetail(username){
 // ═══════════════════════════════════════════════════════
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-function toggleMenu(){document.getElementById('main-menu').classList.toggle('open');}
-function closeMenu(){document.getElementById('main-menu').classList.remove('open');}
+function toggleMenu(){
+  const sb=document.getElementById('main-sidebar');
+  const ov=document.getElementById('sidebar-overlay');
+  if(sb.classList.contains('open')){closeMenu();}
+  else{sb.classList.add('open');ov.classList.add('open');}
+}
+function closeMenu(){
+  document.getElementById('main-sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
 
 // ── Admin clock realtime ──
 function startAdminClock(){
@@ -1919,40 +2141,32 @@ async function svPasteCookie(){
   catch{ showToast('Ctrl+V để dán thủ công','#ff9100'); }
 }
 
-async function svWizardCookieVerify(){
+function svWizardCookieVerify(){
   const cookie = document.getElementById('sv-cookie').value.trim();
   const result = document.getElementById('sv-cookie-result');
   const err    = document.getElementById('sv-err1');
-  const btn    = document.getElementById('sv-btn-cookie');
   err.style.display='none';
   if(!cookie){ err.style.display='block'; err.textContent='⚠️ Chưa nhập cookie!'; return; }
+
+  // Lấy uid từ c_user nếu có, không thì dùng tên tab
+  let uid = '';
+  const m = cookie.match(/c_user[=:]\s*["']?(\d+)/);
+  if(m) uid = m[1];
+
+  _svCookieStr = cookie;
+  const tabName = document.getElementById('sv-tab-name').value.trim();
+  _svAccName = tabName || (uid ? 'UID ' + uid : 'Cookie ' + cookie.substring(0,8) + '...');
+
   result.style.display='block';
-  result.style.background='rgba(79,158,255,.08)'; result.style.border='1px solid rgba(79,158,255,.2)'; result.style.color='var(--blue)';
-  result.innerHTML='<div style="display:flex;align-items:center;gap:8px"><div class="spinner" style="width:16px;height:16px"></div> Đang kiểm tra...</div>';
-  btn.disabled=true; btn.textContent='⏳...';
-  try{
-    const r=await fetch('/api/verify-fb-cookie',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cookie,_token:SESSION_TOKEN})});
-    const d=await r.json();
-    if(d.ok){
-      _svCookieStr=cookie;
-      const tabName=document.getElementById('sv-tab-name').value.trim();
-      _svAccName=tabName||(d.name||('Cookie '+cookie.substring(0,8)+'...'));
-      result.style.background='rgba(0,230,118,.08)'; result.style.border='1px solid rgba(0,230,118,.25)'; result.style.color='var(--green)';
-      result.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><div style="font-size:22px">🍪</div><div><div style="font-weight:700">${_svAccName}</div><div style="font-size:11px;margin-top:2px">✅ Cookie hợp lệ!</div></div></div>`;
-      playSfx('success');
-      setTimeout(()=>{
-        document.getElementById('sv-acc-name-show').textContent=_svAccName;
-        svSetStep(2);
-      },700);
-    } else {
-      result.style.background='rgba(255,82,82,.08)'; result.style.border='1px solid rgba(255,82,82,.2)'; result.style.color='var(--red)';
-      result.innerHTML='❌ Cookie die hoặc không hợp lệ! Lấy lại cookie mới.';
-      playSfx('error');
-    }
-  }catch(e){
-    result.style.background='rgba(255,145,0,.08)'; result.style.border='1px solid rgba(255,145,0,.2)'; result.style.color='var(--orange)';
-    result.innerHTML='⚠️ Lỗi: '+e.message;
-  }finally{ btn.disabled=false; btn.textContent='✅ Xác nhận Cookie'; }
+  result.style.background='rgba(0,230,118,.08)';
+  result.style.border='1px solid rgba(0,230,118,.25)';
+  result.style.color='var(--green)';
+  result.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><div style="font-size:22px">🍪</div><div><div style="font-weight:700">${_svAccName}</div><div style="font-size:11px;margin-top:2px">✅ Cookie hợp lệ!</div></div></div>`;
+  playSfx('success');
+  setTimeout(()=>{
+    document.getElementById('sv-acc-name-show').textContent=_svAccName;
+    svSetStep(2);
+  }, 700);
 }
 
 function svWizardTargetConfirm(){
@@ -1997,6 +2211,8 @@ async function svWizardStartAndSave(){
     if(!r.ok) throw new Error(d.detail||'Lỗi khởi động');
     closeModal('create-server-modal');
     showToast('🐬 Máy chủ đã khởi động!','var(--green)');
+    if(!window._svLogIdx) window._svLogIdx = {};
+    window._svLogIdx[server.id] = 0;
     openServerListModal();
   }catch(e){ err.style.display='block'; err.textContent='❌ '+e.message; }
   finally{ btn.disabled=false; btn.textContent='🐬 Lưu & Chạy ngay'; }
@@ -2036,7 +2252,12 @@ async function loadServerList(){
       </div>`;
       return;
     }
-    body.innerHTML = '<div class="sv-grid">' + list.map(sv => buildServerCard2(sv)).join('') + '</div>';
+    // Lưu lại _svLogIdx trước khi rebuild để không mất offset
+    const savedIdx = window._svLogIdx ? Object.assign({}, window._svLogIdx) : {};
+    body.innerHTML = '<div class="sv-rail">' + list.map(sv => buildServerCard2(sv)).join('') + '</div>';
+    // Restore idx - không reset về 0 nếu đã có data
+    if(!window._svLogIdx) window._svLogIdx = {};
+    Object.assign(window._svLogIdx, savedIdx);
     list.forEach(sv => fetchCardScreenshot2(sv.id));
   }catch(e){
     body.innerHTML='<div style="color:var(--red);padding:16px;text-align:center">❌ Lỗi tải danh sách</div>';
@@ -2048,46 +2269,54 @@ function buildServerCard(sv){ return buildServerCard2(sv); }
 function buildServerCard2(sv){
   const sLabel = {ready:'Sẵn sàng',running:'Đang chạy',stopped:'Đã dừng',paused:'Tạm dừng'};
   const st = sv.status||'ready';
-  const isRunning = st==='running';
-  const isPaused  = st==='paused';
-  const cookieEsc = (sv.cookie||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  const targetEsc = (sv.target_url||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const dotColor = st==='running'?'var(--green)':st==='paused'?'#ffc800':'#555';
+  const rawDate = sv.created_at || sv.created || sv.created_time || sv.createdAt || null;
+  const created = rawDate ? (String(rawDate).includes('T') ? String(rawDate).replace('T',' ').substring(0,16) : String(rawDate).substring(0,16)) : 'Chưa rõ';
   return `
-  <div class="sv2-card ${st}" id="svcard2-${sv.id}">
-    <div class="sv2-header">
-      <div class="sv2-status-dot ${st}" id="sv2-dot-${sv.id}"></div>
-      <div class="sv2-name">${sv.name||'Máy chủ ảo'}</div>
-      <span class="sv2-status-badge ${st}" id="sv2-badge-${sv.id}">${sLabel[st]||st}</span>
+  <div class="sv2-card ${st}" id="svcard2-${sv.id}" onclick="event.stopPropagation();openDetailModal('${sv.id}')" style="cursor:pointer">
+    <!-- Tên tab nổi bật -->
+    <div style="padding:8px 9px 4px;display:flex;align-items:center;gap:5px">
+      <div style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;${st==='running'?'box-shadow:0 0 5px var(--green)':''}"></div>
+      <div style="font-size:12px;font-weight:900;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.2px">${sv.name||'Máy chủ'}</div>
+      <span id="sv2-badge-${sv.id}" style="padding:2px 6px;border-radius:20px;font-size:7px;font-weight:700;${st==='running'?'background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)':st==='paused'?'background:rgba(255,200,0,.15);color:#ffc800;border:1px solid rgba(255,200,0,.3)':'background:rgba(255,255,255,.07);color:var(--muted);border:1px solid rgba(255,255,255,.1)'}">${sLabel[st]||st}</span>
     </div>
-    <div id="sv2-ph-${sv.id}" class="sv2-screenshot-ph"><div style="font-size:32px;opacity:.3">🖥️</div><div>Chưa có ảnh</div></div>
-    <img id="sv2-img-${sv.id}" class="sv2-screenshot" style="display:none" onclick="openServerScreenshot('${sv.id}')" alt="screenshot"/>
-    <div class="sv2-body">
-      <div class="sv2-meta-row">
-        <div class="sv2-meta-item"><div class="sv2-meta-label">🎯 Nạn nhân</div><div class="sv2-meta-val">${sv.target_name||sv.target_url||'?'}</div></div>
-        <div class="sv2-meta-item"><div class="sv2-meta-label">🍪 Acc</div><div class="sv2-meta-val">${sv.acc_name||'?'}</div></div>
-        <div class="sv2-meta-item"><div class="sv2-meta-label">🚀 Tốc độ</div><div class="sv2-meta-val">${{fast:'🏎 Nhanh',normal:'⚡ T.bình',slow:'🐢 Chậm'}[sv.speed||'normal']}</div></div>
-        <div class="sv2-meta-item"><div class="sv2-meta-label">📅 Tạo lúc</div><div class="sv2-meta-val">${sv.created||'?'}</div></div>
+    <!-- Screenshot -->
+    <div id="sv2-ph-${sv.id}" class="sv2-screenshot-ph"><div style="font-size:16px;opacity:.2">🖥</div></div>
+    <img id="sv2-img-${sv.id}" class="sv2-screenshot" style="display:none" alt="ss"/>
+    <!-- Thông tin -->
+    <div style="padding:4px 9px 4px;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+        <span style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Acc</span>
+        <span class="sv2-meta-val" style="font-size:9px;font-weight:700;color:#c9d8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%">${sv.acc_name||'?'}</span>
       </div>
-      <div class="sv2-stats-row">
-        <div class="sv2-stat"><div class="sv2-stat-val" id="sv2-total-${sv.id}">0</div><div class="sv2-stat-label">Báo cáo</div></div>
-        <div class="sv2-stat"><div class="sv2-stat-val" id="sv2-loops-${sv.id}" style="color:var(--cyan)">0</div><div class="sv2-stat-label">Vòng lặp</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+        <span style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Nạn nhân</span>
+        <span class="sv2-meta-val" style="font-size:9px;font-weight:700;color:#c9d8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%">${sv.target_name||'?'}</span>
       </div>
-      <div class="sv2-log" id="sv2-log-${sv.id}">⏳ Chờ dữ liệu...</div>
-      <div class="sv2-actions">
-        ${!isRunning && !isPaused ? `<button class="sv2-btn play" onclick="serverAction('start','${sv.id}','${cookieEsc}','${targetEsc}','${sv.speed||'normal'}','${sv.acc_name||''}','${sv.acc_uid||''}','${sv.target_name||''}')">▶ Chạy ngay</button>` : ''}
-        ${isRunning ? `<button class="sv2-btn pause" onclick="serverAction('pause','${sv.id}')">⏸ Tạm dừng</button>` : ''}
-        ${isPaused  ? `<button class="sv2-btn resume" onclick="serverAction('resume','${sv.id}')">▶ Tiếp tục</button>` : ''}
-        ${isRunning||isPaused ? `<button class="sv2-btn stop" onclick="serverAction('stop','${sv.id}')">⏹ Dừng hẳn</button>` : ''}
-        <button class="sv2-btn del" onclick="deleteServer('${sv.id}')" title="Xóa">🗑</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+        <span style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Tạo lúc</span>
+        <span class="sv2-meta-val" style="font-size:9px;font-weight:600;color:#c9d8f0">${created}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">
+        <span style="font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Uptime</span>
+        <span style="font-size:9px;font-weight:700;color:var(--cyan);font-family:monospace" id="sv2-uptime-${sv.id}">--:--:--</span>
       </div>
     </div>
-    <div class="sv2-id">🆔 ${sv.id}</div>
+    <!-- Nút Xem ngay -->
+    <div style="padding:0 8px 8px" onclick="event.stopPropagation();openDetailModal('${sv.id}')">
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;border-radius:9px;background:rgba(79,158,255,.08);border:1px solid rgba(79,158,255,.2);font-size:11px;font-weight:700;color:var(--blue)">
+        Xem ngay
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
   </div>`;
 }
 
 async function fetchCardScreenshot2(svId){
   try{
-    const sr = await fetch('/api/dame/status?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(!window._svLogIdx) window._svLogIdx = {};
+    const since = window._svLogIdx[svId] || 0;
+    const sr = await fetch('/api/dame/status?server_id='+svId+'&since='+since,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
     if(!sr.ok) return;
     const sd = await sr.json();
     const sLabel = {ready:'Sẵn sàng',running:'Đang chạy',stopped:'Đã dừng',paused:'Tạm dừng'};
@@ -2095,11 +2324,47 @@ async function fetchCardScreenshot2(svId){
     const stEl   = document.getElementById('sv2-badge-'+svId);
     const dotEl  = document.getElementById('sv2-dot-'+svId);
     const totEl  = document.getElementById('sv2-total-'+svId);
+    const loopsEl= document.getElementById('sv2-loops-'+svId);
     const logEl  = document.getElementById('sv2-log-'+svId);
     if(stEl){ stEl.textContent=sLabel[st]||st; stEl.className='sv2-status-badge '+st; }
     if(dotEl) dotEl.className='sv2-status-dot '+st;
     if(totEl) totEl.textContent=sd.total||0;
-    if(logEl && sd.log) logEl.textContent=sd.log;
+    if(loopsEl) loopsEl.textContent=sd.loops||0;
+    // Uptime
+    const uptimeEl = document.getElementById('sv2-uptime-'+svId);
+    const progEl   = document.getElementById('sv2-prog-'+svId);
+    if(uptimeEl){
+      if((sd.running||sd.paused) && sd.start_time){
+        if(!window._svStart) window._svStart={};
+        window._svStart[svId] = sd.start_time*1000;
+        const secs = Math.floor((Date.now() - window._svStart[svId])/1000);
+        const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
+        uptimeEl.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if(progEl){ const pct=Math.min((secs%60)/60*100,100); progEl.style.width=pct+'%'; }
+      } else {
+        uptimeEl.textContent='--:--:--';
+        if(progEl) progEl.style.width='0%';
+      }
+    }
+    if(logEl){
+      if(sd.logs && sd.logs.length){
+        if(since===0) logEl.innerHTML='';
+        sd.logs.forEach(line => {
+          const div = document.createElement('div');
+          div.style.cssText='border-left:2px solid rgba(79,158,255,.4);padding-left:6px;margin-bottom:3px;line-height:1.55';
+          div.textContent = line;
+          logEl.appendChild(div);
+        });
+        logEl.scrollTop = logEl.scrollHeight;
+        window._svLogIdx[svId] = sd.log_count || (since + sd.logs.length);
+      } else if(since===0){
+        // Đầu tiên fetch nhưng không có log → hiện trạng thái
+        const stTxt={running:'🟢 Đang khởi động — chờ log...',paused:'⏸ Tạm dừng',stopped:'⏹ Chưa chạy'};
+        logEl.innerHTML='<div style="color:var(--muted)">'+( stTxt[st]||'✅ Sẵn sàng')+'</div>';
+      }
+    }
+    // Sync detail modal nếu đang mở cho server này
+    if(window._detailOpenId === svId) _syncDetailModal(svId, sd);
     if(sd.running||sd.screenshot_b64){
       const r=await fetch('/api/dame/screenshot?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
       if(!r.ok) return;
@@ -2326,7 +2591,124 @@ async function deleteServer(id){
   await loadServerList();
   showToast('🗑 Đã xóa máy chủ','var(--muted)');
 }
-document.addEventListener('click',e=>{const m=document.getElementById('main-menu');if(m&&m.classList.contains('open')&&!e.target.closest('.dropdown'))closeMenu();});
+
+// ─── SERVER DETAIL MODAL ───────────────────────────────
+window._detailOpenId = null;
+window._detailStartTime = null;
+window._detailLogStore = {}; // svId → log lines array
+
+async function openDetailModal(svId){
+  window._detailOpenId = svId;
+  if(!window._detailLogStore[svId]) window._detailLogStore[svId] = [];
+  // Fill static info from API
+  try{
+    const svr = await fetch('/api/servers',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(svr.ok){
+      const svList = await svr.json();
+      const sv = svList.find(s=>s.id===svId || s.id===parseInt(svId));
+      if(sv){
+        const detName = document.getElementById('det-name');
+        if(detName) detName.textContent = sv.name || ('Máy chủ ' + svId);
+        if(document.getElementById('det-acc'))     document.getElementById('det-acc').textContent     = sv.acc_name    || '?';
+        if(document.getElementById('det-victim'))  document.getElementById('det-victim').textContent  = sv.target_name || '?';
+        if(document.getElementById('det-speed'))   document.getElementById('det-speed').textContent   = sv.speed       || '?';
+        const rawDate = sv.created_at || sv.created || sv.created_time || sv.createdAt || null;
+        const created = rawDate ? (String(rawDate).includes('T') ? String(rawDate).replace('T',' ').substring(0,16) : String(rawDate).substring(0,16)) : '?';
+        if(document.getElementById('det-created')) document.getElementById('det-created').textContent = created;
+      }
+    }
+  }catch(e){}
+  // Also try to fill from card as fallback
+  const card = document.getElementById('svcard2-'+svId);
+  if(card){
+    const badge = document.getElementById('sv2-badge-'+svId);
+    const dot   = document.getElementById('sv2-dot-'+svId);
+    const detBadge = document.getElementById('det-badge');
+    const detDot   = document.getElementById('det-dot');
+    if(badge && detBadge){ detBadge.textContent=badge.textContent; detBadge.className=badge.className; }
+    if(dot && detDot){ detDot.className=dot.className; }
+    const detName = document.getElementById('det-name');
+    if(detName && detName.textContent===''){
+      const metas = card.querySelectorAll('.sv2-meta-val');
+      if(metas[1] && !document.getElementById('det-victim').textContent) document.getElementById('det-victim').textContent=metas[1].textContent;
+      if(metas[0] && !document.getElementById('det-acc').textContent)    document.getElementById('det-acc').textContent=metas[0].textContent;
+      if(metas[2] && !document.getElementById('det-created').textContent)document.getElementById('det-created').textContent=metas[2].textContent;
+      detName.textContent = ('Máy chủ ' + svId);
+    }
+  }
+  // Fetch fresh status với since=0 để lấy toàn bộ log
+  try{
+    const since = 0; // Detail modal luôn lấy full log từ đầu
+    const r = await fetch('/api/dame/status?server_id='+svId+'&since='+since,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const sd = await r.json();
+    _syncDetailModal(svId, sd, 0, true);
+    if(sd.running) window._detailStartTime = Date.now();
+    // Screenshot
+    if(sd.running || sd.screenshot_b64){
+      const sr = await fetch('/api/dame/screenshot?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+      const scd = await sr.json();
+      if(scd.screenshot_b64){
+        const img=document.getElementById('det-scr-img'), ph=document.getElementById('det-scr-ph');
+        if(img){img.src='data:image/jpeg;base64,'+scd.screenshot_b64;img.style.display='block';}
+        if(ph) ph.style.display='none';
+      }
+    }
+  }catch(e){}
+  document.getElementById('sv-detail-modal').style.display='flex';
+}
+
+function _syncDetailModal(svId, sd, _unused, fullReset){
+  if(window._detailOpenId !== svId) return;
+  const sLabel={ready:'Sẵn sàng',running:'Đang chạy',stopped:'Đã dừng',paused:'Tạm dừng'};
+  const st = sd.running?'running':sd.paused?'paused':'stopped';
+  const badge=document.getElementById('det-badge'), dot=document.getElementById('det-dot');
+  if(badge){badge.textContent=sLabel[st]||st; badge.className='sv2-status-badge '+st;}
+  if(dot) dot.className='sv2-status-dot '+st;
+  const totEl=document.getElementById('det-total'), loopEl=document.getElementById('det-loops');
+  if(totEl) totEl.textContent=sd.total||0;
+  if(loopEl) loopEl.textContent=sd.loops||0;
+  // Actions
+  const actDiv=document.getElementById('det-actions');
+  if(actDiv){
+    actDiv.innerHTML=`
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${!sd.running&&!sd.paused?`<button class="sv2-btn play" style="flex:1" onclick="serverAction('start','${svId}','','','${sd.speed||'normal'}','','','')">▶ Chạy ngay</button>`:''}
+        ${sd.running?`<button class="sv2-btn pause" style="flex:1" onclick="serverAction('pause','${svId}')">⏸ Tạm dừng</button>`:''}
+        ${sd.paused?`<button class="sv2-btn resume" style="flex:1" onclick="serverAction('resume','${svId}')">▶ Tiếp tục</button>`:''}
+        ${sd.running||sd.paused?`<button class="sv2-btn stop" style="flex:1" onclick="serverAction('stop','${svId}')">⏹ Dừng hẳn</button>`:''}
+      </div>`;
+  }
+  // Logs — append new lines (sd.logs đã là delta từ since)
+  const logEl=document.getElementById('det-log');
+  if(logEl){
+    if(fullReset) logEl.innerHTML='';
+    if(sd.logs && sd.logs.length){
+      sd.logs.forEach(line => {
+        const div=document.createElement('div');
+        div.style.cssText='border-left:2px solid rgba(79,158,255,.35);padding-left:7px;margin-bottom:3px;line-height:1.6';
+        div.textContent=line;
+        logEl.appendChild(div);
+      });
+      logEl.scrollTop=logEl.scrollHeight;
+    } else if(fullReset){
+      logEl.innerHTML=`<div style="color:var(--muted)">${st==='stopped'?'⏹ Chưa chạy — chưa có log':st==='running'?'🟢 Đang chạy — chờ log...':'✅ Sẵn sàng'}</div>`;
+    }
+  }
+}
+
+function closeDetailModal(){
+  document.getElementById('sv-detail-modal').style.display='none';
+  window._detailOpenId=null;
+  window._detailStartTime=null;
+}
+
+function clearDetLog(){
+  const el=document.getElementById('det-log');
+  if(el) el.innerHTML='<div style="color:var(--muted)">🗑 Đã xóa log</div>';
+  if(window._detailOpenId && window._svLogIdx) window._svLogIdx[window._detailOpenId]=0;
+}
+// ──────────────────────────────────────────────────────
+document.addEventListener('click',e=>{if(!sfxOn)return;const el=e.target.closest('button,.btn,.support-btn,.sb-item,.sb-toggle-row,.sb-logout,.hist-btn,.tab,.page-btn,.captcha-opt,.auth-tab');if(el)playSfx('click');});
 
 let _theme='dark';
 function toggleTheme(){
@@ -2355,14 +2737,49 @@ function playSfx(type){
     else if(type==='error'){osc.frequency.setValueAtTime(300,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(150,ctx.currentTime+.2);gain.gain.setValueAtTime(.15,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.2);osc.start(ctx.currentTime);osc.stop(ctx.currentTime+.2);}
   }catch{}
 }
-document.addEventListener('click',e=>{if(!sfxOn)return;const el=e.target.closest('button,.btn,.support-btn,.d-item,.d-toggle,.hist-btn,.tab,.page-btn,.captcha-opt,.auth-tab');if(el)playSfx('click');});
+// sfx click handled above
+
+function togglePw(inputId, btn){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  const eyeOn  = btn.querySelector('.eye-icon');
+  const eyeOff = btn.querySelector('.eye-off-icon');
+  if(eyeOn)  eyeOn.style.display  = show ? 'none'  : 'block';
+  if(eyeOff) eyeOff.style.display = show ? 'block' : 'none';
+  btn.classList.toggle('active', show);
+}
 
 function showToast(msg,bg='#4f9eff'){
   const t=document.createElement('div');t.className='toast';t.textContent=msg;t.style.background=bg;
   document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
 }
 function startClock(){
-  setInterval(()=>{const el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleTimeString('vi-VN');},1000);
+  setInterval(()=>{
+    // Tick uptime cho tất cả card đang chạy
+    if(window._svStart){
+      Object.keys(window._svStart).forEach(svId=>{
+        const el=document.getElementById('sv2-uptime-'+svId);
+        const pg=document.getElementById('sv2-prog-'+svId);
+        if(!el) return;
+        const secs=Math.floor((Date.now()-window._svStart[svId])/1000);
+        const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
+        el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if(pg){ pg.style.width=Math.min((secs%60)/60*100,100)+'%'; }
+      });
+    }
+    const t=new Date().toLocaleTimeString('vi-VN');
+    const el=document.getElementById('clock');if(el)el.textContent=t;
+    const el2=document.getElementById('clock-welcome');if(el2)el2.textContent=t;
+    // Update detail modal uptime nếu đang mở
+    if(window._detailOpenId && window._detailStartTime){
+      const s=Math.floor((Date.now()-window._detailStartTime)/1000);
+      const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;
+      const el3=document.getElementById('det-uptime');
+      if(el3) el3.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+    }
+  },1000);
 }
 
 // Khởi động nếu đã có session
