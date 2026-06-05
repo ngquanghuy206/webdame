@@ -361,8 +361,11 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
 
             # ── BƯỚC 4: Reload để FB nhận session ──
             DAME_SESSION.add_log("🔄 Reload để kích hoạt session...")
-            await page.reload(wait_until="domcontentloaded", timeout=25000)
-            await asyncio.sleep(2)
+            try:
+                await page.reload(wait_until="domcontentloaded", timeout=40000)
+            except:
+                pass  # Timeout reload vẫn ok, trang có thể đã load đủ
+            await asyncio.sleep(3)
 
             # ── BƯỚC 5: Check đăng nhập thành công chưa ──
             cur_url = page.url
