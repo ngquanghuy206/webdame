@@ -1164,10 +1164,9 @@ async function stepVerifyCookie(){
 
   try{
     if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; btn.disabled=false; btn.textContent='✅ Xác nhận Cookie'; return; }
-    // Verify mất ~25-35s vì server phải mở Playwright browser
-    box.innerHTML='<div style="display:flex;align-items:center;gap:10px"><div class="spinner" style="width:18px;height:18px;display:inline-block"></div> Đang kiểm tra cookie (30-40 giây)...</div>';
+    // Verify nhanh - chỉ check format cookie
     const ctrl = new AbortController();
-    const timeoutId = setTimeout(() => ctrl.abort(), 60000); // 60s timeout
+    const timeoutId = setTimeout(() => ctrl.abort(), 10000); // 10s là đủ
     let r;
     try {
       r = await fetch('/api/verify-fb-cookie',{
@@ -1179,7 +1178,7 @@ async function stepVerifyCookie(){
       clearTimeout(timeoutId);
     } catch(fetchErr) {
       clearTimeout(timeoutId);
-      if(fetchErr.name === 'AbortError') throw new Error('Quá thời gian chờ (60s). Server đang bận, thử lại sau.');
+      if(fetchErr.name === 'AbortError') throw new Error('Server không phản hồi. Thử lại sau.');
       throw new Error('Không kết nối được server: ' + fetchErr.message);
     }
     const d = await r.json();
