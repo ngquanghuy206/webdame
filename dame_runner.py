@@ -218,14 +218,34 @@ async def _screenshot_loop():
 # VERIFY COOKIE
 # ══════════════════════════════════════
 async def verify_fb_cookie(cookie_str: str) -> dict:
-    # Chỉ check không rỗng, không check sống/chết — log lúc chạy sẽ báo
+    # Chỉ check format — không check sống/chết thực sự (sẽ báo khi dame chạy)
     try:
         if not cookie_str or not cookie_str.strip():
             return {"ok": False, "name": "", "uid": "", "error": "Cookie rỗng"}
         import re
+        # Lấy c_user nếu có
         m = re.search(r"c_user[=:]\s*[\"']?(\d+)", cookie_str)
         uid = m.group(1) if m else ""
-        name = f"UID {uid}" if uid else "Cookie đã nhận"
+        # Thử parse JSON array (Cookie-Editor format)
+        if not uid:
+            try:
+                import json
+                parsed = json.loads(cookie_str)
+                if isinstance(parsed, list):
+                    for c in parsed:
+                        if isinstance(c, dict) and c.get("name") == "c_user":
+                            uid = str(c.get("value", ""))
+                            break
+            except Exception:
+                pass
+        # Cookie hợp lệ nếu có c_user hoặc nếu string đủ dài (có vẻ là cookie string thực)
+        if uid:
+            name = f"UID {uid}"
+        elif len(cookie_str.strip()) >= 10:
+            # Không tìm được c_user nhưng cookie không rỗng — chấp nhận, báo khi chạy
+            name = "Cookie đã nhận"
+        else:
+            return {"ok": False, "name": "", "uid": "", "error": "Cookie sai format hoặc quá ngắn"}
         return {"ok": True, "name": name, "uid": uid}
     except Exception as e:
         return {"ok": False, "name": "", "uid": "", "error": str(e)[:200]}
