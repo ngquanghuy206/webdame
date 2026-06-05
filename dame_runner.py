@@ -147,18 +147,27 @@ def parse_cookie_str(cookie_str: str) -> list:
     return cookies
 
 def build_inject_js(cookie_str: str) -> str:
-    """Inject cookie giống bookmarklet DZI MEO MEO - xóa cũ, set mới"""
-    escaped = json.dumps(cookie_str)
+    """Inject cookie giống bookmarklet DZI MEO MEO - xóa cũ, set mới, force en_US"""
+    # Lọc bỏ cookie locale khỏi string để tránh ghi đè en_US
+    filtered = []
+    for part in cookie_str.split(';'):
+        p = part.strip()
+        if p and not p.lower().startswith('locale='):
+            filtered.append(p)
+    cookie_str_clean = '; '.join(filtered)
+    escaped = json.dumps(cookie_str_clean)
     return f"""
 (function() {{
     var cookieStr = {escaped};
-    // Bước 1: Xóa toàn bộ cookie cũ (giống bookmarklet chọn 3)
+    // Bước 1: Xóa toàn bộ cookie cũ
     document.cookie.split(";").forEach(function(c) {{
         document.cookie = c.replace(/^ +/, "")
             .replace(/=.*/, "=;expires=" + new Date().toUTCString()
             + ";path=/;domain=.facebook.com");
     }});
-    // Bước 2: Set cookie mới từng cái (giống bookmarklet chọn 1)
+    // Bước 2: Force locale=en_US trước
+    document.cookie = "locale=en_US; domain=.facebook.com; path=/";
+    // Bước 3: Set cookie user (không có locale để không ghi đè)
     var cookies = cookieStr.split(';');
     cookies.forEach(function(cookie) {{
         cookie = cookie.trim();
