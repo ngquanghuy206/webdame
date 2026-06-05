@@ -2131,12 +2131,25 @@ async function svWizardCookieVerify(){
   const btn    = document.getElementById('sv-btn-cookie');
   err.style.display='none';
   if(!cookie){ err.style.display='block'; err.textContent='⚠️ Chưa nhập cookie!'; return; }
+  // Kiểm tra đã đăng nhập chưa
+  if(!SESSION_TOKEN){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; return; }
   result.style.display='block';
   result.style.background='rgba(79,158,255,.08)'; result.style.border='1px solid rgba(79,158,255,.2)'; result.style.color='var(--blue)';
   result.innerHTML='<div style="display:flex;align-items:center;gap:8px"><div class="spinner" style="width:16px;height:16px"></div> Đang kiểm tra...</div>';
   btn.disabled=true; btn.textContent='⏳...';
   try{
-    const r=await fetch('/api/verify-fb-cookie',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cookie,_token:SESSION_TOKEN})});
+    const ctrl = new AbortController();
+    const tid = setTimeout(()=>ctrl.abort(), 10000);
+    let r;
+    try{
+      r=await fetch('/api/verify-fb-cookie',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cookie,_token:SESSION_TOKEN}),signal:ctrl.signal});
+      clearTimeout(tid);
+    }catch(fetchErr){
+      clearTimeout(tid);
+      if(fetchErr.name==='AbortError') throw new Error('Server không phản hồi. Thử lại sau.');
+      throw new Error('Không kết nối được server: '+fetchErr.message);
+    }
+    if(r.status===401){ err.style.display='block'; err.textContent='⚠️ Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!'; result.style.display='none'; return; }
     const d=await r.json();
     if(d.ok){
       _svCookieStr=cookie;
