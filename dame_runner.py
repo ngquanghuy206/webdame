@@ -201,104 +201,40 @@ async def _screenshot_loop():
 # VERIFY COOKIE
 # ══════════════════════════════════════
 async def verify_fb_cookie(cookie_str: str) -> dict:
-    if not PLAYWRIGHT_OK:
-        return {"ok": False, "name": "", "uid": "", "error": "Playwright chưa cài"}
+    """
+    Không dùng Playwright nữa — check nhanh format cookie.
+    Việc check sống/chết thực sự sẽ diễn ra khi bắt đầu dame (log sẽ báo).
+    """
     try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(
-                headless=True,
-                args=["--no-sandbox","--disable-gpu","--disable-dev-shm-usage",
-                      "--disable-extensions","--disable-images","--blink-settings=imagesEnabled=false"]
-            )
-            ctx = await browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                java_script_enabled=True,
-            )
-            # Inject cookie qua context TRƯỚC khi mở trang (bypass httpOnly restriction)
-            parsed_cookies = parse_cookie_str(cookie_str)
-            if parsed_cookies:
-                await ctx.add_cookies(parsed_cookies)
-            page = await ctx.new_page()
-            # Block ảnh/media để load nhanh hơn
-            await page.route("**/*.{png,jpg,jpeg,gif,webp,svg,mp4,mp3,woff,woff2}", lambda r: r.abort())
-            await page.goto("https://www.facebook.com", wait_until="domcontentloaded", timeout=20000)
-            await asyncio.sleep(1.5)
+        parsed = parse_cookie_str(cookie_str)
+        if not parsed:
+            return {"ok": False, "name": "", "uid": "", "error": "Cookie sai format hoặc rỗng"}
+        
+        # Lấy c_user để hiển thị UID
+        uid = ""
+        name = ""
+        for c in parsed:
+            if c.get("name") == "c_user":
+                uid = str(c.get("value", ""))
+            if c.get("name") == "xs" and not uid:
+                pass  # xs exists = likely valid session
 
-            url = page.url
-            if "login" in url or "checkpoint" in url:
-                # Thử fallback JS inject nếu ctx.add_cookies chưa đủ
-                await page.evaluate(build_inject_js(cookie_str))
-                await page.reload(wait_until="domcontentloaded", timeout=25000)
-                await asyncio.sleep(2)
-                url = page.url
-                if "login" in url or "checkpoint" in url:
-                    await browser.close()
-                    return {"ok": False, "name": "", "uid": "", "error": "Cookie die hoặc checkpoint"}
+        if not uid:
+            # Thử parse từ string thô
+            import re
+            m = re.search(r'c_user[=:]\s*["']?(\d+)', cookie_str)
+            if m:
+                uid = m.group(1)
 
-            # Lấy tên + UID qua GraphQL
-            result = await page.evaluate("""
-                async () => {
-                    try {
-                        const r = await fetch('https://www.facebook.com/api/graphql/', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                            body: 'variables=%7B%7D&doc_id=3919904814718296'
-                        });
-                        const t = await r.text();
-                        const m = t.match(/"name":"([^"]+)"/);
-                        const u = t.match(/"id":"(\\d{10,})"/);
-                        return {name: m?m[1]:'', uid: u?u[1]:''};
-                    } catch(e) { return {name:'',uid:''}; }
-                }
-            """)
+        if not uid:
+            return {"ok": False, "name": "", "uid": "", "error": "Không tìm thấy c_user trong cookie. Kiểm tra lại cookie."}
 
-            # Fallback DOM
-            if not result.get("name"):
-                try:
-                    el = await page.query_selector('[aria-label*="account" i], [aria-label*="tài khoản" i]')
-                    if el:
-                        lbl = (await el.get_attribute("aria-label") or "")
-                        result["name"] = lbl.replace("Tài khoản của ","").replace("account","").strip()
-                except: pass
-
-            # Fallback title
-            if not result.get("name"):
-                title = await page.title()
-                if title and "Facebook" not in title:
-                    result["name"] = title.split("–")[0].split("|")[0].strip()
-
-            # Fallback c_user từ cookie
-            if not result.get("uid"):
-                try:
-                    cookies = await ctx.cookies()
-                    c_user = next((c["value"] for c in cookies if c["name"]=="c_user"), "")
-                    if c_user: result["uid"] = c_user
-                except: pass
-
-            # ── Check popup "See more / Xem thêm" login dialog (soft-block) ──
-            try:
-                popup_selectors = [
-                    "form[data-testid='royal_login_form']",
-                    "input[name='email']",
-                    "input[data-testid='royal_email']",
-                    "[role='dialog'] input[type='password']",
-                    "[role='dialog'] button[name='login']",
-                ]
-                for sel in popup_selectors:
-                    el = await page.query_selector(sel)
-                    if el:
-                        await browser.close()
-                        return {"ok": False, "name": "", "uid": "", "error": "Cookie bị Facebook soft-block (hiện popup đăng nhập lại). Lấy cookie mới hoặc dùng VPS Việt Nam."}
-            except: pass
-
-            await browser.close()
-            return {"ok": True, "name": result.get("name",""), "uid": result.get("uid","")}
+        name = f"UID {uid}"
+        return {"ok": True, "name": name, "uid": uid}
     except Exception as e:
         return {"ok": False, "name": "", "uid": "", "error": str(e)[:200]}
 
-# ══════════════════════════════════════
-# LẤY TÊN TARGET
-# ══════════════════════════════════════
+
 async def get_target_name(cookie_str: str, target_url: str) -> dict:
     if not PLAYWRIGHT_OK:
         return {"ok": False, "name": "Không xác định", "uid": ""}
@@ -410,28 +346,32 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
             parsed_cookies = parse_cookie_str(cookie_str)
             if parsed_cookies:
                 await ctx.add_cookies(parsed_cookies)
-            await page.goto("https://www.facebook.com", wait_until="domcontentloaded", timeout=25000)
+
+            # Mở thẳng trang nạn nhân (tránh FB detect session lạ từ homepage)
+            DAME_SESSION.add_log("🎯 Mở trang target...")
+            await page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
             await page.evaluate(build_inject_js(cookie_str))
-            await page.reload(wait_until="domcontentloaded", timeout=25000)
-            await asyncio.sleep(2.5)
+            await asyncio.sleep(2)
 
-            if "login" in page.url or "checkpoint" in page.url:
-                DAME_SESSION.add_log("❌ Cookie die / checkpoint!")
+            # Check cookie sống/chết ngay trên trang target
+            cur_url = page.url
+            if "login" in cur_url or "checkpoint" in cur_url:
+                DAME_SESSION.add_log("❌ Cookie die / bị checkpoint!")
                 DAME_SESSION.stopped = True; DAME_SESSION.running = False
                 screenshot_task.cancel()
                 await browser.close(); return
 
-            DAME_SESSION.add_log("✅ Login OK · Đang mở target...")
-            await page.goto(target_url, wait_until="domcontentloaded", timeout=25000)
-            await asyncio.sleep(3)
+            # Check popup login dialog (soft-block)
+            try:
+                popup = await page.query_selector("input[name='email'], [role='dialog'] input[type='password'], form[data-testid='royal_login_form']")
+                if popup:
+                    DAME_SESSION.add_log("❌ Cookie bị soft-block (popup đăng nhập xuất hiện)!")
+                    DAME_SESSION.stopped = True; DAME_SESSION.running = False
+                    screenshot_task.cancel()
+                    await browser.close(); return
+            except: pass
 
-            if "login" in page.url:
-                DAME_SESSION.add_log("❌ Không mở được target!")
-                DAME_SESSION.stopped = True; DAME_SESSION.running = False
-                screenshot_task.cancel()
-                await browser.close(); return
-
-            DAME_SESSION.add_log(f"🎯 Target OK · Script đã inject · Đang chạy tự động...")
+            DAME_SESSION.add_log("✅ Cookie sống · Đang chạy dame tự động...")
 
             # ── Vòng lặp chính: chỉ detect die, reload nếu cần ──
             die_keywords = [
