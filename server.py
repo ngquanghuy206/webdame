@@ -311,7 +311,7 @@ from dame_runner import (
     verify_fb_cookie, get_target_name,
     start_dame, pause_dame, resume_dame, stop_dame,
     get_status, get_screenshot, fb_login_by_pass,
-    get_all_status, DAME_SESSIONS,
+    get_all_status, DAME_SESSIONS, DAME_SESSION,
     _captcha_sessions
 )
 import os
@@ -375,7 +375,15 @@ async def api_dame_status(request: Request):
     username = get_session_user(get_token(request))
     if not username: raise HTTPException(401, "Chưa đăng nhập")
     server_id = request.query_params.get("server_id","")
-    return JSONResponse(get_status(server_id))
+    since = int(request.query_params.get("since","0"))
+    st = get_status(server_id)
+    # Thay pop_logs bằng get_logs với since index
+    sess = DAME_SESSIONS.get(server_id) if server_id else DAME_SESSION
+    if sess:
+        new_logs = sess.get_logs(since)
+        st["logs"] = new_logs
+        st["log_count"] = len(sess._logs)
+    return JSONResponse(st)
 
 @app.get("/api/dame/status/all")
 async def api_dame_status_all(request: Request):
@@ -387,7 +395,9 @@ async def api_dame_status_all(request: Request):
 async def api_dame_screenshot(request: Request):
     username = get_session_user(get_token(request))
     if not username: raise HTTPException(401, "Chưa đăng nhập")
-    return JSONResponse({"screenshot": get_screenshot()})
+    server_id = request.query_params.get("server_id","")
+    b64 = get_screenshot(server_id)
+    return JSONResponse({"screenshot": b64, "screenshot_b64": b64})
 
 @app.post("/api/dame/pause")
 async def api_dame_pause(request: Request):

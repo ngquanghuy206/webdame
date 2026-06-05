@@ -50,6 +50,10 @@ class DameSession:
             self._logs = self._logs[-300:]
         self.log = entry
 
+    def get_logs(self, since: int = 0) -> list:
+        """Trả logs từ index 'since', không xóa."""
+        return self._logs[since:]
+
     def pop_logs(self) -> list:
         logs = list(self._logs)
         self._logs.clear()
