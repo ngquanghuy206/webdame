@@ -331,7 +331,10 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
             )
             ctx: BrowserContext = await browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                viewport={"width": 1280, "height": 800}
+                viewport={"width": 1280, "height": 800},
+                locale="en-US",
+                timezone_id="America/New_York",
+                extra_http_headers={"Accept-Language": "en-US,en;q=0.9"}
             )
 
             # ── Inject script tự động vào mọi trang facebook ──
@@ -343,10 +346,15 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
             # Bắt đầu vòng chụp screenshot nền
             screenshot_task = asyncio.create_task(_screenshot_loop())
 
-            # ── BƯỚC 1: Mở trang login FB (trang trắng, chưa có session) ──
+            # ── BƯỚC 1: Mở trang login FB với locale=en_US ──
             DAME_SESSION.add_log("🌐 Mở Facebook login page...")
-            await page.goto("https://www.facebook.com/login", wait_until="domcontentloaded", timeout=30000)
+            await page.goto("https://www.facebook.com/login?locale=en_US", wait_until="domcontentloaded", timeout=30000)
             await asyncio.sleep(1)
+            # Set cookie locale=en_US để FB giữ ngôn ngữ tiếng Anh
+            await ctx.add_cookies([{
+                "name": "locale", "value": "en_US",
+                "domain": ".facebook.com", "path": "/"
+            }])
 
             # ── BƯỚC 2: Inject cookie bằng document.cookie (giống bookmarklet) ──
             DAME_SESSION.add_log("🍪 Inject cookie...")
@@ -397,9 +405,12 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
                 screenshot_task.cancel()
                 await browser.close(); return
 
-            DAME_SESSION.add_log("🐬 Dame script tự chạy · Đang dame...")
-            # Script đã được inject qua add_init_script và tự auto-start sau 2s
-            # Không cần evaluate thêm để tránh chạy 2 instance
+            # Evaluate dame script thủ công (add_init_script không đủ tin cậy trên headless)
+            try:
+                await page.evaluate(dame_js)
+                DAME_SESSION.add_log("🐬 Dame script đã inject · Đang chạy...")
+            except Exception as e:
+                DAME_SESSION.add_log(f"⚠️ Script inject lỗi: {str(e)[:80]}")
 
             # ── Vòng lặp chính: chỉ detect die, reload nếu cần ──
             die_keywords = [
