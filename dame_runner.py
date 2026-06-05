@@ -183,6 +183,9 @@ SPEED_CONFIG = {
     "slow":   {"click": 350, "action": 700, "done": 250, "loop": 1500, "inter": 650},
 }
 def cfg(speed): return SPEED_CONFIG.get(speed, SPEED_CONFIG["normal"])
+def _get_delay_config(speed):
+    c = SPEED_CONFIG.get(speed, SPEED_CONFIG["normal"])
+    return {"LOOP_DELAY": c["loop"], "CLICK_DELAY": c["click"], "ACTION_DELAY": c["action"], "DONE_DELAY": c["done"], "INTER_DELAY": c["inter"]}
 
 # ══════════════════════════════════════
 # CHỤP SCREENSHOT TAB MÁY ẢO
