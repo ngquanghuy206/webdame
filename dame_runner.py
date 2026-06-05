@@ -147,16 +147,18 @@ def parse_cookie_str(cookie_str: str) -> list:
     return cookies
 
 def build_inject_js(cookie_str: str) -> str:
-    """Fallback JS inject - chỉ dùng cho non-httpOnly cookies"""
+    """Inject cookie giống bookmarklet DZI MEO MEO - xóa cũ, set mới"""
     escaped = json.dumps(cookie_str)
     return f"""
 (function() {{
     var cookieStr = {escaped};
+    // Bước 1: Xóa toàn bộ cookie cũ (giống bookmarklet chọn 3)
     document.cookie.split(";").forEach(function(c) {{
         document.cookie = c.replace(/^ +/, "")
             .replace(/=.*/, "=;expires=" + new Date().toUTCString()
             + ";path=/;domain=.facebook.com");
     }});
+    // Bước 2: Set cookie mới từng cái (giống bookmarklet chọn 1)
     var cookies = cookieStr.split(';');
     cookies.forEach(function(cookie) {{
         cookie = cookie.trim();
@@ -166,7 +168,7 @@ def build_inject_js(cookie_str: str) -> str:
             document.cookie = cookie;
         }}
     }});
-    return 'OK';
+    return 'INJECTED:' + cookies.length;
 }})();
 """
 
@@ -341,19 +343,28 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
             # Bắt đầu vòng chụp screenshot nền
             screenshot_task = asyncio.create_task(_screenshot_loop())
 
-            # Inject cookie
+            # ── BƯỚC 1: Mở trang login FB (trang trắng, chưa có session) ──
+            DAME_SESSION.add_log("🌐 Mở Facebook login page...")
+            await page.goto("https://www.facebook.com/login", wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(1)
+
+            # ── BƯỚC 2: Inject cookie bằng document.cookie (giống bookmarklet) ──
             DAME_SESSION.add_log("🍪 Inject cookie...")
+            inject_js = build_inject_js(cookie_str)
+            await page.evaluate(inject_js)
+            await asyncio.sleep(0.5)
+
+            # ── BƯỚC 3: Cũng inject qua ctx.add_cookies để đảm bảo httpOnly ──
             parsed_cookies = parse_cookie_str(cookie_str)
             if parsed_cookies:
                 await ctx.add_cookies(parsed_cookies)
 
-            # Mở thẳng trang nạn nhân (tránh FB detect session lạ từ homepage)
-            DAME_SESSION.add_log("🎯 Mở trang target...")
-            await page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
-            await page.evaluate(build_inject_js(cookie_str))
+            # ── BƯỚC 4: Reload để FB nhận session ──
+            DAME_SESSION.add_log("🔄 Reload để kích hoạt session...")
+            await page.reload(wait_until="domcontentloaded", timeout=25000)
             await asyncio.sleep(2)
 
-            # Check cookie sống/chết ngay trên trang target
+            # ── BƯỚC 5: Check đăng nhập thành công chưa ──
             cur_url = page.url
             if "login" in cur_url or "checkpoint" in cur_url:
                 DAME_SESSION.add_log("❌ Cookie die / bị checkpoint!")
@@ -365,13 +376,31 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
             try:
                 popup = await page.query_selector("input[name='email'], [role='dialog'] input[type='password'], form[data-testid='royal_login_form']")
                 if popup:
-                    DAME_SESSION.add_log("❌ Cookie bị soft-block (popup đăng nhập xuất hiện)!")
+                    DAME_SESSION.add_log("❌ Cookie bị soft-block (popup đăng nhập)!")
                     DAME_SESSION.stopped = True; DAME_SESSION.running = False
                     screenshot_task.cancel()
                     await browser.close(); return
             except: pass
 
-            DAME_SESSION.add_log("✅ Cookie sống · Đang chạy dame tự động...")
+            DAME_SESSION.add_log("✅ Đăng nhập OK · Đang mở trang target...")
+
+            # ── BƯỚC 6: Mở trang nạn nhân ──
+            await page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(2)
+
+            if "login" in page.url or "checkpoint" in page.url:
+                DAME_SESSION.add_log("❌ Không mở được target!")
+                DAME_SESSION.stopped = True; DAME_SESSION.running = False
+                screenshot_task.cancel()
+                await browser.close(); return
+
+            DAME_SESSION.add_log("🎯 Target OK · Đang chạy dame tự động...")
+            # Re-inject dame script sau khi trang target load xong
+            try:
+                await page.evaluate(dame_js)
+                DAME_SESSION.add_log("💉 Dame script đã inject · Đang chạy...")
+            except Exception as e:
+                DAME_SESSION.add_log(f"⚠️ Inject script lỗi: {str(e)[:60]}")
 
             # ── Vòng lặp chính: chỉ detect die, reload nếu cần ──
             die_keywords = [
