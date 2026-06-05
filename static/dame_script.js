@@ -896,6 +896,7 @@
     }
     
     async function startDameProcess() {
+        window._startDameProcess = startDameProcess; // expose ra window
         totalReportsDone = 0;
         totalLoopsCompleted = 0;
         startTime = Date.now();
@@ -958,6 +959,11 @@
     setInterval(() => { if(isRunning) updateUI(); }, 1000);
     addLog("🐬 DZI MEO MEO PRO V6.2 - Chọn chế độ và bắt đầu!", "#00BFFF");
     console.log("🐬 DZI MEO MEO | DZI X MODE | PRO V6.2");
+
+    // Expose functions ra window để server có thể gọi
+    window._startDameProcess = startDameProcess;
+    window._dameTotal = 0;
+    window._dameLoops = 0;
 
     // Auto bắt đầu dame ngay khi vào link
     setTimeout(() => {
