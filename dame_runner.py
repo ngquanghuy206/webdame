@@ -549,7 +549,11 @@ def get_all_status() -> dict:
 def get_status(server_id="") -> dict:
     sess = DAME_SESSIONS.get(server_id) if server_id else DAME_SESSION
     if not sess:
-        return {"running":False,"paused":False,"stopped":True,"died":False,"total":0,"loops":0,"log":"","logs":[],"name":"","uid":"","die_screenshot":""}
+        return {"running":False,"paused":False,"stopped":True,"died":False,"total":0,"loops":0,"log":"","logs":[],"name":"","uid":"","die_screenshot":"","is_running":False}
+    # Sync status nếu task đã xong nhưng flag chưa update
+    if sess._task and sess._task.done() and sess.running:
+        sess.running = False
+        sess.stopped = True
     return {
         "running":  sess.running,
         "paused":   sess.paused,
@@ -561,6 +565,7 @@ def get_status(server_id="") -> dict:
         "logs":     sess.pop_logs(),
         "name":     sess.name,
         "uid":      sess.uid,
+        "is_running": sess.running,
         "die_screenshot": sess.screenshot_b64 if sess.died else "",
     }
 
@@ -659,11 +664,14 @@ async def _dame_loop_multi(sess: DameSession, cookie_str: str, target_url: str, 
             finally:
                 screenshot_task.cancel()
                 sess.running = False
+                sess.stopped = True
                 try: await browser.close()
                 except: pass
     except Exception as e:
         sess.add_log(f"❌ Playwright lỗi: {str(e)[:200]}")
-        sess.running = False; sess.died = True
+        sess.running = False
+        sess.stopped = True
+        sess.died = True
 
 
 # ══════════════════════════════════════

@@ -347,8 +347,17 @@ async def api_dame_start(request: Request):
     acc_name    = data.get("acc_name", "")
     acc_uid     = data.get("acc_uid", "")
     target_name = data.get("target_name", "")
+    server_id   = (data.get("server_id") or "").strip()
     if not cookie or not target_url: raise HTTPException(400, "Thiếu cookie hoặc target")
-    await start_dame(cookie, target_url, speed, acc_name, acc_uid, target_name)
+    await start_dame(cookie, target_url, speed, acc_name, acc_uid, target_name, server_id=server_id)
+    # Cập nhật status server trong file JSON nếu có server_id
+    if server_id:
+        servers = load_servers()
+        for s in servers:
+            if s["id"] == server_id:
+                s["status"] = "running"
+                break
+        save_servers(servers)
     now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     add_history({"id": "dzixmode" + "".join([str(__import__("random").randint(0,9)) for _ in range(6)]), "owner": username, "type": "dame",
                  "acc_name": acc_name, "acc_uid": acc_uid, "target": target_url,
@@ -359,7 +368,7 @@ async def api_dame_start(request: Request):
         f"🎯 Target: <b>{target_name}</b>\n🔗 {target_url}\n"
         f"🚀 Speed: {speed} · By: <code>{username}</code>\n🕐 {now}"
     ))
-    return JSONResponse({"ok": True, "name": acc_name, "uid": acc_uid})
+    return JSONResponse({"ok": True, "name": acc_name, "uid": acc_uid, "server_id": server_id})
 
 @app.get("/api/dame/status")
 async def api_dame_status(request: Request):
