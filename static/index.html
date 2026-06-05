@@ -7,9 +7,9 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="🐬 FB Dame Tool — by Dzi Meo Meo">
 <meta property="og:description" content="Công cụ dame acc Facebook. Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi) · IT Automation Developer · 2026">
-<meta property="og:image" content="https://i.imgur.com/vacr9kd.jpeg">
+<meta property="og:image" content="https://i.imgur.com/1qYFul7.jpeg">
 <meta name="description" content="Công cụ dame acc Facebook">
-<link rel="icon" href="https://i.imgur.com/vacr9kd.jpeg" type="image/jpeg">
+<link rel="icon" href="https://i.imgur.com/1qYFul7.jpeg" type="image/jpeg">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;transition:background .3s,color .3s,border-color .3s}
 :root{
@@ -39,6 +39,21 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .auth-card{width:100%;max-width:420px;background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:24px;padding:30px 28px;box-shadow:0 20px 60px var(--shadow)}
 .auth-logo{text-align:center;margin-bottom:22px}
 .auth-logo-icon{font-size:42px;margin-bottom:8px}
+
+/* Rainbow border logo for login */
+@keyframes rainbowSpin{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.rainbow-logo-wrap{
+  width:76px;height:76px;border-radius:18px;padding:3px;
+  background:linear-gradient(135deg,#ff0000,#ff7700,#ffff00,#00ff00,#00ffff,#0077ff,#8800ff,#ff0000);
+  background-size:300% 300%;
+  animation:rainbowSpin 2.5s linear infinite;
+  box-shadow:0 0 22px rgba(124,77,255,.45),0 0 8px rgba(0,229,255,.3);
+  display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px;
+}
+.rainbow-logo-img{width:70px;height:70px;border-radius:15px;object-fit:cover;display:block}
+
+/* Circular logo for sidebar */
+.sb-logo-circle{width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid rgba(79,158,255,.4);display:block}
 .auth-logo-title{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .auth-logo-sub{font-size:11px;color:var(--muted);margin-top:4px}
 .auth-tabs{display:flex;gap:0;background:var(--glass2);border-radius:12px;padding:4px;margin-bottom:24px}
@@ -55,6 +70,10 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .auth-err{background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.3);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--red);display:none}
 .remember-row{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--muted);user-select:none}
+.pw-eye-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--muted);backdrop-filter:blur(4px);transition:all .18s;padding:0}
+.pw-eye-btn svg{width:16px;height:16px;transition:all .18s}
+.pw-eye-btn:hover{background:rgba(79,158,255,0.15);border-color:rgba(79,158,255,0.4);color:var(--blue);transform:translateY(-50%) scale(1.08)}
+.pw-eye-btn.active{background:rgba(79,158,255,0.18);border-color:rgba(79,158,255,0.5);color:var(--blue)}
 .remember-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);background:var(--glass2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:12px}
 .remember-check.checked{background:linear-gradient(135deg,var(--blue2),var(--purple));border-color:transparent;color:#fff}
 
@@ -406,7 +425,11 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">
-      <div class="auth-logo-icon">🐬</div>
+      <div class="auth-logo-icon">
+        <div class="rainbow-logo-wrap">
+          <img src="https://i.imgur.com/vIkYA9e.jpeg" class="rainbow-logo-img" alt="FB Dame Tool">
+        </div>
+      </div>
       <div class="auth-logo-title">FB Dame Tool</div>
       <div class="auth-logo-sub">Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi) · 2026</div>
     </div>
@@ -423,7 +446,20 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       </div>
       <div class="field-group">
         <div class="field-label">Mật khẩu</div>
-        <input class="field-input" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password">
+        <div style="position:relative">
+          <input class="field-input" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password" style="padding-right:44px">
+          <button type="button" class="pw-eye-btn" onclick="togglePw('login-pass',this)" title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="remember-row" id="remember-row" onclick="toggleRemember()">
         <div class="remember-check" id="remember-check"></div>
@@ -444,7 +480,20 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       </div>
       <div class="field-group">
         <div class="field-label">Mật khẩu</div>
-        <input class="field-input" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+        <div style="position:relative">
+          <input class="field-input" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" style="padding-right:44px">
+          <button type="button" class="pw-eye-btn" onclick="togglePw('reg-pass',this)" title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="field-group">
         <div class="field-label">Gmail</div>
@@ -474,7 +523,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 <div id="main-sidebar">
   <div class="sb-header">
     <div class="sb-logo">
-      <span class="sb-logo-img">🐬</span>
+      <span class="sb-logo-img"><img src="https://i.imgur.com/1qYFul7.jpeg" class="sb-logo-circle" alt="logo"></span>
       <span class="sb-logo-text">FB DAME TOOL</span>
     </div>
     <div class="sb-close" onclick="closeMenu()">✕</div>
@@ -853,7 +902,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
   <div class="modal-box" style="max-width:98vw;width:98vw;padding-bottom:8px;padding-left:10px;padding-right:10px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="modal-title" style="margin:0">🖥 Máy chủ của bạn</div>
-      <button class="btn btn-primary" style="padding:4px 10px;font-size:10px;border-radius:7px;min-width:0;flex:0" onclick="openCreateServerModal()">+ Tạo mới</button>
+      <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;border-radius:9px;min-width:0;flex:0;white-space:nowrap" onclick="openCreateServerModal()">+ Tạo mới</button>
     </div>
     <div id="server-list-body" style="min-height:80px;overflow-x:hidden;overflow-y:visible;padding:4px 0;margin:0 -10px;padding:4px 10px">
       <div style="text-align:center;color:var(--muted);padding:24px">⏳ Đang tải...</div>
@@ -2689,6 +2738,18 @@ function playSfx(type){
   }catch{}
 }
 // sfx click handled above
+
+function togglePw(inputId, btn){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  const eyeOn  = btn.querySelector('.eye-icon');
+  const eyeOff = btn.querySelector('.eye-off-icon');
+  if(eyeOn)  eyeOn.style.display  = show ? 'none'  : 'block';
+  if(eyeOff) eyeOff.style.display = show ? 'block' : 'none';
+  btn.classList.toggle('active', show);
+}
 
 function showToast(msg,bg='#4f9eff'){
   const t=document.createElement('div');t.className='toast';t.textContent=msg;t.style.background=bg;
