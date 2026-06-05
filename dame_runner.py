@@ -463,6 +463,11 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
                         if total: DAME_SESSION.total = int(total)
                         loops = await page.evaluate("window._dameLoops || 0")
                         if loops: DAME_SESSION.loops = int(loops)
+                        # Lấy logs từng bước từ dame_script.js
+                        js_logs = await page.evaluate("(typeof window._popDameLogs === 'function') ? window._popDameLogs() : []")
+                        if js_logs:
+                            for lg in js_logs:
+                                DAME_SESSION.add_log(str(lg))
                     except: pass
 
                     # Nếu trang bị redirect ra khỏi target → reload
@@ -660,8 +665,22 @@ async def _dame_loop_multi(sess: DameSession, cookie_str: str, target_url: str, 
                     except Exception as e:
                         sess.add_log(f"⚠️ Inject script lỗi: {str(e)[:60]}")
 
-                    sess.total += 1
-                    await asyncio.sleep(delay_cfg.get("LOOP_DELAY", 500) / 1000)
+                    # Chờ dame script chạy và poll logs từng bước
+                    loop_delay_ms = delay_cfg.get("LOOP_DELAY", 500)
+                    waited = 0
+                    while waited < loop_delay_ms and not sess.stopped:
+                        await asyncio.sleep(0.5)
+                        waited += 500
+                        try:
+                            t = await page.evaluate("window._dameTotal || 0")
+                            if t: sess.total = int(t)
+                            l = await page.evaluate("window._dameLoops || 0")
+                            if l: sess.loops = int(l)
+                            js_logs = await page.evaluate("(typeof window._popDameLogs === 'function') ? window._popDameLogs() : []")
+                            if js_logs:
+                                for lg in js_logs:
+                                    sess.add_log(str(lg))
+                        except: pass
 
             except asyncio.CancelledError:
                 sess.add_log("⏹ Đã dừng (cancelled)")
