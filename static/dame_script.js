@@ -165,13 +165,36 @@
     async function findAndClick(texts, timeout = 4000, waitAfter = 150) {
         const start = Date.now();
         while (Date.now() - start < timeout) {
-            const selectors = ['button', 'div[role="button"]', 'a[role="button"]', 'span[role="button"]', 'div[role="menuitem"]', 'div[tabindex="0"]'];
+            const selectors = [
+                'div[role="menuitem"]', 'div[role="option"]',
+                'div[role="radio"]', 'div[role="checkbox"]',
+                'button', 'div[role="button"]', 'a[role="button"]',
+                'span[role="button"]', 'div[tabindex="0"]',
+                'div[role="listitem"] div[role="button"]'
+            ];
             const elements = document.querySelectorAll(selectors.join(','));
             for (let el of elements) {
                 if (!el.offsetParent || isInsidePanel(el)) continue;
                 const txt = normalizeText(el.innerText);
+                if (!txt) continue;
                 for (let kw of texts) {
-                    if (txt === normalizeText(kw) || txt.includes(normalizeText(kw))) {
+                    const nkw = normalizeText(kw);
+                    if (txt === nkw || txt.startsWith(nkw) || txt.includes(nkw)) {
+                        await safeClick(el);
+                        await sleep(waitAfter);
+                        return true;
+                    }
+                }
+            }
+            // Tìm trong label (radio/checkbox của form báo cáo FB)
+            const labels = document.querySelectorAll('label');
+            for (let el of labels) {
+                if (!el.offsetParent || isInsidePanel(el)) continue;
+                const txt = normalizeText(el.innerText);
+                if (!txt) continue;
+                for (let kw of texts) {
+                    const nkw = normalizeText(kw);
+                    if (txt === nkw || txt.startsWith(nkw) || txt.includes(nkw)) {
                         await safeClick(el);
                         await sleep(waitAfter);
                         return true;
@@ -184,29 +207,77 @@
     }
     
     function findMenuElement() {
-        const menuTexts = ["Profile settings see more options", "更多选项", "その他のオプション", "More options"];
-        for (let lbl of menuTexts) {
+        // Ưu tiên aria-label đầy đủ (desktop + mobile EN/VI/JP)
+        const ariaLabels = [
+            "More options", "Profile settings see more options",
+            "Tùy chọn khác", "Xem thêm tùy chọn", "Xem thêm",
+            "More", "Actions", "See more options",
+            "更多选项", "その他のオプション"
+        ];
+        for (let lbl of ariaLabels) {
             let el = document.querySelector(`[aria-label="${lbl}"]`);
             if (el && el.offsetParent && !isInsidePanel(el)) return el;
         }
+        // Tìm trong khu vực ProfileActions (nút "..." dưới cover photo)
+        const profileSelectors = [
+            '[data-pagelet="ProfileActions"] [role="button"]',
+            '[data-pagelet="ProfileTilesBelowHeader"] [role="button"]',
+        ];
+        for (let sel of profileSelectors) {
+            try {
+                let els = document.querySelectorAll(sel);
+                for (let el of els) {
+                    if (!el.offsetParent || isInsidePanel(el)) continue;
+                    let txt = (el.innerText || "").trim();
+                    if (txt === "" || txt === "..." || txt === "…") return el;
+                }
+            } catch(e) {}
+        }
+        // Fallback: tìm qua aria-label chứa từ khóa
         let allBtns = document.querySelectorAll('div[role="button"], button');
         for (let btn of allBtns) {
             if (!btn.offsetParent || isInsidePanel(btn)) continue;
-            let txt = btn.innerText || "";
-            if (txt.includes('その他') || txt.includes('Other') || txt.includes('More') || txt.includes('…') || txt.includes('...')) {
-                return btn.closest('div[role="button"], button') || btn;
+            let lbl = (btn.getAttribute("aria-label") || "").toLowerCase();
+            if (lbl.includes("more") || lbl.includes("option") || lbl.includes("tùy chọn") || lbl.includes("thêm")) {
+                return btn;
+            }
+        }
+        // Last resort: nút nhỏ có SVG, không text, nằm trong 400px đầu trang
+        for (let btn of allBtns) {
+            if (!btn.offsetParent || isInsidePanel(btn)) continue;
+            if (!btn.querySelector("svg")) continue;
+            let txt = (btn.innerText || "").trim();
+            let lbl = (btn.getAttribute("aria-label") || "").trim();
+            if (txt === "" && lbl === "") {
+                let rect = btn.getBoundingClientRect();
+                if (rect.top > 0 && rect.top < 400 && rect.width < 60) return btn;
             }
         }
         return null;
     }
     
     async function clickMenu() {
-        const menu = findMenuElement();
+        // Thử findMenuElement trước
+        let menu = findMenuElement();
         if (menu) {
             await safeClick(menu);
-            await sleep(300);
+            await sleep(400);
             return true;
         }
+        // Fallback: nút ngoài cùng phải trong vùng cover photo (y: 100-350)
+        try {
+            let coverBtns = Array.from(document.querySelectorAll('[role="button"]')).filter(el => {
+                if (!el.offsetParent || isInsidePanel(el)) return false;
+                let rect = el.getBoundingClientRect();
+                return rect.top > 100 && rect.top < 350 && rect.width < 80;
+            });
+            if (coverBtns.length > 0) {
+                coverBtns.sort((a, b) => b.getBoundingClientRect().right - a.getBoundingClientRect().right);
+                await safeClick(coverBtns[0]);
+                await sleep(400);
+                return true;
+            }
+        } catch(e) {}
         return false;
     }
     
@@ -730,11 +801,26 @@
             addLog(`📌 ${reportConfig.name}: ${stepDisplay}`, "#7BACE0");
             
             if(step.type === "menu") {
-                await clickMenu();
+                // Retry menu click tối đa 3 lần
+                let menuOk = false;
+                for (let retry = 0; retry < 3 && !menuOk; retry++) {
+                    menuOk = await clickMenu();
+                    if (!menuOk) {
+                        addLog(`⚠️ Không tìm menu, thử lại (${retry+1}/3)...`, "#FFA500");
+                        await sleep(800);
+                        window.scrollTo({top: 0, behavior: 'smooth'});
+                        await sleep(400);
+                    }
+                }
+                if (!menuOk) {
+                    addLog(`❌ Bỏ qua báo cáo này (không tìm được menu)`, "#FF6B6B");
+                    return false;
+                }
                 await sleep(config.DELAY_TIME);
             }
             else if(step.type === "click") {
-                await findAndClick(step.texts, 4000, config.DELAY_TIME);
+                let ok = await findAndClick(step.texts, 5000, config.DELAY_TIME);
+                if (!ok) addLog(`⚠️ Không tìm thấy: ${step.texts[0]}`, "#FFA500");
             }
             else if(step.type === "optional") {
                 await findAndClick(step.texts, 2000, 150);
@@ -744,6 +830,13 @@
             }
             else if(step.type === "done") {
                 await findAndClick(step.texts, 3500, config.DONE_DELAY);
+                // Đóng dialog dư thừa nếu còn
+                try {
+                    let closeBtn = document.querySelector('[aria-label="Close"], [aria-label="Đóng"]');
+                    if (closeBtn && closeBtn.offsetParent && !isInsidePanel(closeBtn)) {
+                        await safeClick(closeBtn); await sleep(200);
+                    }
+                } catch(e) {}
             }
             else if(step.type === "input") {
                 let inp = getElementByXpath(INPUT_XPATH);
@@ -896,7 +989,6 @@
     }
     
     async function startDameProcess() {
-        window._startDameProcess = startDameProcess; // expose ra window
         totalReportsDone = 0;
         totalLoopsCompleted = 0;
         startTime = Date.now();
@@ -919,7 +1011,6 @@
             }
             if(!shouldStop) {
                 totalLoopsCompleted = loopCount;
-                window._dameLoops = totalLoopsCompleted;
                 updateUI();
                 addLog(`✅ HOÀN THÀNH VÒNG ${loopCount} | ${formatUptime()}`, "#00FF88");
                 updateBubbleStatus(`Hoàn thành vòng ${loopCount}`, 100);
@@ -939,13 +1030,17 @@
     createBubbleStatus();
     renderMainPanel();
     
-    try {
-        if (document.body) {
-            document.body.appendChild(panel);
-            document.body.appendChild(miniPanel);
-            document.body.appendChild(bubbleStatus);
-        }
-    } catch(e) { console.log('UI append error:', e); }
+    // Append UI an toàn (chờ body nếu cần)
+    function appendUI() {
+        try {
+            if (document.body) {
+                if (!document.getElementById('fb-auto-panel'))    document.body.appendChild(panel);
+                if (!document.getElementById('fb-mini-panel'))    document.body.appendChild(miniPanel);
+                if (!document.getElementById('fb-bubble-status')) document.body.appendChild(bubbleStatus);
+            }
+        } catch(e) { console.log('UI append error:', e); }
+    }
+    appendUI();
     
     miniPanel.addEventListener("click", () => {
         isMainPanelOpen = true;
@@ -964,16 +1059,32 @@
     addLog("🐬 DZI MEO MEO PRO V6.2 - Chọn chế độ và bắt đầu!", "#00BFFF");
     console.log("🐬 DZI MEO MEO | DZI X MODE | PRO V6.2");
 
-    // Expose functions ra window để server có thể gọi
-    window._startDameProcess = startDameProcess;
+    // ── Expose ra window để server Playwright đọc được ──
     window._dameTotal = 0;
     window._dameLoops = 0;
+    window._startDameProcess = startDameProcess;
+    window._stopDame = () => { shouldStop = true; isPaused = false; };
+    window._pauseDame = () => { isPaused = true; };
+    window._resumeDame = () => { isPaused = false; };
 
-    // Auto bắt đầu dame ngay khi vào link
-    setTimeout(() => {
-        try {
-            currentMode = "dame";
-            startDameProcess();
-        } catch(e) { console.log("Auto-start error:", e); }
-    }, 2000);
+    // ── AUTO-START sau 10 giây (máy ảo không cần nhấn nút) ──
+    let _autoCountdown = 10;
+    updateBubbleStatus(`Tự khởi động sau ${_autoCountdown}s...`, 0);
+    addLog(`⏳ Tự động dame sau 10 giây...`, "#FFA500");
+
+    const _autoTimer = setInterval(() => {
+        _autoCountdown--;
+        if (_autoCountdown > 0) {
+            updateBubbleStatus(`Tự khởi động sau ${_autoCountdown}s...`, (10 - _autoCountdown) * 10);
+        } else {
+            clearInterval(_autoTimer);
+            if (!isRunning) {
+                currentMode = "dame";
+                addLog("🚀 AUTO-START DAME!", "#00BFFF");
+                updateBubbleStatus("🚀 Đang khởi động...", 100);
+                startDameProcess();
+            }
+        }
+    }, 1000);
+
 })();
