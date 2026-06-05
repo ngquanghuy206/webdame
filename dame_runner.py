@@ -543,6 +543,9 @@ def get_all_status() -> dict:
     """Trả về status của tất cả server đang chạy"""
     result = {}
     for sid, sess in DAME_SESSIONS.items():
+        if sess._task and sess._task.done() and sess.running:
+            sess.running = False
+            sess.stopped = True
         result[sid] = {
             "running":  sess.running,
             "paused":   sess.paused,
@@ -550,22 +553,24 @@ def get_all_status() -> dict:
             "died":     sess.died,
             "total":    sess.total,
             "loops":    sess.loops,
-            "log":      sess.log,
-            "logs":     sess.pop_logs(),
+            "log":      sess._logs[-1] if sess._logs else "",
+            "logs":     sess.get_logs(0),
+            "log_count": len(sess._logs),
             "name":     sess.name,
             "uid":      sess.uid,
             "screenshot_b64": sess.screenshot_b64,
         }
     return result
 
-def get_status(server_id="") -> dict:
+def get_status(server_id="", since: int = 0) -> dict:
     sess = DAME_SESSIONS.get(server_id) if server_id else DAME_SESSION
     if not sess:
-        return {"running":False,"paused":False,"stopped":True,"died":False,"total":0,"loops":0,"log":"","logs":[],"name":"","uid":"","die_screenshot":"","is_running":False}
+        return {"running":False,"paused":False,"stopped":True,"died":False,"total":0,"loops":0,"log":"","logs":[],"log_count":0,"name":"","uid":"","die_screenshot":"","is_running":False}
     # Sync status nếu task đã xong nhưng flag chưa update
     if sess._task and sess._task.done() and sess.running:
         sess.running = False
         sess.stopped = True
+    new_logs = sess.get_logs(since)
     return {
         "running":  sess.running,
         "paused":   sess.paused,
@@ -573,8 +578,9 @@ def get_status(server_id="") -> dict:
         "died":     sess.died,
         "total":    sess.total,
         "loops":    sess.loops,
-        "log":      sess.log,
-        "logs":     sess.pop_logs(),
+        "log":      sess._logs[-1] if sess._logs else "",
+        "logs":     new_logs,
+        "log_count": len(sess._logs),
         "name":     sess.name,
         "uid":      sess.uid,
         "is_running": sess.running,
@@ -598,13 +604,21 @@ async def _screenshot_loop_multi(sess: DameSession):
         await asyncio.sleep(2)
 
 async def _dame_loop_multi(sess: DameSession, cookie_str: str, target_url: str, speed: str):
-    """Dame loop độc lập cho từng server — dùng sess thay DAME_SESSION global"""
+    """Dame loop độc lập cho từng server — theo mô hình v2: inject 1 lần, poll liên tục"""
     if not PLAYWRIGHT_OK:
         sess.add_log("❌ Playwright chưa cài!"); sess.stopped=True; sess.running=False; return
 
     dame_js = _load_dame_script()
     if not dame_js:
         sess.add_log("❌ Không tìm thấy dame_script.js!"); sess.stopped=True; sess.running=False; return
+
+    die_keywords = [
+        "sorry, something went wrong",
+        "there's a technical problem",
+        "something went wrong",
+        "this content isn't available",
+        "this page isn't available",
+    ]
 
     try:
         async with async_playwright() as p:
@@ -625,52 +639,76 @@ async def _dame_loop_multi(sess: DameSession, cookie_str: str, target_url: str, 
             screenshot_task = asyncio.create_task(_screenshot_loop_multi(sess))
 
             try:
-                # Inject cookies
-                cookies_list = parse_cookie_str(cookie_str)
-                if not cookies_list:
-                    sess.add_log("❌ Cookie không hợp lệ!"); sess.stopped=True; sess.running=False
+                # ── BƯỚC 1: Mở FB login ──
+                sess.add_log("🌐 Mở Facebook login page...")
+                await page.goto("https://www.facebook.com/login?locale=en_US", wait_until="domcontentloaded", timeout=30000)
+                await asyncio.sleep(1)
+                await ctx.add_cookies([{"name":"locale","value":"en_US","domain":".facebook.com","path":"/"}])
+
+                # ── BƯỚC 2: Inject cookie ──
+                sess.add_log("🍪 Inject cookie...")
+                inject_js = build_inject_js(cookie_str)
+                await page.evaluate(inject_js)
+                await asyncio.sleep(0.5)
+                parsed_cookies = parse_cookie_str(cookie_str)
+                if parsed_cookies:
+                    await ctx.add_cookies(parsed_cookies)
+
+                # ── BƯỚC 3: Reload để FB nhận session ──
+                sess.add_log("🔄 Reload để kích hoạt session...")
+                try:
+                    await page.reload(wait_until="domcontentloaded", timeout=40000)
+                except: pass
+                await asyncio.sleep(3)
+
+                # ── BƯỚC 4: Check đăng nhập ──
+                cur_url = page.url
+                if "login" in cur_url or "checkpoint" in cur_url:
+                    sess.add_log("❌ Cookie die / bị checkpoint!")
+                    sess.stopped = True; sess.running = False
                     screenshot_task.cancel(); await browser.close(); return
 
-                await ctx.add_cookies(cookies_list)
-                sess.add_log("🍪 Đã inject cookie")
+                # Check popup soft-block
+                try:
+                    popup = await page.query_selector("input[name='email'], [role='dialog'] input[type='password']")
+                    if popup:
+                        sess.add_log("❌ Cookie bị soft-block (popup đăng nhập)!")
+                        sess.stopped = True; sess.running = False
+                        screenshot_task.cancel(); await browser.close(); return
+                except: pass
 
-                delay_cfg = _get_delay_config(speed)
-                loop_count = 0
+                sess.add_log("✅ Đăng nhập OK · Đang mở trang target...")
 
+                # ── BƯỚC 5: Goto target ──
+                await page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
+                await asyncio.sleep(3)
+
+                if "login" in page.url or "checkpoint" in page.url:
+                    sess.add_log("❌ Không mở được target!")
+                    sess.stopped = True; sess.running = False
+                    screenshot_task.cancel(); await browser.close(); return
+
+                # ── BƯỚC 6: Inject dame script 1 lần ──
+                try:
+                    await page.evaluate(dame_js)
+                    sess.add_log("🐬 Dame script injected · Auto-start sau 10s...")
+                except Exception as e:
+                    sess.add_log(f"⚠️ Script inject lỗi: {str(e)[:80]}")
+
+                # Chờ auto-start (script tự countdown 10s)
+                await asyncio.sleep(12)
+                sess.add_log("🚀 Dame đang chạy tự động...")
+
+                # ── Vòng poll chính: detect die, poll JS logs, reload nếu cần ──
                 while not sess.stopped:
                     while sess.paused and not sess.stopped:
                         await asyncio.sleep(0.5)
                     if sess.stopped: break
 
-                    loop_count += 1
-                    sess.loops = loop_count
-                    sess.add_log(f"🔄 Vòng {loop_count}")
+                    await asyncio.sleep(2)
 
                     try:
-                        await page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
-                    except Exception as e:
-                        sess.add_log(f"⚠️ Lỗi load trang: {str(e)[:80]}")
-                        await asyncio.sleep(3); continue
-
-                    # Check checkpoint
-                    cur_url = page.url
-                    if "checkpoint" in cur_url or "login" in cur_url:
-                        sess.add_log("💀 Cookie chết hoặc checkpoint!")
-                        sess.died = True; sess.running = False; sess.stopped = True
-                        break
-
-                    try:
-                        await page.evaluate(dame_js)
-                        sess.add_log("⚡ Đã inject dame script")
-                    except Exception as e:
-                        sess.add_log(f"⚠️ Inject script lỗi: {str(e)[:60]}")
-
-                    # Chờ dame script chạy và poll logs từng bước
-                    loop_delay_ms = delay_cfg.get("LOOP_DELAY", 500)
-                    waited = 0
-                    while waited < loop_delay_ms and not sess.stopped:
-                        await asyncio.sleep(0.5)
-                        waited += 500
+                        # Poll JS logs từng bước từ dame_script
                         try:
                             t = await page.evaluate("window._dameTotal || 0")
                             if t: sess.total = int(t)
@@ -681,6 +719,38 @@ async def _dame_loop_multi(sess: DameSession, cookie_str: str, target_url: str, 
                                 for lg in js_logs:
                                     sess.add_log(str(lg))
                         except: pass
+
+                        # Detect die
+                        try:
+                            body_text = (await page.inner_text("body")).lower()
+                            if any(k in body_text for k in die_keywords):
+                                sess.add_log("💀 Phát hiện ACC DIE!")
+                                die_sc = await page.screenshot(type="jpeg", quality=80, full_page=False)
+                                sess.screenshot_b64 = base64.b64encode(die_sc).decode()
+                                sess.died = True; sess.running = False; sess.stopped = True
+                                sess.add_log("📸 Đã chụp ảnh die · Dừng")
+                                break
+                        except: pass
+
+                        # Nếu trang bị redirect → reload + re-inject
+                        if target_url.split("?")[0] not in page.url and "facebook.com" in page.url:
+                            sess.add_log("🔄 Reload về target + re-inject script...")
+                            await page.goto(target_url, wait_until="domcontentloaded", timeout=20000)
+                            await asyncio.sleep(2)
+                            try:
+                                await page.evaluate(dame_js)
+                                sess.add_log("⚡ Re-inject dame script OK")
+                            except: pass
+
+                    except Exception as e:
+                        sess.add_log(f"⚠ Loop: {str(e)[:80]}")
+
+                screenshot_task.cancel()
+                await browser.close()
+                if sess.died:
+                    sess.add_log(f"💀 Kết thúc — ACC DIE · Tổng: {sess.total}")
+                else:
+                    sess.add_log(f"⏹ Kết thúc · Tổng: {sess.total}")
 
             except asyncio.CancelledError:
                 sess.add_log("⏹ Đã dừng (cancelled)")

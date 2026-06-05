@@ -376,13 +376,7 @@ async def api_dame_status(request: Request):
     if not username: raise HTTPException(401, "Chưa đăng nhập")
     server_id = request.query_params.get("server_id","")
     since = int(request.query_params.get("since","0"))
-    st = get_status(server_id)
-    # Thay pop_logs bằng get_logs với since index
-    sess = DAME_SESSIONS.get(server_id) if server_id else DAME_SESSION
-    if sess:
-        new_logs = sess.get_logs(since)
-        st["logs"] = new_logs
-        st["log_count"] = len(sess._logs)
+    st = get_status(server_id, since)
     return JSONResponse(st)
 
 @app.get("/api/dame/status/all")
