@@ -207,18 +207,22 @@ async def verify_fb_cookie(cookie_str: str) -> dict:
         async with async_playwright() as p:
             browser = await p.chromium.launch(
                 headless=True,
-                args=["--no-sandbox","--disable-gpu","--disable-dev-shm-usage"]
+                args=["--no-sandbox","--disable-gpu","--disable-dev-shm-usage",
+                      "--disable-extensions","--disable-images","--blink-settings=imagesEnabled=false"]
             )
             ctx = await browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                java_script_enabled=True,
             )
             # Inject cookie qua context TRƯỚC khi mở trang (bypass httpOnly restriction)
             parsed_cookies = parse_cookie_str(cookie_str)
             if parsed_cookies:
                 await ctx.add_cookies(parsed_cookies)
             page = await ctx.new_page()
-            await page.goto("https://www.facebook.com", wait_until="domcontentloaded", timeout=30000)
-            await asyncio.sleep(2.5)
+            # Block ảnh/media để load nhanh hơn
+            await page.route("**/*.{png,jpg,jpeg,gif,webp,svg,mp4,mp3,woff,woff2}", lambda r: r.abort())
+            await page.goto("https://www.facebook.com", wait_until="domcontentloaded", timeout=20000)
+            await asyncio.sleep(1.5)
 
             url = page.url
             if "login" in url or "checkpoint" in url:
@@ -270,6 +274,22 @@ async def verify_fb_cookie(cookie_str: str) -> dict:
                     c_user = next((c["value"] for c in cookies if c["name"]=="c_user"), "")
                     if c_user: result["uid"] = c_user
                 except: pass
+
+            # ── Check popup "See more / Xem thêm" login dialog (soft-block) ──
+            try:
+                popup_selectors = [
+                    "form[data-testid='royal_login_form']",
+                    "input[name='email']",
+                    "input[data-testid='royal_email']",
+                    "[role='dialog'] input[type='password']",
+                    "[role='dialog'] button[name='login']",
+                ]
+                for sel in popup_selectors:
+                    el = await page.query_selector(sel)
+                    if el:
+                        await browser.close()
+                        return {"ok": False, "name": "", "uid": "", "error": "Cookie bị Facebook soft-block (hiện popup đăng nhập lại). Lấy cookie mới hoặc dùng VPS Việt Nam."}
+            except: pass
 
             await browser.close()
             return {"ok": True, "name": result.get("name",""), "uid": result.get("uid","")}
