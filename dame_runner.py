@@ -147,27 +147,18 @@ def parse_cookie_str(cookie_str: str) -> list:
     return cookies
 
 def build_inject_js(cookie_str: str) -> str:
-    """Inject cookie giống bookmarklet DZI MEO MEO - xóa cũ, set mới, force en_US"""
-    # Lọc bỏ cookie locale khỏi string để tránh ghi đè en_US
-    filtered = []
-    for part in cookie_str.split(';'):
-        p = part.strip()
-        if p and not p.lower().startswith('locale='):
-            filtered.append(p)
-    cookie_str_clean = '; '.join(filtered)
-    escaped = json.dumps(cookie_str_clean)
+    """Inject cookie giống bookmarklet DZI MEO MEO - xóa cũ, set mới"""
+    escaped = json.dumps(cookie_str)
     return f"""
 (function() {{
     var cookieStr = {escaped};
-    // Bước 1: Xóa toàn bộ cookie cũ
+    // Bước 1: Xóa toàn bộ cookie cũ (giống bookmarklet chọn 3)
     document.cookie.split(";").forEach(function(c) {{
         document.cookie = c.replace(/^ +/, "")
             .replace(/=.*/, "=;expires=" + new Date().toUTCString()
             + ";path=/;domain=.facebook.com");
     }});
-    // Bước 2: Force locale=en_US trước
-    document.cookie = "locale=en_US; domain=.facebook.com; path=/";
-    // Bước 3: Set cookie user (không có locale để không ghi đè)
+    // Bước 2: Set cookie mới từng cái (giống bookmarklet chọn 1)
     var cookies = cookieStr.split(';');
     cookies.forEach(function(cookie) {{
         cookie = cookie.trim();
@@ -347,7 +338,8 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
             )
 
             # ── Inject script tự động vào mọi trang facebook ──
-            await ctx.add_init_script(dame_js)
+            # KHÔNG dùng add_init_script vì không đáng tin trên headless
+            # Sẽ inject thủ công sau khi trang load
 
             page = await ctx.new_page()
             DAME_SESSION._page = page
@@ -406,7 +398,7 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
 
             # ── BƯỚC 6: Mở trang nạn nhân ──
             await page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)  # chờ trang ổn định
 
             if "login" in page.url or "checkpoint" in page.url:
                 DAME_SESSION.add_log("❌ Không mở được target!")
@@ -414,12 +406,16 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
                 screenshot_task.cancel()
                 await browser.close(); return
 
-            # Evaluate dame script thủ công (add_init_script không đủ tin cậy trên headless)
+            # Inject dame script vào trang (sau khi DOM đã load)
             try:
                 await page.evaluate(dame_js)
-                DAME_SESSION.add_log("🐬 Dame script đã inject · Đang chạy...")
+                DAME_SESSION.add_log("🐬 Dame script injected · Auto-start sau 10s...")
             except Exception as e:
                 DAME_SESSION.add_log(f"⚠️ Script inject lỗi: {str(e)[:80]}")
+
+            # Chờ 12 giây cho script auto-start (script tự countdown 10s)
+            await asyncio.sleep(12)
+            DAME_SESSION.add_log("🚀 Dame đang chạy tự động...")
 
             # ── Vòng lặp chính: chỉ detect die, reload nếu cần ──
             die_keywords = [
