@@ -222,7 +222,7 @@ async def verify_fb_cookie(cookie_str: str) -> dict:
         if not uid:
             # Thử parse từ string thô
             import re
-            m = re.search(r'c_user[=:]\s*["']?(\d+)', cookie_str)
+            m = re.search(r"c_user[=:]\s*[\"']?(\d+)", cookie_str)
             if m:
                 uid = m.group(1)
 
