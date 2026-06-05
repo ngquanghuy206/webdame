@@ -623,10 +623,6 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       </button>
     </div>
 
-    <div style="text-align:center">
-      <span onclick="closeWelcome()" style="color:var(--blue);font-size:13px;cursor:pointer;opacity:.7">Bỏ qua, vào thẳng app →</span>
-    </div>
-
     <!-- COPYRIGHT -->
     <div style="text-align:center;margin-top:32px;padding:20px 0 8px;border-top:1px solid rgba(255,255,255,.06)">
       <div style="font-size:11px;color:rgba(255,255,255,.25);line-height:1.8;letter-spacing:.3px">
@@ -2236,8 +2232,17 @@ async function loadServerList(){
       </div>`;
       return;
     }
+    // Lưu lại _svLogIdx trước khi rebuild để không mất offset
+    const savedIdx = window._svLogIdx ? Object.assign({}, window._svLogIdx) : {};
     body.innerHTML = '<div class="sv-grid">' + list.map(sv => buildServerCard2(sv)).join('') + '</div>';
+    // Restore idx - không reset về 0 nếu đã có data
+    if(!window._svLogIdx) window._svLogIdx = {};
+    Object.assign(window._svLogIdx, savedIdx);
     list.forEach(sv => fetchCardScreenshot2(sv.id));
+  }catch(e){
+    body.innerHTML='<div style="color:var(--red);padding:16px;text-align:center">❌ Lỗi tải danh sách</div>';
+  }
+}
   }catch(e){
     body.innerHTML='<div style="color:var(--red);padding:16px;text-align:center">❌ Lỗi tải danh sách</div>';
   }
@@ -2288,8 +2293,8 @@ function buildServerCard2(sv){
 
 async function fetchCardScreenshot2(svId){
   try{
-    const _logIdx = window._svLogIdx = window._svLogIdx || {};
-    const since = _logIdx[svId] || 0;
+    if(!window._svLogIdx) window._svLogIdx = {};
+    const since = window._svLogIdx[svId] || 0;
     const sr = await fetch('/api/dame/status?server_id='+svId+'&since='+since,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
     if(!sr.ok) return;
     const sd = await sr.json();
@@ -2306,23 +2311,23 @@ async function fetchCardScreenshot2(svId){
     if(loopsEl) loopsEl.textContent=sd.loops||0;
     if(logEl){
       if(sd.logs && sd.logs.length){
-        if(since===0) logEl.textContent='';
-        // Hiển thị từng dòng log như v2 cũ
+        if(since===0) logEl.innerHTML='';
         sd.logs.forEach(line => {
           const div = document.createElement('div');
-          div.style.cssText='border-left:2px solid rgba(79,158,255,.4);padding-left:6px;margin-bottom:3px;line-height:1.5';
+          div.style.cssText='border-left:2px solid rgba(79,158,255,.4);padding-left:6px;margin-bottom:3px;line-height:1.55';
           div.textContent = line;
           logEl.appendChild(div);
         });
         logEl.scrollTop = logEl.scrollHeight;
-        _logIdx[svId] = (sd.log_count || (since + sd.logs.length));
+        window._svLogIdx[svId] = sd.log_count || (since + sd.logs.length);
       } else if(since===0){
-        // Lần đầu fetch, không có log → hiện trạng thái thay vì "chờ dữ liệu"
-        logEl.textContent = st==='stopped' ? '⏹ Chưa chạy' : st==='paused' ? '⏸ Đang tạm dừng' : '✅ Sẵn sàng chạy';
+        // Đầu tiên fetch nhưng không có log → hiện trạng thái
+        const stTxt={running:'🟢 Đang khởi động — chờ log...',paused:'⏸ Tạm dừng',stopped:'⏹ Chưa chạy'};
+        logEl.innerHTML='<div style="color:var(--muted)">'+( stTxt[st]||'✅ Sẵn sàng')+'</div>';
       }
     }
     // Sync detail modal nếu đang mở cho server này
-    if(window._detailOpenId === svId) _syncDetailModal(svId, sd, since);
+    if(window._detailOpenId === svId) _syncDetailModal(svId, sd);
     if(sd.running||sd.screenshot_b64){
       const r=await fetch('/api/dame/screenshot?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
       if(!r.ok) return;
@@ -2576,9 +2581,10 @@ async function openDetailModal(svId){
     if(metas[3] && document.getElementById('det-created'))document.getElementById('det-created').textContent=metas[3].textContent;
     if(detName) detName.textContent = card.querySelector('.sv2-name')?.textContent || ('Máy chủ ' + svId);
   }
-  // Fetch fresh status
+  // Fetch fresh status với since=0 để lấy toàn bộ log
   try{
-    const r = await fetch('/api/dame/status?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const since = 0; // Detail modal luôn lấy full log từ đầu
+    const r = await fetch('/api/dame/status?server_id='+svId+'&since='+since,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
     const sd = await r.json();
     _syncDetailModal(svId, sd, 0, true);
     if(sd.running) window._detailStartTime = Date.now();
@@ -2596,7 +2602,7 @@ async function openDetailModal(svId){
   document.getElementById('sv-detail-modal').style.display='flex';
 }
 
-function _syncDetailModal(svId, sd, since, fullReset){
+function _syncDetailModal(svId, sd, _unused, fullReset){
   if(window._detailOpenId !== svId) return;
   const sLabel={ready:'Sẵn sàng',running:'Đang chạy',stopped:'Đã dừng',paused:'Tạm dừng'};
   const st = sd.running?'running':sd.paused?'paused':'stopped';
@@ -2617,19 +2623,21 @@ function _syncDetailModal(svId, sd, since, fullReset){
         ${sd.running||sd.paused?`<button class="sv2-btn stop" style="flex:1" onclick="serverAction('stop','${svId}')">⏹ Dừng hẳn</button>`:''}
       </div>`;
   }
-  // Logs
+  // Logs — append new lines (sd.logs đã là delta từ since)
   const logEl=document.getElementById('det-log');
-  if(logEl && sd.logs && sd.logs.length){
-    if(fullReset || since===0) logEl.innerHTML='';
-    sd.logs.forEach(line => {
-      const div=document.createElement('div');
-      div.style.cssText='border-left:2px solid rgba(79,158,255,.35);padding-left:7px;margin-bottom:4px;line-height:1.6';
-      div.textContent=line;
-      logEl.appendChild(div);
-    });
-    logEl.scrollTop=logEl.scrollHeight;
-  } else if(fullReset && logEl){
-    logEl.innerHTML=`<div style="color:var(--muted)">${st==='stopped'?'⏹ Chưa chạy — chưa có log':'✅ Sẵn sàng'}</div>`;
+  if(logEl){
+    if(fullReset) logEl.innerHTML='';
+    if(sd.logs && sd.logs.length){
+      sd.logs.forEach(line => {
+        const div=document.createElement('div');
+        div.style.cssText='border-left:2px solid rgba(79,158,255,.35);padding-left:7px;margin-bottom:3px;line-height:1.6';
+        div.textContent=line;
+        logEl.appendChild(div);
+      });
+      logEl.scrollTop=logEl.scrollHeight;
+    } else if(fullReset){
+      logEl.innerHTML=`<div style="color:var(--muted)">${st==='stopped'?'⏹ Chưa chạy — chưa có log':st==='running'?'🟢 Đang chạy — chờ log...':'✅ Sẵn sàng'}</div>`;
+    }
   }
 }
 
