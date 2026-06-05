@@ -24,7 +24,8 @@ except: pass
 # SESSION STATE
 # ══════════════════════════════════════
 class DameSession:
-    def __init__(self):
+    def __init__(self, server_id: str = ""):
+        self.server_id = server_id
         self.running   = False
         self.paused    = False
         self.stopped   = False
@@ -36,10 +37,10 @@ class DameSession:
         self.uid       = ""
         self.target    = ""
         self.speed     = "normal"
-        self.screenshot_b64: str = ""      # ảnh base64 tab máy ảo
+        self.screenshot_b64: str = ""
         self._task: Optional[asyncio.Task] = None
         self._logs: list = []
-        self._page: Optional[object] = None  # giữ ref page đang chạy
+        self._page: Optional[object] = None
 
     def add_log(self, msg: str):
         ts = time.strftime("%H:%M:%S")
@@ -54,7 +55,8 @@ class DameSession:
         self._logs.clear()
         return logs
 
-DAME_SESSION = DameSession()
+DAME_SESSION  = DameSession()          # legacy single-session (giữ tương thích)
+DAME_SESSIONS: dict = {}               # server_id -> DameSession (multi-server)
 
 # ══════════════════════════════════════
 # PARSE COOKIE STRING → LIST DICT cho Playwright context.add_cookies()
@@ -482,49 +484,187 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
 # ══════════════════════════════════════
 # PUBLIC API
 # ══════════════════════════════════════
-async def start_dame(cookie_str, target_url, speed="normal", name="", uid="", target_name=""):
-    global DAME_SESSION
-    DAME_SESSION = DameSession()
-    DAME_SESSION.running = True
-    DAME_SESSION.speed   = speed
-    DAME_SESSION.name    = name
-    DAME_SESSION.uid     = uid
-    DAME_SESSION.target  = target_url
-    DAME_SESSION._task   = asyncio.create_task(_dame_loop(cookie_str, target_url, speed))
-    DAME_SESSION.add_log(f"🚀 Bắt đầu · Cookie: {name} · Target: {target_name or target_url}")
+async def start_dame(cookie_str, target_url, speed="normal", name="", uid="", target_name="", server_id=""):
+    global DAME_SESSION, DAME_SESSIONS
+    sess = DameSession(server_id=server_id)
+    sess.running = True
+    sess.speed   = speed
+    sess.name    = name
+    sess.uid     = uid
+    sess.target  = target_url
+    sess.add_log(f"🚀 Bắt đầu · Acc: {name} · Target: {target_name or target_url}")
+    if server_id:
+        # Dừng session cũ nếu đang chạy
+        old = DAME_SESSIONS.get(server_id)
+        if old and old._task and not old._task.done():
+            old.stopped = True; old.running = False
+            try: old._task.cancel()
+            except: pass
+        DAME_SESSIONS[server_id] = sess
+        sess._task = asyncio.create_task(_dame_loop_multi(sess, cookie_str, target_url, speed))
+    else:
+        # Legacy single session
+        DAME_SESSION = sess
+        DAME_SESSION._task = asyncio.create_task(_dame_loop(cookie_str, target_url, speed))
 
-def pause_dame():
-    DAME_SESSION.paused = True
-    DAME_SESSION.add_log("⏸ Tạm dừng")
+def pause_dame(server_id=""):
+    sess = DAME_SESSIONS.get(server_id, DAME_SESSION) if server_id else DAME_SESSION
+    sess.paused = True
+    sess.add_log("⏸ Tạm dừng")
 
-def resume_dame():
-    DAME_SESSION.paused = False
-    DAME_SESSION.add_log("▶ Tiếp tục")
+def resume_dame(server_id=""):
+    sess = DAME_SESSIONS.get(server_id, DAME_SESSION) if server_id else DAME_SESSION
+    sess.paused = False
+    sess.add_log("▶ Tiếp tục")
 
-def stop_dame():
-    DAME_SESSION.stopped = True
-    DAME_SESSION.paused  = False
-    DAME_SESSION.running = False
-    DAME_SESSION.add_log("⏹ Dừng")
+def stop_dame(server_id=""):
+    sess = DAME_SESSIONS.get(server_id, DAME_SESSION) if server_id else DAME_SESSION
+    sess.stopped = True
+    sess.paused  = False
+    sess.running = False
+    sess.add_log("⏹ Dừng")
+    if server_id and sess._task:
+        try: sess._task.cancel()
+        except: pass
 
-def get_status() -> dict:
+def get_all_status() -> dict:
+    """Trả về status của tất cả server đang chạy"""
+    result = {}
+    for sid, sess in DAME_SESSIONS.items():
+        result[sid] = {
+            "running":  sess.running,
+            "paused":   sess.paused,
+            "stopped":  sess.stopped,
+            "died":     sess.died,
+            "total":    sess.total,
+            "loops":    sess.loops,
+            "log":      sess.log,
+            "logs":     sess.pop_logs(),
+            "name":     sess.name,
+            "uid":      sess.uid,
+            "screenshot_b64": sess.screenshot_b64,
+        }
+    return result
+
+def get_status(server_id="") -> dict:
+    sess = DAME_SESSIONS.get(server_id) if server_id else DAME_SESSION
+    if not sess:
+        return {"running":False,"paused":False,"stopped":True,"died":False,"total":0,"loops":0,"log":"","logs":[],"name":"","uid":"","die_screenshot":""}
     return {
-        "running":  DAME_SESSION.running,
-        "paused":   DAME_SESSION.paused,
-        "stopped":  DAME_SESSION.stopped,
-        "died":     DAME_SESSION.died,
-        "total":    DAME_SESSION.total,
-        "loops":    DAME_SESSION.loops,
-        "log":      DAME_SESSION.log,
-        "logs":     DAME_SESSION.pop_logs(),
-        "name":     DAME_SESSION.name,
-        "uid":      DAME_SESSION.uid,
-        "die_screenshot": DAME_SESSION.screenshot_b64 if DAME_SESSION.died else "",
+        "running":  sess.running,
+        "paused":   sess.paused,
+        "stopped":  sess.stopped,
+        "died":     sess.died,
+        "total":    sess.total,
+        "loops":    sess.loops,
+        "log":      sess.log,
+        "logs":     sess.pop_logs(),
+        "name":     sess.name,
+        "uid":      sess.uid,
+        "die_screenshot": sess.screenshot_b64 if sess.died else "",
     }
 
-def get_screenshot() -> str:
-    """Trả về ảnh JPEG base64 của tab máy ảo, hoặc '' nếu chưa có"""
-    return DAME_SESSION.screenshot_b64
+def get_screenshot(server_id="") -> str:
+    sess = DAME_SESSIONS.get(server_id) if server_id else DAME_SESSION
+    if not sess: return ""
+    return sess.screenshot_b64
+
+
+async def _screenshot_loop_multi(sess: DameSession):
+    """Screenshot loop cho một session cụ thể"""
+    while sess.running and not sess.stopped:
+        try:
+            if sess._page:
+                data = await sess._page.screenshot(type="jpeg", quality=60, full_page=False)
+                sess.screenshot_b64 = base64.b64encode(data).decode()
+        except: pass
+        await asyncio.sleep(2)
+
+async def _dame_loop_multi(sess: DameSession, cookie_str: str, target_url: str, speed: str):
+    """Dame loop độc lập cho từng server — dùng sess thay DAME_SESSION global"""
+    if not PLAYWRIGHT_OK:
+        sess.add_log("❌ Playwright chưa cài!"); sess.stopped=True; sess.running=False; return
+
+    dame_js = _load_dame_script()
+    if not dame_js:
+        sess.add_log("❌ Không tìm thấy dame_script.js!"); sess.stopped=True; sess.running=False; return
+
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox","--disable-gpu","--disable-dev-shm-usage",
+                      "--disable-blink-features=AutomationControlled","--window-size=1280,800"]
+            )
+            ctx: BrowserContext = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                viewport={"width": 1280, "height": 800},
+                locale="en-US", timezone_id="America/New_York",
+                extra_http_headers={"Accept-Language": "en-US,en;q=0.9"}
+            )
+            page = await ctx.new_page()
+            sess._page = page
+
+            screenshot_task = asyncio.create_task(_screenshot_loop_multi(sess))
+
+            try:
+                # Inject cookies
+                cookies_list = parse_cookie_str(cookie_str)
+                if not cookies_list:
+                    sess.add_log("❌ Cookie không hợp lệ!"); sess.stopped=True; sess.running=False
+                    screenshot_task.cancel(); await browser.close(); return
+
+                await ctx.add_cookies(cookies_list)
+                sess.add_log("🍪 Đã inject cookie")
+
+                delay_cfg = _get_delay_config(speed)
+                loop_count = 0
+
+                while not sess.stopped:
+                    while sess.paused and not sess.stopped:
+                        await asyncio.sleep(0.5)
+                    if sess.stopped: break
+
+                    loop_count += 1
+                    sess.loops = loop_count
+                    sess.add_log(f"🔄 Vòng {loop_count}")
+
+                    try:
+                        await page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
+                    except Exception as e:
+                        sess.add_log(f"⚠️ Lỗi load trang: {str(e)[:80]}")
+                        await asyncio.sleep(3); continue
+
+                    # Check checkpoint
+                    cur_url = page.url
+                    if "checkpoint" in cur_url or "login" in cur_url:
+                        sess.add_log("💀 Cookie chết hoặc checkpoint!")
+                        sess.died = True; sess.running = False; sess.stopped = True
+                        break
+
+                    try:
+                        await page.evaluate(dame_js)
+                        sess.add_log("⚡ Đã inject dame script")
+                    except Exception as e:
+                        sess.add_log(f"⚠️ Inject script lỗi: {str(e)[:60]}")
+
+                    sess.total += 1
+                    await asyncio.sleep(delay_cfg.get("LOOP_DELAY", 500) / 1000)
+
+            except asyncio.CancelledError:
+                sess.add_log("⏹ Đã dừng (cancelled)")
+            except Exception as e:
+                sess.add_log(f"❌ Lỗi: {str(e)[:200]}")
+                sess.died = True
+            finally:
+                screenshot_task.cancel()
+                sess.running = False
+                try: await browser.close()
+                except: pass
+    except Exception as e:
+        sess.add_log(f"❌ Playwright lỗi: {str(e)[:200]}")
+        sess.running = False; sess.died = True
+
 
 # ══════════════════════════════════════
 # LOGIN FACEBOOK BẰNG EMAIL + MẬT KHẨU

