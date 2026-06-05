@@ -762,6 +762,7 @@
             }
         }
         totalReportsDone++;
+        window._dameTotal = totalReportsDone;
         updateBubbleStatus(`✅ Hoàn thành ${reportConfig.name.substring(0, 15)}`, 100);
         addLog(`✅ Hoàn thành báo cáo: ${reportConfig.name}`, "#00FF88");
         updateUI();
@@ -917,6 +918,7 @@
             }
             if(!shouldStop) {
                 totalLoopsCompleted = loopCount;
+                window._dameLoops = totalLoopsCompleted;
                 updateUI();
                 addLog(`✅ HOÀN THÀNH VÒNG ${loopCount} | ${formatUptime()}`, "#00FF88");
                 updateBubbleStatus(`Hoàn thành vòng ${loopCount}`, 100);
