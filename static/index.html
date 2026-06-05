@@ -140,6 +140,37 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .countdown-label{font-size:11px;text-align:center;margin-top:5px;font-variant-numeric:tabular-nums;font-weight:700}
 .otp-timer{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
 .otp-timer-val{font-weight:800;font-variant-numeric:tabular-nums;color:var(--blue)}
+/* ── SERVER CARDS SWIPE ── */
+.sv-rail{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.sv-rail::-webkit-scrollbar{display:none}
+.sv-card{min-width:260px;max-width:260px;background:linear-gradient(145deg,#0d1322,#111827);border:1px solid rgba(79,158,255,.22);border-radius:18px;scroll-snap-align:start;overflow:hidden;flex-shrink:0;position:relative;transition:transform .15s,box-shadow .15s}
+.sv-card:active{transform:scale(.97)}
+.sv-card.running{border-color:rgba(0,230,118,.4);box-shadow:0 0 18px rgba(0,230,118,.15)}
+.sv-card.stopped{border-color:rgba(255,255,255,.1);opacity:.7}
+.sv-card-ss{width:100%;height:130px;object-fit:cover;object-position:top;display:block;background:#070b14}
+.sv-card-ss-ph{width:100%;height:130px;display:flex;align-items:center;justify-content:center;background:#070b14;font-size:30px;color:rgba(79,158,255,.3)}
+.sv-card-body{padding:11px 13px}
+.sv-card-name{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.sv-card-id{font-size:9px;color:rgba(79,158,255,.5);font-family:monospace;margin-bottom:6px;letter-spacing:.5px}
+.sv-card-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);margin-bottom:4px}
+.sv-card-row b{color:#c9d8f0;font-weight:600}
+.sv-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700}
+.sv-badge.ready{background:rgba(79,158,255,.15);color:var(--blue)}
+.sv-badge.running{background:rgba(0,230,118,.15);color:var(--green)}
+.sv-badge.stopped{background:rgba(255,255,255,.08);color:var(--muted)}
+.sv-card-actions{display:flex;gap:7px;padding:0 13px 13px}
+.sv-card-actions .btn{flex:1;padding:7px 4px;font-size:11px;font-weight:700;border-radius:10px}
+.sv-empty{text-align:center;color:var(--muted);padding:32px 20px;font-size:13px}
+.sv-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px}
+.sv-dot.ready{background:var(--blue)}
+.sv-dot.running{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse-dot 1.2s infinite}
+.sv-dot.stopped{background:#444}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.sv-inline-ss{margin-bottom:14px}
+.sv-inline-ss-wrap{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(79,158,255,.2);background:#070b14;cursor:pointer}
+.sv-inline-ss-bar{display:flex;align-items:center;gap:8px;padding:7px 12px;background:#0d1220;border-bottom:1px solid rgba(255,255,255,.05)}
+.sv-inline-ss-dot{width:9px;height:9px;border-radius:50%}
+
 .otp-timer-bar{width:120px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;display:inline-block}
 .otp-timer-fill{height:100%;border-radius:2px;background:var(--blue);transition:width 1s linear,background .5s}
 .scanned-box{display:none;flex-direction:column;align-items:center;gap:10px;padding:20px 24px;border-radius:16px;text-align:center;background:rgba(0,230,118,.06);border:1.5px solid rgba(0,230,118,.25)}
@@ -363,12 +394,83 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div class="admin-avatar">🧑‍💻</div>
     <div class="admin-name">Nguyễn Hoàng Khánh Nam</div>
     <div class="admin-title">Dzi Meo Meo · IT Automation Developer · 2026</div>
+    <div class="admin-info-row" style="justify-content:center;font-size:15px;font-weight:700;color:var(--blue);letter-spacing:1px" id="admin-clock">⏰ --:--:--</div>
     <div class="admin-info-row">🎂 <span>30/05/2006</span></div>
     <div class="admin-info-row">📱 <span>Zalo: <b>0993329535</b></span></div>
     <div class="admin-info-row">🎵 <span>TikTok: <b>@hkhanhnam206</b></span></div>
     <div class="admin-info-row">💼 <span>Lĩnh vực: <b>IT / Automation / Bot Dev</b></span></div>
     <div class="admin-info-row">✨ <span>Admin: <b>Dzi Meo Meo</b></span></div>
     <button class="close-btn" onclick="closeModal('admin-modal')">✕ Đóng</button>
+  </div>
+</div>
+
+<!-- INTRO MODAL -->
+<div class="modal-overlay" id="intro-modal" onclick="if(event.target===this)closeModal('intro-modal')">
+  <div class="modal-box" style="max-width:520px">
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:48px">🐬</div>
+      <div style="font-size:20px;font-weight:800;color:var(--blue)">FB Dame Tool</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Phát triển bởi Dzi Meo Meo · 2026</div>
+    </div>
+    <div style="background:var(--glass2);border-radius:14px;padding:14px 16px;margin-bottom:14px;font-size:13px;line-height:1.8">
+      🐬 <b>Dame acc Facebook</b> tự động — báo cáo liên tục nhiều loại vi phạm.<br>
+      🖥 Chạy trên <b>máy chủ ảo</b> 24/7, không cần giữ máy tính bật.<br>
+      📊 Theo dõi trạng thái, xem log realtime, quản lý nhiều phiên.
+    </div>
+    <div style="font-weight:700;margin-bottom:10px;font-size:13px">⚡ Chọn chức năng:</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-primary" style="padding:14px;font-size:14px;font-weight:700;border-radius:14px" onclick="closeModal('intro-modal');switchMainTab('input')">
+        🐬 Dame acc — Nhập cookie & target rồi chạy ngay
+      </button>
+      <button class="btn" style="padding:14px;font-size:14px;font-weight:700;border-radius:14px;background:var(--glass2);border:1px solid var(--border)" onclick="closeModal('intro-modal');openCreateServerModal()">
+        🖥 Tạo máy chủ ảo — Lưu cấu hình, chạy bền vững
+      </button>
+      <button class="btn" style="padding:14px;font-size:14px;font-weight:700;border-radius:14px;background:var(--glass2);border:1px solid var(--border)" onclick="closeModal('intro-modal');openServerListModal()">
+        📋 Danh sách máy chủ — Xem & quản lý máy chủ đã tạo
+      </button>
+    </div>
+    <button class="close-btn" style="margin-top:16px" onclick="closeModal('intro-modal')">✕ Đóng</button>
+  </div>
+</div>
+
+<!-- CREATE SERVER MODAL -->
+<div class="modal-overlay" id="create-server-modal" onclick="if(event.target===this)closeModal('create-server-modal')">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-title">🖥 Tạo máy chủ ảo dame</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+      Cấu hình sẽ được lưu vào danh sách. Nhấn <b>▶ Chạy</b> trong danh sách để khởi động dame.
+    </div>
+    <div class="field-label">📛 Tên máy chủ (tùy chọn)</div>
+    <input id="sv-name" class="field-input" placeholder="VD: Máy chủ 1 · target ABC" style="margin-bottom:10px"/>
+    <div class="field-label">🍪 Cookie Facebook</div>
+    <textarea id="sv-cookie" class="field-input" rows="3" placeholder="Dán cookie vào đây..." style="margin-bottom:10px;resize:none"></textarea>
+    <div class="field-label">🎯 Link / UID Target</div>
+    <input id="sv-target" class="field-input" placeholder="https://www.facebook.com/..." style="margin-bottom:10px"/>
+    <div class="field-label">🚀 Tốc độ</div>
+    <select id="sv-speed" class="field-input" style="margin-bottom:16px">
+      <option value="fast">🏎 Nhanh</option>
+      <option value="normal" selected>⚡ Trung bình</option>
+      <option value="slow">🐢 Chậm (an toàn)</option>
+    </select>
+    <div id="sv-err" style="color:var(--red);font-size:12px;display:none;margin-bottom:8px"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1;padding:12px;font-weight:700" onclick="doCreateServer()">💾 Lưu máy chủ</button>
+      <button class="btn" style="padding:12px;background:var(--glass2);border:1px solid var(--border)" onclick="closeModal('create-server-modal')">Hủy</button>
+    </div>
+  </div>
+</div>
+
+<!-- SERVER LIST MODAL - SWIPE CARDS -->
+<div class="modal-overlay" id="server-list-modal" onclick="if(event.target===this)closeModal('server-list-modal')">
+  <div class="modal-box" style="max-width:98vw;width:580px;padding-bottom:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="modal-title" style="margin:0">🖥 Máy chủ của bạn</div>
+      <button class="btn btn-primary" style="padding:6px 14px;font-size:12px" onclick="openCreateServerModal()">+ Tạo mới</button>
+    </div>
+    <div id="server-list-body" style="min-height:80px">
+      <div style="text-align:center;color:var(--muted);padding:24px">⏳ Đang tải...</div>
+    </div>
+    <button class="close-btn" style="margin-top:10px" onclick="closeModal('server-list-modal')">✕ Đóng</button>
   </div>
 </div>
 
@@ -497,6 +599,8 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
           <div class="d-section">Tài khoản</div>
           <div class="d-item" onclick="doLogout()">🚪 Đăng xuất</div>
           <div class="d-section">Tính năng</div>
+          <div class="d-item" onclick="openIntroModal();closeMenu()">🐬 Giới thiệu & Chức năng</div>
+          <div class="d-item" onclick="openServerListModal();closeMenu()">🖥 Danh sách máy chủ</div>
           <div class="d-item" onclick="openHistory();closeMenu()">📋 Lịch sử <span id="hist-badge" class="badge" style="position:static;margin-left:auto;display:none"></span></div>
           <div class="d-item" onclick="openModal('admin-modal');closeMenu()">🔐 Thông tin Admin</div>
           <div class="d-item" onclick="openModal('guide-modal');closeMenu()">📚 Hướng dẫn</div>
@@ -721,12 +825,36 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         <button class="btn btn-primary" id="btn-resume" onclick="togglePause()" style="display:none">▶️ Tiếp tục</button>
         <button class="btn btn-outline" id="btn-back-input" onclick="switchMainTab('input')">← Quay lại</button>
       </div>
-      <!-- NÚT XEM TAB MÁY ẢO -->
+      <!-- SERVERS INLINE + NÚT XEM TAB MÁY ẢO -->
+      <div class="sv-inline-ss" id="sv-inline-wrap" style="margin-top:12px;display:none">
+        <div class="sv-inline-ss-wrap">
+          <div class="sv-inline-ss-bar">
+            <div class="sv-inline-ss-dot" style="background:#ff5f57"></div>
+            <div class="sv-inline-ss-dot" style="background:#febc2e;margin-left:4px"></div>
+            <div class="sv-inline-ss-dot" style="background:#28c840;margin-left:4px"></div>
+            <div style="flex:1;margin-left:8px;background:rgba(255,255,255,.06);border-radius:6px;padding:3px 10px;font-size:10px;color:var(--muted);font-family:monospace" id="sv-inline-urlbar">https://www.facebook.com</div>
+            <div id="sv-inline-live" style="display:flex;align-items:center;gap:5px;margin-left:8px;font-size:10px;color:var(--muted)">
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--red)" id="sv-inline-dot"></div>
+              <span id="sv-inline-label">Chờ...</span>
+            </div>
+          </div>
+          <img id="sv-inline-img" style="width:100%;display:none;max-height:220px;object-fit:cover;object-position:top" alt="Tab máy ảo" onclick="openScreenshotModal()"/>
+          <div id="sv-inline-ph" style="height:160px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--muted)">
+            <div style="font-size:36px">🖥️</div>
+            <div style="font-size:12px">Chờ tab máy ảo khởi động...</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:rgba(79,158,255,.5);text-align:center;margin-top:5px">Nhấn ảnh để xem toàn màn hình</div>
+      </div>
+
       <div style="margin-top:10px">
-        <button class="btn" id="btn-view-tab" onclick="openScreenshotModal()"
-          style="width:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(79,158,255,.35);color:var(--blue);font-size:13px;padding:11px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-          🖥️ Xem tab máy ảo đang chạy
-        </button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:12px;font-weight:700;color:var(--blue)">🖥 Máy chủ của bạn</div>
+          <button class="btn btn-primary" style="padding:5px 12px;font-size:11px" onclick="openCreateServerModal()">+ Tạo mới</button>
+        </div>
+        <div class="sv-rail" id="sv-status-rail">
+          <div class="sv-empty">⏳ Đang tải...</div>
+        </div>
       </div>
     </div>
   </div>
@@ -1279,43 +1407,7 @@ async function startDame(){
     addLog('🚀 Bắt đầu dame: '+_targetName);
     addLog('👤 Cookie: '+_accName+' | UID: '+(_accUid||'?'));
 
-    if(dameTimer) clearInterval(dameTimer);
-    dameTimer = setInterval(async()=>{
-      if(dameStop){ clearInterval(dameTimer); return; }
-      try{
-        const rs = await fetch('/api/dame/status',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-        const ds = await rs.json();
-        if(ds.logs && ds.logs.length) ds.logs.forEach(l=>addLog(l));
-        dameTotal = ds.total || dameTotal;
-        dameLoops = ds.loops || dameLoops;
-        const prog=document.getElementById('run-progress');
-        if(prog) prog.style.width=((dameTotal%13)/13*100)+'%';
-        updateRunUI();
-        // Detect DIE
-        if(ds.died){
-          dameRunning=false; clearInterval(dameTimer);
-          document.getElementById('run-dot').className='dot';
-          document.getElementById('run-dot').style.background='#ff4444';
-          document.getElementById('run-status-text').textContent='💀 ACC ĐÃ DIE!';
-          document.getElementById('run-status-text').style.color='#ff4444';
-          const dieBadge = document.getElementById('die-badge');
-          if(dieBadge) dieBadge.style.display='block';
-          if(ds.die_screenshot){
-            const dieImg = document.getElementById('die-screenshot');
-            if(dieImg){ dieImg.src='data:image/jpeg;base64,'+ds.die_screenshot; dieImg.style.display='block'; }
-          }
-          addLog('💀 ACC DIE · Dừng dame');
-          showToast('💀 ACC DIE!','#ff4444');
-          playSfx('error');
-        } else if(ds.stopped){
-          dameRunning=false; clearInterval(dameTimer);
-          document.getElementById('run-dot').className='dot ok';
-          document.getElementById('run-status-text').textContent='✅ Hoàn thành · '+dameTotal+' báo cáo đã gửi';
-          addLog('✅ Done · tổng '+dameTotal+' báo cáo');
-          showToast('✅ Dame xong! Tổng: '+dameTotal+' báo cáo','#00e676');
-        }
-      } catch{}
-    }, 2000);
+    startDameStatusPolling();
 
     updateRunUI();
     playSfx('success');
@@ -1377,6 +1469,11 @@ function switchMainTab(tab){
   document.getElementById('main-tab-run').style.display   = tab==='run'?'block':'none';
   document.getElementById('tab-input-btn').classList.toggle('active',tab==='input');
   document.getElementById('tab-run-btn').classList.toggle('active',tab==='run');
+  if(tab==='run' && SESSION_TOKEN) {
+    loadServerRail();
+    // Hiện inline screenshot nếu đang chạy
+    refreshInlineScreenshot();
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1499,6 +1596,344 @@ function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function toggleMenu(){document.getElementById('main-menu').classList.toggle('open');}
 function closeMenu(){document.getElementById('main-menu').classList.remove('open');}
+
+// ── Admin clock realtime ──
+function startAdminClock(){
+  function tick(){
+    const el=document.getElementById('admin-clock');
+    if(!el) return;
+    const now=new Date();
+    const d=now.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const t=now.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    el.textContent=`📅 ${d}  ⏰ ${t}`;
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+startAdminClock();
+
+// ── Intro modal ──
+function openIntroModal(){ openModal('intro-modal'); }
+
+// ── Create Server modal ──
+function openCreateServerModal(){
+  closeModal('intro-modal');
+  // Prefill cookie & target từ form hiện tại nếu đã nhập
+  const curCookie = (document.getElementById('fb-cookie-input')||{}).value||'';
+  const curTarget = (document.getElementById('target-input')||{}).value||'';
+  if(curCookie && !document.getElementById('sv-cookie').value) document.getElementById('sv-cookie').value = curCookie;
+  if(curTarget && !document.getElementById('sv-target').value) document.getElementById('sv-target').value = curTarget;
+  openModal('create-server-modal');
+}
+
+async function doCreateServer(){
+  const errEl = document.getElementById('sv-err');
+  errEl.style.display='none';
+  const name   = document.getElementById('sv-name').value.trim();
+  const cookie = document.getElementById('sv-cookie').value.trim();
+  const target = document.getElementById('sv-target').value.trim();
+  const speed  = document.getElementById('sv-speed').value;
+  if(!cookie){ errEl.textContent='⚠️ Chưa nhập cookie!'; errEl.style.display='block'; return; }
+  if(!target){ errEl.textContent='⚠️ Chưa nhập target!'; errEl.style.display='block'; return; }
+  const btn = document.querySelector('#create-server-modal .btn-primary');
+  btn.disabled=true; btn.textContent='⏳ Đang lưu...';
+  try{
+    const r = await fetch('/api/servers',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+      body: JSON.stringify({
+        name, cookie, target_url: target, speed,
+        acc_name: _accName||'', acc_uid: _accUid||'', target_name: _targetName||''
+      })
+    });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail||'Lỗi lưu');
+    closeModal('create-server-modal');
+    document.getElementById('sv-name').value='';
+    document.getElementById('sv-cookie').value='';
+    document.getElementById('sv-target').value='';
+    showToast('✅ Đã tạo máy chủ!','var(--green)');
+    openServerListModal();
+  }catch(e){
+    errEl.textContent='❌ '+e.message; errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='💾 Lưu máy chủ';
+  }
+}
+
+// ── Server List modal ──
+async function openServerListModal(){
+  openModal('server-list-modal');
+  await loadServerList();
+}
+
+async function loadServerList(){
+  const body = document.getElementById('server-list-body');
+  body.innerHTML='<div class="sv-rail" style="padding:8px 2px"><div class="sv-empty">⏳ Đang tải...</div></div>';
+  try{
+    const r = await fetch('/api/servers',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const list = await r.json();
+    if(!list.length){
+      body.innerHTML='<div class="sv-empty">📭 Chưa có máy chủ nào.<br><small style="font-size:11px">Nhấn <b>+ Tạo mới</b> để thêm.</small></div>';
+      return;
+    }
+    body.innerHTML = '<div class="sv-rail">' + list.map(sv => buildServerCard(sv)).join('') + '</div>';
+    // Load screenshots async cho từng card
+    list.forEach(sv => fetchCardScreenshot(sv.id));
+  }catch(e){
+    body.innerHTML='<div style="color:var(--red);padding:16px;text-align:center">❌ Lỗi tải danh sách</div>';
+  }
+}
+
+function buildServerCard(sv){
+  const sLabel = {ready:'Sẵn sàng',running:'Đang chạy',stopped:'Đã dừng',paused:'Tạm dừng'};
+  const st = sv.status||'ready';
+  const isRunning = st==='running';
+  const isPaused  = st==='paused';
+  const cookieEsc = (sv.cookie||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const targetEsc = (sv.target_url||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  return `
+  <div class="sv-card ${st}" id="svcard-${sv.id}">
+    <div class="sv-card-ss-ph" id="svcard-ph-${sv.id}" style="cursor:pointer" onclick="openServerScreenshot('${sv.id}')">🖥️</div>
+    <img class="sv-card-ss" id="svcard-img-${sv.id}" style="display:none;cursor:pointer" onclick="openServerScreenshot('${sv.id}')" alt="screenshot"/>
+    <!-- Live info bar -->
+    <div style="padding:5px 12px;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:space-between;font-size:10px">
+      <div style="display:flex;align-items:center;gap:5px">
+        <span class="sv-dot ${st}"></span>
+        <span id="svcard-status-${sv.id}">${sLabel[st]||st}</span>
+      </div>
+      <span id="svcard-total-${sv.id}" style="color:var(--muted)">0 báo cáo</span>
+    </div>
+    <div class="sv-card-body">
+      <div class="sv-card-name">${sv.name||'Máy chủ'}</div>
+      <div class="sv-card-id">🆔 ${sv.id}</div>
+      <div class="sv-card-row"><span>🎯 Nạn nhân</span><b style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sv.target_name||sv.target_url||'?'}</b></div>
+      <div class="sv-card-row"><span>👤 Acc</span><b>${sv.acc_name||'?'}</b></div>
+      <div class="sv-card-row"><span>📅 Tạo</span><b>${sv.created||'?'}</b></div>
+      <div id="svcard-log-${sv.id}" style="font-size:10px;color:rgba(79,158,255,.6);margin-top:4px;min-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+    </div>
+    <div class="sv-card-actions">
+      ${!isRunning && !isPaused ? `<button class="btn btn-primary" style="font-size:11px" onclick="serverAction('start','${sv.id}','${cookieEsc}','${targetEsc}','${sv.speed||'normal'}','${sv.acc_name||''}','${sv.acc_uid||''}','${sv.target_name||''}')">▶ Chạy</button>` : ''}
+      ${isRunning ? `<button class="btn" style="background:rgba(255,193,0,.12);border:1px solid #ffc100;color:#ffc100;font-size:11px" onclick="serverAction('pause','${sv.id}')">⏸</button>` : ''}
+      ${isPaused  ? `<button class="btn" style="background:rgba(0,230,118,.12);border:1px solid var(--green);color:var(--green);font-size:11px" onclick="serverAction('resume','${sv.id}')">▶</button>` : ''}
+      ${isRunning||isPaused ? `<button class="btn" style="background:rgba(255,82,82,.12);border:1px solid var(--red);color:var(--red);font-size:11px" onclick="serverAction('stop','${sv.id}')">⏹</button>` : ''}
+      <button class="btn" style="background:rgba(255,82,82,.08);border:1px solid var(--red);color:var(--red);flex:0 0 34px;padding:7px;font-size:11px" onclick="deleteServer('${sv.id}')">🗑</button>
+    </div>
+  </div>`;
+}
+
+async function serverAction(action, svId, cookie, targetUrl, speed, accName, accUid, targetName){
+  const tok = SESSION_TOKEN;
+  if(action==='start'){
+    await fetch('/api/dame/start',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},
+      body:JSON.stringify({cookie,target_url:targetUrl,speed,acc_name:accName,acc_uid:accUid,target_name:targetName,server_id:svId})});
+    showToast('▶ Đã khởi động máy chủ '+svId,'var(--green)');
+  } else if(action==='pause'){
+    await fetch('/api/dame/pause',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},
+      body:JSON.stringify({server_id:svId})});
+  } else if(action==='resume'){
+    await fetch('/api/dame/resume',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},
+      body:JSON.stringify({server_id:svId})});
+  } else if(action==='stop'){
+    if(!confirm('Dừng máy chủ này?')) return;
+    await fetch('/api/dame/stop',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},
+      body:JSON.stringify({server_id:svId})});
+    showToast('⏹ Đã dừng máy chủ','var(--red)');
+  }
+  await loadServerList();
+  await loadServerRail();
+}
+
+async function openServerScreenshot(svId){
+  // Mở modal screenshot của server cụ thể
+  openModal('screenshot-modal');
+  const img = document.getElementById('ss-img');
+  const ph  = document.getElementById('ss-placeholder');
+  const r = await fetch('/api/dame/screenshot?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+  const d = await r.json();
+  if(d.screenshot_b64 && img){
+    img.src='data:image/jpeg;base64,'+d.screenshot_b64;
+    img.style.display='block';
+    if(ph) ph.style.display='none';
+  }
+}
+
+async function fetchCardScreenshot(svId){
+  try {
+    // Lấy status live
+    const sr = await fetch('/api/dame/status?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(!sr.ok) return;
+    const sd = await sr.json();
+
+    // Update live info bar
+    const sLabel = {ready:'Sẵn sàng',running:'Đang chạy',stopped:'Đã dừng',paused:'Tạm dừng'};
+    const stEl   = document.getElementById('svcard-status-'+svId);
+    const totEl  = document.getElementById('svcard-total-'+svId);
+    const logEl  = document.getElementById('svcard-log-'+svId);
+    if(stEl) stEl.textContent = sd.running ? 'Đang chạy' : (sd.paused ? 'Tạm dừng' : 'Đã dừng');
+    if(totEl) totEl.textContent = (sd.total||0) + ' báo cáo';
+    if(logEl && sd.log) logEl.textContent = sd.log;
+
+    // Lấy screenshot nếu đang chạy
+    if(sd.running || sd.screenshot_b64){
+      const r = await fetch('/api/dame/screenshot?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+      if(!r.ok) return;
+      const d = await r.json();
+      if(d.screenshot_b64){
+        const img = document.getElementById('svcard-img-'+svId);
+        const ph  = document.getElementById('svcard-ph-'+svId);
+        if(img){ img.src='data:image/jpeg;base64,'+d.screenshot_b64; img.style.display='block'; }
+        if(ph)  ph.style.display='none';
+      }
+    }
+  } catch(e){}
+}
+
+
+async function refreshInlineScreenshot(){
+  const wrap = document.getElementById('sv-inline-wrap');
+  try{
+    const r = await fetch('/api/dame/status',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const d = await r.json();
+    const isRunning = d.is_running;
+    if(wrap) wrap.style.display = isRunning ? 'block' : 'none';
+    if(!isRunning) return;
+
+    // Update inline screenshot
+    const sr = await fetch('/api/dame/screenshot',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(!sr.ok) return;
+    const sd = await sr.json();
+    const img = document.getElementById('sv-inline-img');
+    const ph  = document.getElementById('sv-inline-ph');
+    const dot = document.getElementById('sv-inline-dot');
+    const lbl = document.getElementById('sv-inline-label');
+    const url = document.getElementById('sv-inline-urlbar');
+    if(sd.screenshot_b64){
+      if(img){ img.src='data:image/jpeg;base64,'+sd.screenshot_b64; img.style.display='block'; }
+      if(ph) ph.style.display='none';
+    }
+    if(dot){ dot.style.background='var(--green)'; dot.style.animation='pulse-dot 1.2s infinite'; }
+    if(lbl) lbl.textContent='🔴 LIVE';
+    if(url && d.current_url) url.textContent=d.current_url;
+  }catch(e){
+    if(wrap) wrap.style.display='none';
+  }
+}
+async function loadServerRail(){
+  const rail = document.getElementById('sv-status-rail');
+  if(!rail) return;
+  try{
+    const r = await fetch('/api/servers',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const list = await r.json();
+    if(!list.length){
+      rail.innerHTML='<div class="sv-empty" style="font-size:12px">📭 Chưa có máy chủ nào.<br><small>Nhấn <b>+ Tạo mới</b> ở menu.</small></div>';
+      return;
+    }
+    // Chỉ rebuild HTML nếu số lượng server thay đổi (tránh flicker)
+    const existingCards = rail.querySelectorAll('.sv-card').length;
+    if(existingCards !== list.length){
+      rail.innerHTML = list.map(sv => buildServerCard(sv)).join('');
+    }
+    // Luôn update live data
+    list.forEach(sv => fetchCardScreenshot(sv.id));
+  }catch(e){}
+}
+
+
+async function startServerDame(id, cookie, targetUrl, speed, accName, accUid, targetName){
+  closeModal('server-list-modal');
+  // Điền vào form chính và khởi động dame
+  _cookieStr   = cookie;
+  _accName     = accName;
+  _accUid      = accUid;
+  _targetUrl   = targetUrl;
+  _targetName  = targetName;
+  showToast('🚀 Đang khởi động máy chủ...','var(--blue)');
+  // Update status
+  await fetch(`/api/servers/${id}/status`,{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+    body: JSON.stringify({status:'running'})
+  }).catch(()=>{});
+  // Start dame
+  try{
+    const r = await fetch('/api/dame/start',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+      body: JSON.stringify({cookie, target_url: targetUrl, speed, acc_name: accName, acc_uid: accUid, target_name: targetName})
+    });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail||'Lỗi khởi động');
+    dameRunning=true; damePaused=false; dameStop=false;
+    dameTotal=0; dameLoops=0; dameStartTime=Date.now();
+    document.getElementById('run-acc-name').textContent    = accName;
+    document.getElementById('run-victim-name').textContent = '👤 '+targetName;
+    document.getElementById('run-target-url').textContent  = '🔗 '+targetUrl;
+    document.getElementById('run-dot').className='dot active';
+    document.getElementById('run-status-text').textContent='🐬 Đang dame '+targetName+'...';
+    document.getElementById('run-acc-info').style.display='block';
+    switchMainTab('run');
+    addLog('🚀 Máy chủ khởi động: '+targetName);
+    addLog('👤 Cookie: '+accName+' | UID: '+(accUid||'?'));
+    startDameStatusPolling();
+  }catch(e){
+    showToast('❌ '+e.message,'var(--red)');
+    await fetch(`/api/servers/${id}/status`,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+      body: JSON.stringify({status:'ready'})
+    }).catch(()=>{});
+  }
+}
+
+function startDameStatusPolling(){
+  if(dameTimer) clearInterval(dameTimer);
+  dameTimer = setInterval(async()=>{
+    if(dameStop){ clearInterval(dameTimer); return; }
+    try{
+      const rs = await fetch('/api/dame/status',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+      const ds = await rs.json();
+      if(ds.logs && ds.logs.length) ds.logs.forEach(l=>addLog(l));
+      dameTotal = ds.total || dameTotal;
+      dameLoops = ds.loops || dameLoops;
+      const prog=document.getElementById('run-progress');
+      if(prog) prog.style.width=((dameTotal%13)/13*100)+'%';
+      updateRunUI();
+      if(ds.died){
+        dameRunning=false; clearInterval(dameTimer);
+        document.getElementById('run-dot').className='dot';
+        document.getElementById('run-dot').style.background='#ff4444';
+        document.getElementById('run-status-text').textContent='💀 ACC ĐÃ DIE!';
+        document.getElementById('run-status-text').style.color='#ff4444';
+        const dieBadge=document.getElementById('die-badge');
+        if(dieBadge) dieBadge.style.display='block';
+        if(ds.die_screenshot){
+          const dieImg=document.getElementById('die-screenshot');
+          if(dieImg){dieImg.src='data:image/jpeg;base64,'+ds.die_screenshot;dieImg.style.display='block';}
+        }
+        addLog('💀 ACC DIE · Dừng dame');
+        showToast('💀 ACC DIE!','#ff4444');
+        playSfx('error');
+      } else if(ds.stopped){
+        dameRunning=false; clearInterval(dameTimer);
+        document.getElementById('run-dot').className='dot ok';
+        document.getElementById('run-status-text').textContent='✅ Hoàn thành · '+dameTotal+' báo cáo đã gửi';
+        addLog('✅ Done · tổng '+dameTotal+' báo cáo');
+        showToast('✅ Dame xong! Tổng: '+dameTotal+' báo cáo','#00e676');
+      }
+    } catch{}
+  }, 2000);
+}
+
+async function deleteServer(id){
+  if(!confirm('Xóa máy chủ này?')) return;
+  await fetch(`/api/servers/${id}`,{
+    method:'DELETE',
+    headers:{'Authorization':'Bearer '+SESSION_TOKEN}
+  });
+  await loadServerList();
+  showToast('🗑 Đã xóa máy chủ','var(--muted)');
+}
 document.addEventListener('click',e=>{const m=document.getElementById('main-menu');if(m&&m.classList.contains('open')&&!e.target.closest('.dropdown'))closeMenu();});
 
 let _theme='dark';
@@ -1551,6 +1986,15 @@ function startClock(){
   }
   setActiveStep(1);
   setInterval(()=>{if(dameRunning)updateRunUI();},1000);
+
+  // Auto refresh server rail + inline screenshot mỗi 4s khi ở tab run
+  setInterval(()=>{
+    const runTab = document.getElementById('main-tab-run');
+    if(runTab && runTab.style.display!=='none' && SESSION_TOKEN){
+      refreshInlineScreenshot();
+      loadServerRail();
+    }
+  }, 4000);
 })();
 
 // Countdown timers (dùng cho forgot password)
