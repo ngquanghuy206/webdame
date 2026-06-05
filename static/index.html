@@ -2,7 +2,7 @@
 <html lang="vi" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>FB Dame Tool — Dzi Meo Meo</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="🐬 FB Dame Tool — by Dzi Meo Meo">
@@ -84,8 +84,14 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .admin-badge{background:linear-gradient(135deg,rgba(255,215,64,.2),rgba(255,145,0,.2));border-color:rgba(255,215,64,.4);color:var(--yellow)}
 
 /* ── ICON BUTTONS ────────────────────────────────────── */
-.icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--glass2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text);position:relative}
-.icon-btn:hover{border-color:var(--blue)}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:none;background:var(--glass2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text);position:relative;transition:all .15s}
+.icon-btn:hover{background:rgba(79,158,255,.18);transform:scale(1.07)}
+
+/* ── SUPPORT BUTTONS → sidebar style ─────────────────── */
+.support-btn{flex:1;padding:10px 12px;border-radius:13px;background:var(--glass);border:1px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;text-align:left;color:var(--text);display:flex;align-items:center;gap:10px;transition:all .15s}
+.support-btn:hover{border-color:var(--blue);background:rgba(79,158,255,.08);transform:translateY(-1px)}
+.support-btn .sb-item-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.support-btn .sb-item-icon svg{width:17px;height:17px}
 .badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 
 /* ── SIDEBAR MENU ─────────────────────────────────────── */
@@ -190,7 +196,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .otp-timer{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
 .otp-timer-val{font-weight:800;font-variant-numeric:tabular-nums;color:var(--blue)}
 /* ── SERVER CARDS SWIPE ── */
-.sv-rail{display:flex;gap:8px;overflow-x:auto;padding:4px 4px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.sv-rail{display:flex;gap:8px;overflow-x:auto;padding:4px 4px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%;box-sizing:border-box}
 .sv-rail::-webkit-scrollbar{display:none}
 .sv-card{min-width:260px;max-width:260px;background:linear-gradient(145deg,#0d1322,#111827);border:1px solid rgba(79,158,255,.22);border-radius:18px;scroll-snap-align:start;overflow:hidden;flex-shrink:0;position:relative;transition:transform .15s,box-shadow .15s}
 .sv-card:active{transform:scale(.97)}
@@ -339,8 +345,8 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .welcome-action-btn.full{grid-column:span 2}
 .welcome-or-divider{text-align:center;font-size:12px;color:var(--muted);margin:8px 0;letter-spacing:1px}
 /* ── SERVER LIST REDESIGN ─────────────────────────────── */
-.sv-grid{display:grid;grid-template-columns:1fr;gap:12px;padding:4px 0}
-.sv2-card{background:linear-gradient(145deg,rgba(13,19,34,.95),rgba(8,13,24,.98));border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;transition:all .18s;position:relative;min-width:150px;max-width:160px;scroll-snap-align:start;flex-shrink:0}
+.sv-grid{display:flex;flex-direction:column;gap:8px;padding:4px 0;width:100%}
+.sv2-card{background:linear-gradient(145deg,rgba(13,19,34,.95),rgba(8,13,24,.98));border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;transition:all .18s;position:relative;min-width:calc(33vw - 12px);max-width:calc(33vw - 12px);scroll-snap-align:start;flex-shrink:0}
 .sv2-card:hover{border-color:rgba(79,158,255,.35);transform:translateY(-2px)}
 .sv2-card.running{border-color:rgba(0,230,118,.4);box-shadow:0 0 14px rgba(0,230,118,.15)}
 .sv2-card.stopped{opacity:.7}
@@ -348,23 +354,23 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .sv2-uptime-val{font-weight:700;color:var(--cyan);font-family:monospace;font-size:10px}
 .sv2-progress{height:2px;background:rgba(255,255,255,.07);border-radius:2px;margin:4px 8px 0;overflow:hidden}
 .sv2-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue2),var(--cyan));border-radius:2px;transition:width .5s;width:0%}
-.sv2-header{display:flex;align-items:center;gap:6px;padding:8px 10px 6px}
-.sv2-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sv2-header{display:flex;align-items:center;gap:3px;padding:5px 6px 4px}
+.sv2-status-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
 .sv2-status-dot.running{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse-dot 1.2s infinite}
 .sv2-status-dot.stopped{background:#444}
 .sv2-status-dot.ready{background:var(--blue)}
-.sv2-name{font-size:14px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sv2-status-badge{padding:2px 6px;border-radius:20px;font-size:9px;font-weight:700}
+.sv2-name{font-size:9px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv2-status-badge{padding:1px 4px;border-radius:20px;font-size:7px;font-weight:700}
 .sv2-status-badge.running{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)}
 .sv2-status-badge.stopped{background:rgba(255,255,255,.07);color:var(--muted);border:1px solid rgba(255,255,255,.1)}
 .sv2-status-badge.ready{background:rgba(79,158,255,.15);color:var(--blue);border:1px solid rgba(79,158,255,.25)}
-.sv2-screenshot{width:100%;height:80px;object-fit:cover;object-position:top;display:block;background:linear-gradient(to bottom,#070b14,#0d1220);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;position:relative}
-.sv2-screenshot-ph{width:100%;height:80px;background:linear-gradient(to bottom,#070b14,#0d1220);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:rgba(79,158,255,.3);font-size:10px;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
-.sv2-body{padding:6px 8px 4px}
-.sv2-meta-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px}
-.sv2-meta-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:7px;padding:4px 6px}
-.sv2-meta-label{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue);opacity:.6;margin-bottom:1px}
-.sv2-meta-val{font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv2-screenshot{width:100%;height:40px;object-fit:cover;object-position:top;display:block;background:linear-gradient(to bottom,#070b14,#0d1220);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;position:relative}
+.sv2-screenshot-ph{width:100%;height:40px;background:linear-gradient(to bottom,#070b14,#0d1220);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:rgba(79,158,255,.3);font-size:10px;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
+.sv2-body{padding:4px 5px 3px}
+.sv2-meta-row{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:4px}
+.sv2-meta-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:5px;padding:2px 4px}
+.sv2-meta-label{font-size:6px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--blue);opacity:.6;margin-bottom:1px}
+.sv2-meta-val{font-size:8px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sv2-stats-row{display:flex;gap:5px;margin-bottom:5px}
 .sv2-stat{flex:1;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:7px;padding:5px 4px;text-align:center}
 .sv2-stat{flex:1;background:rgba(79,158,255,.06);border:1px solid rgba(79,158,255,.12);border-radius:10px;padding:8px 10px;text-align:center}
@@ -372,15 +378,15 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .sv2-stat-label{font-size:9px;color:var(--muted);margin-top:2px}
 .sv2-btn.detail{background:rgba(79,158,255,.12);color:var(--blue);border:1px solid rgba(79,158,255,.25);}
 .sv2-log{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);border-radius:6px;padding:4px 6px;font-size:9px;font-family:monospace;color:rgba(79,158,255,.5);min-height:16px;white-space:pre-wrap;overflow-y:auto;max-height:52px;margin-bottom:5px;scrollbar-width:thin}
-.sv2-actions{display:flex;gap:4px}
-.sv2-btn{flex:1;padding:6px 4px;border-radius:8px;border:none;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:3px}
+.sv2-actions{display:flex;gap:2px}
+.sv2-btn{flex:1;padding:3px 2px;border-radius:5px;border:none;font-size:9px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:2px}
 .sv2-btn:hover{opacity:.85;transform:translateY(-1px)}
 .sv2-btn.play{background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff;box-shadow:0 4px 14px rgba(41,121,255,.3)}
 .sv2-btn.pause{background:rgba(255,193,0,.12);border:1px solid rgba(255,193,0,.3);color:#ffc100}
 .sv2-btn.stop{background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.3);color:var(--red)}
 .sv2-btn.resume{background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.3);color:var(--green)}
-.sv2-btn.del{flex:0 0 28px;padding:5px;background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);color:var(--red)}
-.sv2-id{font-size:8px;color:rgba(79,158,255,.3);font-family:monospace;padding:0 8px 6px}
+.sv2-btn.del{flex:0 0 20px;padding:3px;background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);color:var(--red)}
+.sv2-id{font-size:7px;color:rgba(79,158,255,.3);font-family:monospace;padding:0 5px 4px}
 /* ── FOOTER ──────────────────────────────────────────── */
 .footer{text-align:center;font-size:11px;color:var(--muted);margin-top:28px;opacity:.5}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4);pointer-events:none;max-width:90vw;text-align:center}
@@ -780,14 +786,14 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         oninput="svDetectCookieFormat(this.value)"></textarea>
       <div id="sv-cookie-hint" style="font-size:11px;color:var(--muted);margin-bottom:8px;min-height:16px"></div>
       <div style="display:flex;gap:8px;margin-bottom:10px">
-        <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="svPasteCookie()">📋 Dán</button>
-        <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('sv-cookie').value='';document.getElementById('sv-cookie-hint').textContent=''">🗑 Xóa</button>
+        <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:6px" onclick="svPasteCookie()"><span class="sb-item-icon ic-blue" style="width:22px;height:22px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>Dán</button>
+        <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:6px" onclick="document.getElementById('sv-cookie').value='';document.getElementById('sv-cookie-hint').textContent=''"><span class="sb-item-icon ic-red" style="width:22px;height:22px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#ff5050" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></span>Xóa</button>
       </div>
       <div id="sv-cookie-result" style="display:none;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7;margin-bottom:10px"></div>
       <div class="field-label" style="font-size:12px;margin-bottom:6px">🏷️ Tên tab (tuỳ chọn)</div>
       <input id="sv-tab-name" class="field-input" type="text" placeholder="VD: Acc chính, Nick dự phòng..." style="font-size:13px;margin-bottom:14px"/>
       <div id="sv-err1" class="auth-err" style="margin-bottom:8px"></div>
-      <button class="btn btn-primary" id="sv-btn-cookie" style="width:100%;padding:13px;font-size:14px" onclick="svWizardCookieVerify()">✅ Xác nhận Cookie</button>
+      <button class="btn btn-primary" id="sv-btn-cookie" style="width:100%;padding:13px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="svWizardCookieVerify()"><span class="sb-item-icon" style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg></span>Xác nhận Cookie</button>
       <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:8px" onclick="svWizardBack(1)">← Đổi tên</button>
     </div>
 
@@ -807,7 +813,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       <div class="field-label" style="font-size:12px;margin-bottom:6px">👤 Tên nạn nhân (tuỳ chọn)</div>
       <input id="sv-victim-name" class="field-input" type="text" placeholder="VD: Nguyễn Văn A..." style="font-size:13px;margin-bottom:14px"/>
       <div id="sv-err2" class="auth-err" style="margin-bottom:8px"></div>
-      <button class="btn btn-primary" style="width:100%;padding:13px;font-size:14px" onclick="svWizardTargetConfirm()">🔍 Xác nhận Target →</button>
+      <button class="btn btn-primary" style="width:100%;padding:13px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="svWizardTargetConfirm()"><span class="sb-item-icon" style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Xác nhận Target →</button>
       <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:8px" onclick="svWizardBack(2)">← Đổi cookie</button>
     </div>
 
@@ -833,7 +839,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         </div>
       </div>
       <div id="sv-err3" class="auth-err" style="margin-bottom:10px"></div>
-      <button class="btn btn-primary" id="sv-btn-start" style="width:100%;padding:14px;font-size:15px;margin-bottom:8px" onclick="svWizardStartAndSave()">🐬 Lưu & Chạy ngay</button>
+      <button class="btn btn-primary" id="sv-btn-start" style="width:100%;padding:14px;font-size:15px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="svWizardStartAndSave()"><span class="sb-item-icon" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>Lưu & Chạy ngay</button>
       <button class="btn" style="width:100%;padding:12px;font-size:13px;background:var(--glass2);border:1px solid var(--border);color:var(--muted)" onclick="svWizardSaveOnly()">💾 Chỉ lưu (chạy sau)</button>
       <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:6px" onclick="svWizardBack(3)">← Đổi target</button>
     </div>
@@ -849,7 +855,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       <div class="modal-title" style="margin:0">🖥 Máy chủ của bạn</div>
       <button class="btn btn-primary" style="padding:6px 12px;font-size:11px;border-radius:8px" onclick="openCreateServerModal()">+ Tạo mới</button>
     </div>
-    <div id="server-list-body" style="min-height:80px;overflow:hidden;padding:4px 0">
+    <div id="server-list-body" style="min-height:80px;overflow-x:hidden;overflow-y:visible;padding:4px 0;margin:0 -10px;padding:4px 10px">
       <div style="text-align:center;color:var(--muted);padding:24px">⏳ Đang tải...</div>
     </div>
     <button class="close-btn" style="margin-top:10px" onclick="closeModal('server-list-modal')">✕ Đóng</button>
@@ -932,8 +938,8 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div class="modal-title">🔍 Chi tiết cookie</div>
     <div id="hist-detail-content"></div>
     <div class="btn-row" style="margin-top:14px">
-      <button class="btn btn-green" onclick="copyHistDetailCookie(this)">📋 Copy Cookie</button>
-      <button class="btn btn-primary" onclick="downloadHistDetail()">⬇️ Tải .txt</button>
+      <button class="btn btn-green" onclick="copyHistDetailCookie(this)" style="display:flex;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>Copy Cookie</button>
+      <button class="btn btn-primary" onclick="downloadHistDetail()" style="display:flex;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>Tải .txt</button>
     </div>
     <button class="close-btn" onclick="closeModal('hist-detail-modal')">Đóng</button>
   </div>
@@ -1032,15 +1038,15 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
   <!-- SUPPORT BUTTONS -->
   <div class="support-wrap">
-    <div class="support-btn" onclick="openModal('admin-modal')">👤 Thông tin Admin</div>
-    <div class="support-btn" onclick="openModal('guide-modal')">📖 Hướng dẫn sử dụng</div>
+    <div class="support-btn" onclick="openModal('admin-modal')"><span class="sb-item-icon ic-orange"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9632" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Thông tin Admin</div>
+    <div class="support-btn" onclick="openModal('guide-modal')"><span class="sb-item-icon ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="#00c882" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>Hướng dẫn sử dụng</div>
   </div>
 
   <!-- MAIN CARD -->
   <div class="card">
     <div class="tabs" style="margin-bottom:18px">
-      <div class="tab active" id="tab-input-btn" onclick="switchMainTab('input')">⚙️ Nhập & Chạy</div>
-      <div class="tab" id="tab-run-btn" onclick="switchMainTab('run')">📊 Trạng thái</div>
+      <div class="tab active" id="tab-input-btn" onclick="switchMainTab('input')" style="display:flex;align-items:center;justify-content:center;gap:6px"><span class="sb-item-icon ic-blue" style="width:24px;height:24px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>Nhập & Chạy</div>
+      <div class="tab" id="tab-run-btn" onclick="switchMainTab('run')" style="display:flex;align-items:center;justify-content:center;gap:6px"><span class="sb-item-icon ic-purple" style="width:24px;height:24px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Trạng thái</div>
     </div>
 
     <!-- ════ TAB NHẬP — STEP WIZARD ════ -->
@@ -1072,12 +1078,12 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
           oninput="detectCookieFormat(this.value)"></textarea>
         <div id="cookie-format-hint" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:16px"></div>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="pasteCookie()">📋 Dán</button>
-          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="document.getElementById('fb-cookie-input').value='';hideBox('cookie-verify-box');document.getElementById('cookie-format-hint').textContent=''">🗑 Xóa</button>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:6px" onclick="pasteCookie()"><span class="sb-item-icon ic-blue" style="width:22px;height:22px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>Dán</button>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:6px" onclick="document.getElementById('fb-cookie-input').value='';hideBox('cookie-verify-box');document.getElementById('cookie-format-hint').textContent=''"><span class="sb-item-icon ic-red" style="width:22px;height:22px;border-radius:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#ff5050" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></span>Xóa</button>
         </div>
         <div id="cookie-verify-box" style="display:none;margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7"></div>
         <div class="btn-row" style="margin-top:14px">
-          <button class="btn btn-primary" id="btn-verify-cookie" onclick="stepVerifyCookie()">✅ Xác nhận Cookie</button>
+          <button class="btn btn-primary" id="btn-verify-cookie" onclick="stepVerifyCookie()" style="display:flex;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg></span>Xác nhận Cookie</button>
         </div>
         <div id="step1-err" class="auth-err" style="margin-top:8px"></div>
 
@@ -1112,7 +1118,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
         <div id="target-verify-box" style="display:none;margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.7"></div>
         <div class="btn-row" style="margin-top:14px">
-          <button class="btn btn-primary" id="btn-verify-target" onclick="stepVerifyTarget()">🔍 Xác nhận Target</button>
+          <button class="btn btn-primary" id="btn-verify-target" onclick="stepVerifyTarget()" style="display:flex;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Xác nhận Target</button>
         </div>
         <div id="step2-err" class="auth-err" style="margin-top:8px"></div>
       </div>
@@ -1153,8 +1159,9 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         </div>
 
         <div class="btn-row">
-          <button class="btn btn-primary" id="btn-start-dame" onclick="startDame()" style="flex:1;padding:14px;font-size:15px;letter-spacing:.5px">
-            🐬 Bắt đầu Dame
+          <button class="btn btn-primary" id="btn-start-dame" onclick="startDame()" style="flex:1;padding:14px;font-size:15px;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;gap:8px">
+            <span class="sb-item-icon" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>
+            Bắt đầu Dame
           </button>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px">
@@ -1222,10 +1229,10 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
       <!-- ĐIỀU KHIỂN -->
       <div class="btn-row">
-        <button class="btn btn-outline" id="btn-pause" onclick="togglePause()" style="display:none">⏸️ Tạm dừng</button>
-        <button class="btn btn-danger" id="btn-stop" onclick="stopDame()" style="display:none">⏹️ Dừng</button>
-        <button class="btn btn-primary" id="btn-resume" onclick="togglePause()" style="display:none">▶️ Tiếp tục</button>
-        <button class="btn btn-outline" id="btn-back-input" onclick="switchMainTab('input')">← Quay lại</button>
+        <button class="btn btn-outline" id="btn-pause" onclick="togglePause()" style="display:none;align-items:center;gap:8px"><span class="sb-item-icon ic-yellow" style="width:24px;height:24px;border-radius:7px"><svg viewBox="0 0 24 24" fill="none" stroke="#ffc800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></span>Tạm dừng</button>
+        <button class="btn btn-danger" id="btn-stop" onclick="stopDame()" style="display:none;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></span>Dừng</button>
+        <button class="btn btn-primary" id="btn-resume" onclick="togglePause()" style="display:none;align-items:center;gap:8px"><span class="sb-item-icon" style="width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>Tiếp tục</button>
+        <button class="btn btn-outline" id="btn-back-input" onclick="switchMainTab('input')" style="display:flex;align-items:center;gap:8px"><span class="sb-item-icon ic-blue" style="width:24px;height:24px;border-radius:7px"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="15 18 9 12 15 6"/></svg></span>Quay lại</button>
       </div>
       <!-- SERVERS INLINE + NÚT XEM TAB MÁY ẢO -->
       <div class="sv-inline-ss" id="sv-inline-wrap" style="margin-top:12px;display:none">
