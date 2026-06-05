@@ -1309,6 +1309,7 @@ let rememberMe    = localStorage.getItem('zct_remember') === '1';
 let SESSION_TOKEN = rememberMe ? (localStorage.getItem('zct_token')||'') : (sessionStorage.getItem('zct_token')||'');
 let CURRENT_USER  = rememberMe ? (localStorage.getItem('zct_user')||'')  : (sessionStorage.getItem('zct_user')||'');
 let IS_ADMIN      = rememberMe ? localStorage.getItem('zct_admin')==='1' : sessionStorage.getItem('zct_admin')==='1';
+if(SESSION_TOKEN){document.cookie=`session_token=${SESSION_TOKEN};path=/;SameSite=Lax;max-age=${rememberMe?60*60*24*30:60*60*8}`;}
 let currentData = null, viewingHistItem = null;
 
 // Dame state
@@ -1493,14 +1494,19 @@ async function doLogin(){
   const p=document.getElementById('login-pass').value.trim();
   const err=document.getElementById('login-err');const btn=document.getElementById('login-btn');
   if(!u||!p){err.style.display='block';err.textContent='Vui lòng nhập đầy đủ';return;}
-  btn.disabled=true;btn.textContent='⏳ Đang đăng nhập...';err.style.display='none';
+  btn.disabled=true;btn.textContent='⏳ Đang kết nối server...';err.style.display='none';
+  const _loginAc=new AbortController();
+  const _loginTid=setTimeout(()=>{_loginAc.abort();},20000);
   try{
-    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p}),signal:_loginAc.signal});
+    clearTimeout(_loginTid);
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Sai thông tin');
     SESSION_TOKEN=d.token;CURRENT_USER=d.username;IS_ADMIN=d.is_admin||false;
     const store=rememberMe?localStorage:sessionStorage;
     store.setItem('zct_token',SESSION_TOKEN);store.setItem('zct_user',CURRENT_USER);
     store.setItem('zct_admin',IS_ADMIN?'1':'0');
+    const maxAge=rememberMe?60*60*24*30:60*60*8;
+    document.cookie=`session_token=${SESSION_TOKEN};path=/;SameSite=Lax;max-age=${maxAge}`;
     playSfx('success');showApp();
   }catch(e){err.style.display='block';err.textContent=e.message;playSfx('error');}
   finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
@@ -1576,6 +1582,7 @@ function doLogout(){
   const _tok=SESSION_TOKEN;
   SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;
   ['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});
+  document.cookie='session_token=;path=/;max-age=0';
   stopDame();
   document.getElementById('app-screen').style.display='none';
   document.getElementById('welcome-screen').style.display='none';
@@ -2239,10 +2246,6 @@ async function loadServerList(){
     if(!window._svLogIdx) window._svLogIdx = {};
     Object.assign(window._svLogIdx, savedIdx);
     list.forEach(sv => fetchCardScreenshot2(sv.id));
-  }catch(e){
-    body.innerHTML='<div style="color:var(--red);padding:16px;text-align:center">❌ Lỗi tải danh sách</div>';
-  }
-}
   }catch(e){
     body.innerHTML='<div style="color:var(--red);padding:16px;text-align:center">❌ Lỗi tải danh sách</div>';
   }
