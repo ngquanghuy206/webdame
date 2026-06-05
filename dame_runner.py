@@ -397,13 +397,9 @@ async def _dame_loop(cookie_str: str, target_url: str, speed: str):
                 screenshot_task.cancel()
                 await browser.close(); return
 
-            DAME_SESSION.add_log("🎯 Target OK · Đang chạy dame tự động...")
-            # Re-inject dame script sau khi trang target load xong
-            try:
-                await page.evaluate(dame_js)
-                DAME_SESSION.add_log("💉 Dame script đã inject · Đang chạy...")
-            except Exception as e:
-                DAME_SESSION.add_log(f"⚠️ Inject script lỗi: {str(e)[:60]}")
+            DAME_SESSION.add_log("🐬 Dame script tự chạy · Đang dame...")
+            # Script đã được inject qua add_init_script và tự auto-start sau 2s
+            # Không cần evaluate thêm để tránh chạy 2 instance
 
             # ── Vòng lặp chính: chỉ detect die, reload nếu cần ──
             die_keywords = [
