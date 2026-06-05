@@ -939,9 +939,13 @@
     createBubbleStatus();
     renderMainPanel();
     
-    document.body.appendChild(panel);
-    document.body.appendChild(miniPanel);
-    document.body.appendChild(bubbleStatus);
+    try {
+        if (document.body) {
+            document.body.appendChild(panel);
+            document.body.appendChild(miniPanel);
+            document.body.appendChild(bubbleStatus);
+        }
+    } catch(e) { console.log('UI append error:', e); }
     
     miniPanel.addEventListener("click", () => {
         isMainPanelOpen = true;
@@ -969,15 +973,7 @@
     setTimeout(() => {
         try {
             currentMode = "dame";
-            renderMainPanel();
-            updateUI();
-            const startBtn = document.getElementById("startBtn");
-            if (startBtn) {
-                addLog("⚡ Auto-start dame...", "#00BFFF");
-                startBtn.click();
-            } else {
-                startDameProcess();
-            }
+            startDameProcess();
         } catch(e) { console.log("Auto-start error:", e); }
     }, 2000);
 })();
