@@ -1010,12 +1010,13 @@
             loopCount++;
             for(let i = 0; i < reportTypes.length && !shouldStop; i++) {
                 updateBubbleStatus(reportTypes[i].name.substring(0, 25), 0);
-                addLog(`📋 Vòng ${loopCount} | ${reportTypes[i].name}`, "#7BACE0");
+                addLog(`🔄 Vòng ${loopCount} · Báo cáo ${i+1}/${reportTypes.length}: ${reportTypes[i].name}`, "#7BACE0");
                 await executeReport(reportTypes[i]);
                 if(!shouldStop) await sleep(config.INTER_REPORT_DELAY);
             }
             if(!shouldStop) {
                 totalLoopsCompleted = loopCount;
+                window._dameLoops = totalLoopsCompleted;
                 updateUI();
                 addLog(`✅ HOÀN THÀNH VÒNG ${loopCount} | ${formatUptime()}`, "#00FF88");
                 updateBubbleStatus(`Hoàn thành vòng ${loopCount}`, 100);

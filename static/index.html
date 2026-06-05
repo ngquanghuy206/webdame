@@ -340,10 +340,14 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .welcome-or-divider{text-align:center;font-size:12px;color:var(--muted);margin:8px 0;letter-spacing:1px}
 /* ── SERVER LIST REDESIGN ─────────────────────────────── */
 .sv-grid{display:grid;grid-template-columns:1fr;gap:12px;padding:4px 0}
-.sv2-card{background:linear-gradient(145deg,rgba(13,19,34,.9),rgba(11,18,29,.95));border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden;transition:all .2s;position:relative}
+.sv2-card{background:linear-gradient(145deg,rgba(13,19,34,.9),rgba(11,18,29,.95));border:1px solid rgba(255,255,255,.08);border-radius:18px;overflow:hidden;transition:all .2s;position:relative;min-width:300px;max-width:340px;scroll-snap-align:start}
 .sv2-card:hover{border-color:rgba(79,158,255,.3);box-shadow:0 8px 30px rgba(79,158,255,.1)}
 .sv2-card.running{border-color:rgba(0,230,118,.35);box-shadow:0 0 20px rgba(0,230,118,.12)}
 .sv2-card.stopped{opacity:.75}
+.sv2-uptime-row{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 0;font-size:11px;color:var(--muted)}
+.sv2-uptime-val{font-weight:700;color:var(--cyan);font-family:monospace;font-size:12px}
+.sv2-progress{height:3px;background:rgba(255,255,255,.07);border-radius:2px;margin:6px 14px 0;overflow:hidden}
+.sv2-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue2),var(--cyan));border-radius:2px;transition:width .5s;width:0%}
 .sv2-header{display:flex;align-items:center;gap:12px;padding:14px 16px 10px}
 .sv2-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .sv2-status-dot.running{background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse-dot 1.2s infinite}
@@ -839,12 +843,12 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
 <!-- SERVER LIST MODAL - SWIPE CARDS -->
 <div class="modal-overlay" id="server-list-modal" onclick="if(event.target===this)closeModal('server-list-modal')">
-  <div class="modal-box" style="max-width:98vw;width:580px;padding-bottom:8px">
+  <div class="modal-box" style="max-width:98vw;width:98vw;padding-bottom:8px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="modal-title" style="margin:0">🖥 Máy chủ của bạn</div>
       <button class="btn btn-primary" style="padding:8px 16px;font-size:12px;border-radius:10px" onclick="openCreateServerModal()">➕ Tạo mới</button>
     </div>
-    <div id="server-list-body" style="min-height:80px;max-height:65vh;overflow-y:auto;padding-right:2px">
+    <div id="server-list-body" style="min-height:80px;overflow:hidden;padding:4px 0">
       <div style="text-align:center;color:var(--muted);padding:24px">⏳ Đang tải...</div>
     </div>
     <button class="close-btn" style="margin-top:10px" onclick="closeModal('server-list-modal')">✕ Đóng</button>
@@ -2241,7 +2245,7 @@ async function loadServerList(){
     }
     // Lưu lại _svLogIdx trước khi rebuild để không mất offset
     const savedIdx = window._svLogIdx ? Object.assign({}, window._svLogIdx) : {};
-    body.innerHTML = '<div class="sv-grid">' + list.map(sv => buildServerCard2(sv)).join('') + '</div>';
+    body.innerHTML = '<div class="sv-rail">' + list.map(sv => buildServerCard2(sv)).join('') + '</div>';
     // Restore idx - không reset về 0 nếu đã có data
     if(!window._svLogIdx) window._svLogIdx = {};
     Object.assign(window._svLogIdx, savedIdx);
@@ -2280,7 +2284,12 @@ function buildServerCard2(sv){
         <div class="sv2-stat"><div class="sv2-stat-val" id="sv2-total-${sv.id}">0</div><div class="sv2-stat-label">Báo cáo</div></div>
         <div class="sv2-stat"><div class="sv2-stat-val" id="sv2-loops-${sv.id}" style="color:var(--cyan)">0</div><div class="sv2-stat-label">Vòng lặp</div></div>
       </div>
-      <div class="sv2-log" id="sv2-log-${sv.id}" style="white-space:pre-wrap;overflow-y:auto;max-height:80px;text-overflow:clip">⏳ Chờ dữ liệu...</div>
+      <div class="sv2-uptime-row">
+        <span>⏱ Uptime</span>
+        <span class="sv2-uptime-val" id="sv2-uptime-${sv.id}">--:--:--</span>
+      </div>
+      <div class="sv2-progress"><div class="sv2-progress-bar" id="sv2-prog-${sv.id}"></div></div>
+      <div class="sv2-log" id="sv2-log-${sv.id}" style="white-space:pre-wrap;overflow-y:auto;max-height:110px;text-overflow:clip;font-size:11px;font-family:monospace">⏳ Chờ dữ liệu...</div>
       <div class="sv2-actions">
         ${!isRunning && !isPaused ? `<button class="sv2-btn play" onclick="serverAction('start','${sv.id}','${cookieEsc}','${targetEsc}','${sv.speed||'normal'}','${sv.acc_name||''}','${sv.acc_uid||''}','${sv.target_name||''}')">▶ Chạy ngay</button>` : ''}
         ${isRunning ? `<button class="sv2-btn pause" onclick="serverAction('pause','${sv.id}')">⏸ Tạm dừng</button>` : ''}
@@ -2312,6 +2321,22 @@ async function fetchCardScreenshot2(svId){
     if(dotEl) dotEl.className='sv2-status-dot '+st;
     if(totEl) totEl.textContent=sd.total||0;
     if(loopsEl) loopsEl.textContent=sd.loops||0;
+    // Uptime
+    const uptimeEl = document.getElementById('sv2-uptime-'+svId);
+    const progEl   = document.getElementById('sv2-prog-'+svId);
+    if(uptimeEl){
+      if((sd.running||sd.paused) && sd.start_time){
+        if(!window._svStart) window._svStart={};
+        window._svStart[svId] = sd.start_time*1000;
+        const secs = Math.floor((Date.now() - window._svStart[svId])/1000);
+        const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
+        uptimeEl.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if(progEl){ const pct=Math.min((secs%60)/60*100,100); progEl.style.width=pct+'%'; }
+      } else {
+        uptimeEl.textContent='--:--:--';
+        if(progEl) progEl.style.width='0%';
+      }
+    }
     if(logEl){
       if(sd.logs && sd.logs.length){
         if(since===0) logEl.innerHTML='';
@@ -2693,6 +2718,18 @@ function showToast(msg,bg='#4f9eff'){
 }
 function startClock(){
   setInterval(()=>{
+    // Tick uptime cho tất cả card đang chạy
+    if(window._svStart){
+      Object.keys(window._svStart).forEach(svId=>{
+        const el=document.getElementById('sv2-uptime-'+svId);
+        const pg=document.getElementById('sv2-prog-'+svId);
+        if(!el) return;
+        const secs=Math.floor((Date.now()-window._svStart[svId])/1000);
+        const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
+        el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        if(pg){ pg.style.width=Math.min((secs%60)/60*100,100)+'%'; }
+      });
+    }
     const t=new Date().toLocaleTimeString('vi-VN');
     const el=document.getElementById('clock');if(el)el.textContent=t;
     const el2=document.getElementById('clock-welcome');if(el2)el2.textContent=t;
