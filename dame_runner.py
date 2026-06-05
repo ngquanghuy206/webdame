@@ -41,6 +41,7 @@ class DameSession:
         self._task: Optional[asyncio.Task] = None
         self._logs: list = []
         self._page: Optional[object] = None
+        self.start_time: float = 0.0
 
     def add_log(self, msg: str):
         ts = time.strftime("%H:%M:%S")
@@ -74,8 +75,13 @@ def normalize_cookie_str(raw: str) -> str:
       - JSON array:      [{"name":"key","value":"val",...}, ...]
       - JSON object:     {"key":"val", ...}
       - key=val trên nhiều dòng
+      - URL-encoded:     key%3Dval%3Bkey2%3Dval2
     """
+    from urllib.parse import unquote
     raw = raw.strip()
+    # ── URL-encoded (chứa %3B hoặc %3D) ──
+    if "%3B" in raw or "%3D" in raw or "%3b" in raw or "%3d" in raw:
+        raw = unquote(raw)
     # ── JSON array (export từ EditThisCookie, Cookie-Editor) ──
     if raw.startswith("["):
         try:
@@ -212,35 +218,14 @@ async def _screenshot_loop():
 # VERIFY COOKIE
 # ══════════════════════════════════════
 async def verify_fb_cookie(cookie_str: str) -> dict:
-    """
-    Không dùng Playwright nữa — check nhanh format cookie.
-    Việc check sống/chết thực sự sẽ diễn ra khi bắt đầu dame (log sẽ báo).
-    """
+    # Chỉ check không rỗng, không check sống/chết — log lúc chạy sẽ báo
     try:
-        parsed = parse_cookie_str(cookie_str)
-        if not parsed:
-            return {"ok": False, "name": "", "uid": "", "error": "Cookie sai format hoặc rỗng"}
-        
-        # Lấy c_user để hiển thị UID
-        uid = ""
-        name = ""
-        for c in parsed:
-            if c.get("name") == "c_user":
-                uid = str(c.get("value", ""))
-            if c.get("name") == "xs" and not uid:
-                pass  # xs exists = likely valid session
-
-        if not uid:
-            # Thử parse từ string thô
-            import re
-            m = re.search(r"c_user[=:]\s*[\"']?(\d+)", cookie_str)
-            if m:
-                uid = m.group(1)
-
-        if not uid:
-            return {"ok": False, "name": "", "uid": "", "error": "Không tìm thấy c_user trong cookie. Kiểm tra lại cookie."}
-
-        name = f"UID {uid}"
+        if not cookie_str or not cookie_str.strip():
+            return {"ok": False, "name": "", "uid": "", "error": "Cookie rỗng"}
+        import re
+        m = re.search(r"c_user[=:]\s*[\"']?(\d+)", cookie_str)
+        uid = m.group(1) if m else ""
+        name = f"UID {uid}" if uid else "Cookie đã nhận"
         return {"ok": True, "name": name, "uid": uid}
     except Exception as e:
         return {"ok": False, "name": "", "uid": "", "error": str(e)[:200]}
@@ -500,6 +485,7 @@ async def start_dame(cookie_str, target_url, speed="normal", name="", uid="", ta
     global DAME_SESSION, DAME_SESSIONS
     sess = DameSession(server_id=server_id)
     sess.running = True
+    sess.start_time = __import__("time").time()
     sess.speed   = speed
     sess.name    = name
     sess.uid     = uid
@@ -559,6 +545,7 @@ def get_all_status() -> dict:
             "name":     sess.name,
             "uid":      sess.uid,
             "screenshot_b64": sess.screenshot_b64,
+            "start_time": sess.start_time,
         }
     return result
 
@@ -584,6 +571,7 @@ def get_status(server_id="", since: int = 0) -> dict:
         "name":     sess.name,
         "uid":      sess.uid,
         "is_running": sess.running,
+        "start_time": sess.start_time,
         "die_screenshot": sess.screenshot_b64 if sess.died else "",
     }
 
