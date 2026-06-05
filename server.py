@@ -44,8 +44,9 @@ def load_history():   return _load(HISTORY_FILE, [])
 def save_history(r):  _save(HISTORY_FILE, r)
 def load_users():     return _load(USERS_FILE, {})
 def save_users(u):    _save(USERS_FILE, u)
-def load_sessions():  return _load(SESSIONS_FILE, {})
-def save_sessions(s): _save(SESSIONS_FILE, s)
+_sessions_mem: dict = {}
+def load_sessions():  return _sessions_mem
+def save_sessions(s): _sessions_mem.clear(); _sessions_mem.update(s)
 def load_servers():   return _load(SERVERS_FILE, [])
 def save_servers(s):  _save(SERVERS_FILE, s)
 
