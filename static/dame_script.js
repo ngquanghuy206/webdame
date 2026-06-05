@@ -736,6 +736,11 @@
             logArea.innerHTML = `<div style="color:${color}; border-left: 3px solid ${color}; padding-left: 8px; margin-bottom: 6px;">[${time}] ${msg}</div>` + logArea.innerHTML;
             if(logArea.children.length > 15) logArea.removeChild(logArea.lastChild);
         }
+        // Push lên buffer để server Python đọc được
+        if(!window._dameLogBuffer) window._dameLogBuffer = [];
+        const ts = new Date().toLocaleTimeString('vi-VN');
+        window._dameLogBuffer.push(`[${ts}] ${msg}`);
+        if(window._dameLogBuffer.length > 500) window._dameLogBuffer = window._dameLogBuffer.slice(-500);
     }
     
     function updateUI() {
@@ -1062,10 +1067,12 @@
     // ── Expose ra window để server Playwright đọc được ──
     window._dameTotal = 0;
     window._dameLoops = 0;
+    window._dameLogBuffer = []; // Runner đọc và clear mỗi 5s
     window._startDameProcess = startDameProcess;
     window._stopDame = () => { shouldStop = true; isPaused = false; };
     window._pauseDame = () => { isPaused = true; };
     window._resumeDame = () => { isPaused = false; };
+    window._popDameLogs = () => { const logs = window._dameLogBuffer.slice(); window._dameLogBuffer = []; return logs; };
 
     // ── AUTO-START sau 10 giây (máy ảo không cần nhấn nút) ──
     let _autoCountdown = 10;

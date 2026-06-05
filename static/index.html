@@ -365,6 +365,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .sv2-stat{flex:1;background:rgba(79,158,255,.06);border:1px solid rgba(79,158,255,.12);border-radius:10px;padding:8px 10px;text-align:center}
 .sv2-stat-val{font-size:18px;font-weight:800;color:var(--blue)}
 .sv2-stat-label{font-size:9px;color:var(--muted);margin-top:2px}
+.sv2-btn.detail{background:rgba(79,158,255,.12);color:var(--blue);border:1px solid rgba(79,158,255,.25);}
 .sv2-log{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:7px 10px;font-size:10px;font-family:monospace;color:rgba(79,158,255,.5);min-height:20px;white-space:pre-wrap;overflow-y:auto;max-height:90px;margin-bottom:12px;scrollbar-width:thin}
 .sv2-actions{display:flex;gap:7px}
 .sv2-btn{flex:1;padding:9px 8px;border-radius:11px;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
@@ -943,6 +944,50 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div class="modal-title">🔍 Chi tiết tài khoản</div>
     <div id="user-detail-content"></div>
     <button class="close-btn" onclick="closeModal('user-detail-modal')">Đóng</button>
+  </div>
+</div>
+
+<!-- SERVER DETAIL MODAL -->
+<div class="modal-overlay" id="sv-detail-modal" onclick="if(event.target===this)closeDetailModal()" style="z-index:9998">
+  <div class="modal-box" style="max-width:480px;max-height:88vh;overflow-y:auto;padding:0">
+    <div style="background:linear-gradient(135deg,rgba(13,19,34,.98),rgba(11,18,29,.98));border-radius:18px;overflow:hidden">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div class="sv2-status-dot" id="det-dot" style="width:12px;height:12px"></div>
+        <div style="font-size:15px;font-weight:800;flex:1" id="det-name">Máy chủ</div>
+        <span class="sv2-status-badge" id="det-badge">--</span>
+      </div>
+      <!-- Screenshot -->
+      <div style="position:relative;background:#000;min-height:60px" id="det-scr-wrap">
+        <div id="det-scr-ph" style="display:flex;align-items:center;justify-content:center;height:80px;color:var(--muted);font-size:12px">📷 Chưa có ảnh</div>
+        <img id="det-scr-img" style="display:none;width:100%;object-fit:contain;max-height:220px" alt="screenshot"/>
+      </div>
+      <!-- Stats row -->
+      <div style="display:flex;gap:8px;padding:12px 14px">
+        <div class="sv2-stat" style="flex:1"><div class="sv2-stat-val" id="det-total">0</div><div class="sv2-stat-label">📊 Báo cáo</div></div>
+        <div class="sv2-stat" style="flex:1"><div class="sv2-stat-val" style="color:var(--cyan)" id="det-loops">0</div><div class="sv2-stat-label">🔄 Vòng lặp</div></div>
+        <div class="sv2-stat" style="flex:1"><div class="sv2-stat-val" style="color:var(--yellow);font-size:13px" id="det-uptime">00:00:00</div><div class="sv2-stat-label">⏱ Thời gian</div></div>
+      </div>
+      <!-- Meta info -->
+      <div style="padding:0 14px 10px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="sv2-meta-item" style="flex:1;min-width:120px"><div class="sv2-meta-label">🎯 Nạn nhân</div><div class="sv2-meta-val" id="det-victim">?</div></div>
+          <div class="sv2-meta-item" style="flex:1;min-width:120px"><div class="sv2-meta-label">🍪 Acc</div><div class="sv2-meta-val" id="det-acc">?</div></div>
+          <div class="sv2-meta-item" style="flex:1;min-width:120px"><div class="sv2-meta-label">🚀 Tốc độ</div><div class="sv2-meta-val" id="det-speed">?</div></div>
+          <div class="sv2-meta-item" style="flex:1;min-width:120px"><div class="sv2-meta-label">📅 Tạo lúc</div><div class="sv2-meta-val" id="det-created">?</div></div>
+        </div>
+      </div>
+      <!-- Full log area -->
+      <div style="padding:0 14px 10px">
+        <div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:6px">📋 Log chi tiết</div>
+        <div id="det-log" style="background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:8px 10px;font-size:10px;font-family:monospace;color:rgba(79,158,255,.7);max-height:220px;overflow-y:auto;line-height:1.7;scrollbar-width:thin">⏳ Đang tải log...</div>
+        <button onclick="clearDetLog()" style="margin-top:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--muted);font-size:11px;padding:4px 12px;cursor:pointer">🗑 Xóa log</button>
+      </div>
+      <!-- Actions -->
+      <div style="padding:0 14px 14px" id="det-actions"></div>
+      <!-- Close -->
+      <button class="close-btn" onclick="closeDetailModal()" style="margin:0 14px 14px">✕ Đóng</button>
+    </div>
   </div>
 </div>
 
@@ -2233,6 +2278,7 @@ function buildServerCard2(sv){
         ${isRunning ? `<button class="sv2-btn pause" onclick="serverAction('pause','${sv.id}')">⏸ Tạm dừng</button>` : ''}
         ${isPaused  ? `<button class="sv2-btn resume" onclick="serverAction('resume','${sv.id}')">▶ Tiếp tục</button>` : ''}
         ${isRunning||isPaused ? `<button class="sv2-btn stop" onclick="serverAction('stop','${sv.id}')">⏹ Dừng hẳn</button>` : ''}
+        <button class="sv2-btn detail" onclick="openDetailModal('${sv.id}')" title="Chi tiết">🔍 Chi tiết</button>
         <button class="sv2-btn del" onclick="deleteServer('${sv.id}')" title="Xóa">🗑</button>
       </div>
     </div>
@@ -2258,12 +2304,25 @@ async function fetchCardScreenshot2(svId){
     if(dotEl) dotEl.className='sv2-status-dot '+st;
     if(totEl) totEl.textContent=sd.total||0;
     if(loopsEl) loopsEl.textContent=sd.loops||0;
-    if(logEl && sd.logs && sd.logs.length){
-      if(since===0) logEl.textContent='';
-      logEl.textContent += sd.logs.join('\n') + '\n';
-      logEl.scrollTop = logEl.scrollHeight;
-      _logIdx[svId] = (sd.log_count || (since + sd.logs.length));
+    if(logEl){
+      if(sd.logs && sd.logs.length){
+        if(since===0) logEl.textContent='';
+        // Hiển thị từng dòng log như v2 cũ
+        sd.logs.forEach(line => {
+          const div = document.createElement('div');
+          div.style.cssText='border-left:2px solid rgba(79,158,255,.4);padding-left:6px;margin-bottom:3px;line-height:1.5';
+          div.textContent = line;
+          logEl.appendChild(div);
+        });
+        logEl.scrollTop = logEl.scrollHeight;
+        _logIdx[svId] = (sd.log_count || (since + sd.logs.length));
+      } else if(since===0){
+        // Lần đầu fetch, không có log → hiện trạng thái thay vì "chờ dữ liệu"
+        logEl.textContent = st==='stopped' ? '⏹ Chưa chạy' : st==='paused' ? '⏸ Đang tạm dừng' : '✅ Sẵn sàng chạy';
+      }
     }
+    // Sync detail modal nếu đang mở cho server này
+    if(window._detailOpenId === svId) _syncDetailModal(svId, sd, since);
     if(sd.running||sd.screenshot_b64){
       const r=await fetch('/api/dame/screenshot?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
       if(!r.ok) return;
@@ -2490,6 +2549,102 @@ async function deleteServer(id){
   await loadServerList();
   showToast('🗑 Đã xóa máy chủ','var(--muted)');
 }
+
+// ─── SERVER DETAIL MODAL ───────────────────────────────
+window._detailOpenId = null;
+window._detailStartTime = null;
+window._detailLogStore = {}; // svId → log lines array
+
+async function openDetailModal(svId){
+  window._detailOpenId = svId;
+  if(!window._detailLogStore[svId]) window._detailLogStore[svId] = [];
+  // Fill static info from card
+  const card = document.getElementById('svcard2-'+svId);
+  if(card){
+    const badge = document.getElementById('sv2-badge-'+svId);
+    const dot   = document.getElementById('sv2-dot-'+svId);
+    const detBadge = document.getElementById('det-badge');
+    const detDot   = document.getElementById('det-dot');
+    const detName  = document.getElementById('det-name');
+    if(badge && detBadge){ detBadge.textContent=badge.textContent; detBadge.className=badge.className; }
+    if(dot && detDot){ detDot.className=dot.className; }
+    // Meta from card text
+    const metas = card.querySelectorAll('.sv2-meta-val');
+    if(metas[0] && document.getElementById('det-victim')) document.getElementById('det-victim').textContent=metas[0].textContent;
+    if(metas[1] && document.getElementById('det-acc'))    document.getElementById('det-acc').textContent=metas[1].textContent;
+    if(metas[2] && document.getElementById('det-speed'))  document.getElementById('det-speed').textContent=metas[2].textContent;
+    if(metas[3] && document.getElementById('det-created'))document.getElementById('det-created').textContent=metas[3].textContent;
+    if(detName) detName.textContent = card.querySelector('.sv2-name')?.textContent || ('Máy chủ ' + svId);
+  }
+  // Fetch fresh status
+  try{
+    const r = await fetch('/api/dame/status?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const sd = await r.json();
+    _syncDetailModal(svId, sd, 0, true);
+    if(sd.running) window._detailStartTime = Date.now();
+    // Screenshot
+    if(sd.running || sd.screenshot_b64){
+      const sr = await fetch('/api/dame/screenshot?server_id='+svId,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+      const scd = await sr.json();
+      if(scd.screenshot_b64){
+        const img=document.getElementById('det-scr-img'), ph=document.getElementById('det-scr-ph');
+        if(img){img.src='data:image/jpeg;base64,'+scd.screenshot_b64;img.style.display='block';}
+        if(ph) ph.style.display='none';
+      }
+    }
+  }catch(e){}
+  document.getElementById('sv-detail-modal').style.display='flex';
+}
+
+function _syncDetailModal(svId, sd, since, fullReset){
+  if(window._detailOpenId !== svId) return;
+  const sLabel={ready:'Sẵn sàng',running:'Đang chạy',stopped:'Đã dừng',paused:'Tạm dừng'};
+  const st = sd.running?'running':sd.paused?'paused':'stopped';
+  const badge=document.getElementById('det-badge'), dot=document.getElementById('det-dot');
+  if(badge){badge.textContent=sLabel[st]||st; badge.className='sv2-status-badge '+st;}
+  if(dot) dot.className='sv2-status-dot '+st;
+  const totEl=document.getElementById('det-total'), loopEl=document.getElementById('det-loops');
+  if(totEl) totEl.textContent=sd.total||0;
+  if(loopEl) loopEl.textContent=sd.loops||0;
+  // Actions
+  const actDiv=document.getElementById('det-actions');
+  if(actDiv){
+    actDiv.innerHTML=`
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${!sd.running&&!sd.paused?`<button class="sv2-btn play" style="flex:1" onclick="serverAction('start','${svId}','','','${sd.speed||'normal'}','','','')">▶ Chạy ngay</button>`:''}
+        ${sd.running?`<button class="sv2-btn pause" style="flex:1" onclick="serverAction('pause','${svId}')">⏸ Tạm dừng</button>`:''}
+        ${sd.paused?`<button class="sv2-btn resume" style="flex:1" onclick="serverAction('resume','${svId}')">▶ Tiếp tục</button>`:''}
+        ${sd.running||sd.paused?`<button class="sv2-btn stop" style="flex:1" onclick="serverAction('stop','${svId}')">⏹ Dừng hẳn</button>`:''}
+      </div>`;
+  }
+  // Logs
+  const logEl=document.getElementById('det-log');
+  if(logEl && sd.logs && sd.logs.length){
+    if(fullReset || since===0) logEl.innerHTML='';
+    sd.logs.forEach(line => {
+      const div=document.createElement('div');
+      div.style.cssText='border-left:2px solid rgba(79,158,255,.35);padding-left:7px;margin-bottom:4px;line-height:1.6';
+      div.textContent=line;
+      logEl.appendChild(div);
+    });
+    logEl.scrollTop=logEl.scrollHeight;
+  } else if(fullReset && logEl){
+    logEl.innerHTML=`<div style="color:var(--muted)">${st==='stopped'?'⏹ Chưa chạy — chưa có log':'✅ Sẵn sàng'}</div>`;
+  }
+}
+
+function closeDetailModal(){
+  document.getElementById('sv-detail-modal').style.display='none';
+  window._detailOpenId=null;
+  window._detailStartTime=null;
+}
+
+function clearDetLog(){
+  const el=document.getElementById('det-log');
+  if(el) el.innerHTML='<div style="color:var(--muted)">🗑 Đã xóa log</div>';
+  if(window._detailOpenId && window._svLogIdx) window._svLogIdx[window._detailOpenId]=0;
+}
+// ──────────────────────────────────────────────────────
 document.addEventListener('click',e=>{if(!sfxOn)return;const el=e.target.closest('button,.btn,.support-btn,.sb-item,.sb-toggle-row,.sb-logout,.hist-btn,.tab,.page-btn,.captcha-opt,.auth-tab');if(el)playSfx('click');});
 
 let _theme='dark';
@@ -2530,6 +2685,13 @@ function startClock(){
     const t=new Date().toLocaleTimeString('vi-VN');
     const el=document.getElementById('clock');if(el)el.textContent=t;
     const el2=document.getElementById('clock-welcome');if(el2)el2.textContent=t;
+    // Update detail modal uptime nếu đang mở
+    if(window._detailOpenId && window._detailStartTime){
+      const s=Math.floor((Date.now()-window._detailStartTime)/1000);
+      const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;
+      const el3=document.getElementById('det-uptime');
+      if(el3) el3.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+    }
   },1000);
 }
 
