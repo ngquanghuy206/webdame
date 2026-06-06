@@ -100,6 +100,9 @@ DEPOSIT_FILE      = "deposits.json"       # lịch sử nạp tiền
 PURCHASE_FILE     = "purchases.json"      # lịch sử mua máy chủ
 SLOTS_FILE        = "slots.json"          # user -> số slot dame (luồng dame)
 POSTS_FILE        = "posts.json"          # bài đăng cộng đồng
+HOT_DEALS_FILE    = "hot_deals.json"      # hot deals admin tạo
+NOTIFICATIONS_FILE= "notifications.json"  # thông báo toàn site
+TOP_NAP_FILE      = "top_nap.json"        # bảng xếp hạng nạp tiền
 
 ADMIN_ACCOUNTS = {
     "knammelbel206": hashlib.sha256("nqh300506".encode()).hexdigest()
@@ -184,6 +187,12 @@ def load_purchases(): return _load(PURCHASE_FILE, [])
 def save_purchases(p):_save(PURCHASE_FILE, p)
 def load_slots():     return _load(SLOTS_FILE, {})
 def save_slots(s):    _save(SLOTS_FILE, s)
+def load_hot_deals(): return _load(HOT_DEALS_FILE, [])
+def save_hot_deals(d):_save(HOT_DEALS_FILE, d)
+def load_notifications(): return _load(NOTIFICATIONS_FILE, {"main": {"text":"","image":"","updated":""}, "sub":[]})
+def save_notifications(n):_save(NOTIFICATIONS_FILE, n)
+def load_top_nap():   return _load(TOP_NAP_FILE, {"month":"","entries":[]})
+def save_top_nap(t):  _save(TOP_NAP_FILE, t)
 
 def add_history(record):
     records = load_history(); records.insert(0,record); save_history(records[:500])
@@ -616,6 +625,7 @@ async def admin_approve_deposit(request:Request):
         users[target]["balance"] = users[target].get("balance",0) + dep["amount"]
         save_users(users)
     asyncio.create_task(tg(f"✅ Duyệt nạp <b>{dep['amount']:,}đ</b> cho <code>{target}</code>"))
+    _update_top_nap(target, dep["amount"])
     return JSONResponse({"ok":True})
 
 @app.post("/api/admin/reject-deposit")
@@ -909,15 +919,29 @@ async def api_create_server(request:Request):
     acc_name   = data.get("acc_name","")
     acc_uid    = data.get("acc_uid","")
     target_name= data.get("target_name","")
+    slot_id    = (data.get("slot_id") or "").strip()
     if not cookie or not target_url:
         raise HTTPException(400,"Thiếu cookie hoặc target")
+    # Validate và lấy slot nếu được truyền
+    slot_expires_at = None
+    slot_plan_name  = ""
+    if not is_admin(username) and slot_id:
+        user_slots = get_user_slots(username)
+        matched = next((s for s in user_slots if s.get("id")==slot_id), None)
+        if not matched:
+            raise HTTPException(400,"Slot không hợp lệ hoặc đã hết hạn")
+        slot_expires_at = matched.get("expires_at")
+        slot_plan_name  = matched.get("plan_name","")
+    elif not is_admin(username) and not slot_id:
+        raise HTTPException(400,"Vui lòng chọn slot trước khi tạo máy chủ")
     now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     server = {
         "id": "dzixmode" + "".join([str(random.randint(0,9)) for _ in range(6)]),
         "owner": username, "name": name or f"Máy chủ {now}",
         "cookie": cookie, "target_url": target_url, "target_name": target_name,
         "acc_name": acc_name, "acc_uid": acc_uid, "speed": speed,
-        "status": "ready", "created": now
+        "status": "ready", "created": now,
+        "slot_id": slot_id, "expires_at": slot_expires_at, "plan_name": slot_plan_name
     }
     servers = load_servers(); servers.insert(0,server); save_servers(servers)
     asyncio.create_task(tg(
@@ -1513,6 +1537,152 @@ async def admin_delete_comment(post_id: str, comment_id: str, request: Request):
             p["comments"] = [c for c in p.get("comments",[]) if c["id"] != comment_id]
             break
     save_posts(posts)
+    return JSONResponse({"ok": True})
+
+
+# ══════════════════════════════════════════════════════════
+#  HOT DEALS
+# ══════════════════════════════════════════════════════════
+def parse_duration_to_seconds(s: str) -> int:
+    s = s.strip().lower()
+    if s.endswith("y"):  return int(s[:-1]) * 365 * 86400
+    if s.endswith("m"):  return int(s[:-1]) * 30  * 86400
+    if s.endswith("d"):  return int(s[:-1]) * 86400
+    if s.endswith("h"):  return int(s[:-1]) * 3600
+    return 86400
+
+@app.get("/api/hot-deals")
+async def get_hot_deals(request: Request):
+    deals = load_hot_deals()
+    now = int(time.time())
+    active = [d for d in deals if d.get("expires_at", 0) > now]
+    if len(active) != len(deals): save_hot_deals(active)
+    return JSONResponse(active)
+
+@app.post("/api/admin/hot-deals")
+async def create_hot_deal(request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Khong co quyen")
+    data = await request.json()
+    slots     = int(data.get("slots", 1))
+    duration  = data.get("duration", "1d")
+    qty       = int(data.get("qty", 1))
+    price     = int(data.get("price", 0))
+    orig_price= int(data.get("orig_price", 0))
+    expires   = data.get("expires", "24h")
+    title     = data.get("title", f"{slots} May ao - {duration}")
+    image_url = data.get("image_url", "")
+    expires_at = int(time.time()) + parse_duration_to_seconds(expires)
+    deal = {
+        "id": str(uuid.uuid4())[:8],
+        "title": title, "slots": slots, "duration": duration,
+        "qty_total": qty, "qty_left": qty, "price": price,
+        "orig_price": orig_price, "expires_at": expires_at,
+        "image_url": image_url, "created_at": int(time.time()), "created_by": username
+    }
+    deals = load_hot_deals(); deals.insert(0, deal); save_hot_deals(deals)
+    return JSONResponse({"ok": True, "deal": deal})
+
+@app.delete("/api/admin/hot-deals/{deal_id}")
+async def delete_hot_deal(deal_id: str, request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Khong co quyen")
+    deals = [d for d in load_hot_deals() if d["id"] != deal_id]
+    save_hot_deals(deals)
+    return JSONResponse({"ok": True})
+
+@app.post("/api/hot-deals/{deal_id}/buy")
+async def buy_hot_deal(deal_id: str, request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chua dang nhap")
+    deals = load_hot_deals(); now = int(time.time())
+    deal = next((d for d in deals if d["id"] == deal_id), None)
+    if not deal: raise HTTPException(404, "Deal khong ton tai")
+    if deal.get("expires_at", 0) < now: raise HTTPException(400, "Deal da het han")
+    if deal.get("qty_left", 0) <= 0: raise HTTPException(400, "Deal da het luot")
+    users = load_users(); user = users.get(username)
+    if not user: raise HTTPException(404, "User khong ton tai")
+    balance = user.get("balance", 0); price = deal.get("price", 0)
+    if balance < price: raise HTTPException(400, f"So du khong du. Can {price:,} VND")
+    user["balance"] = balance - price; save_users(users)
+    slots_data = load_slots(); entry = slots_data.get(username, {"count": 0, "slots": []})
+    dur_sec = parse_duration_to_seconds(deal.get("duration","1d")); exp_ts = int(time.time()) + dur_sec
+    for _ in range(deal.get("slots", 1)):
+        entry["slots"].append({"slot_id": str(uuid.uuid4())[:8], "expires_at": exp_ts})
+    entry["count"] = len(entry["slots"]); slots_data[username] = entry; save_slots(slots_data)
+    for d in deals:
+        if d["id"] == deal_id: d["qty_left"] = max(0, d["qty_left"] - 1); break
+    save_hot_deals(deals)
+    purch = load_purchases()
+    purch.insert(0, {"username": username, "type": "hot_deal", "deal_id": deal_id,
+        "title": deal["title"], "price": price, "slots": deal["slots"],
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+    save_purchases(purch)
+    _update_top_nap(username, price)
+    return JSONResponse({"ok": True, "new_balance": user["balance"]})
+
+# ══════════════════════════════════════════════════════════
+#  NOTIFICATIONS
+# ══════════════════════════════════════════════════════════
+@app.get("/api/notifications")
+async def get_notifications(request: Request):
+    return JSONResponse(load_notifications())
+
+@app.post("/api/admin/notifications/main")
+async def set_main_notification(request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Khong co quyen")
+    data = await request.json(); notifs = load_notifications()
+    notifs["main"] = {"text": data.get("text",""), "image": data.get("image",""),
+        "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    save_notifications(notifs); return JSONResponse({"ok": True})
+
+@app.post("/api/admin/notifications/sub")
+async def add_sub_notification(request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Khong co quyen")
+    data = await request.json(); notifs = load_notifications()
+    sub = {"id": str(uuid.uuid4())[:8], "text": data.get("text",""),
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "ts": int(time.time())}
+    subs = notifs.get("sub", []); subs.insert(0, sub); notifs["sub"] = subs[:50]
+    save_notifications(notifs); return JSONResponse({"ok": True, "sub": sub})
+
+@app.delete("/api/admin/notifications/sub/{sub_id}")
+async def delete_sub_notification(sub_id: str, request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Khong co quyen")
+    notifs = load_notifications()
+    notifs["sub"] = [s for s in notifs.get("sub",[]) if s["id"] != sub_id]
+    save_notifications(notifs); return JSONResponse({"ok": True})
+
+# ══════════════════════════════════════════════════════════
+#  TOP NAP
+# ══════════════════════════════════════════════════════════
+def _current_month_str():
+    return datetime.now().strftime("%Y-%m")
+
+def _update_top_nap(username: str, amount: int):
+    top = load_top_nap(); cur_month = _current_month_str()
+    if top.get("month") != cur_month: top = {"month": cur_month, "entries": []}
+    entries = top.get("entries", [])
+    found = next((e for e in entries if e["username"] == username), None)
+    if found: found["total"] += amount
+    else: entries.append({"username": username, "total": amount})
+    entries.sort(key=lambda x: x["total"], reverse=True)
+    top["entries"] = entries[:20]; top["month"] = cur_month; save_top_nap(top)
+
+@app.get("/api/top-nap")
+async def get_top_nap(request: Request):
+    top = load_top_nap(); cur_month = _current_month_str()
+    if top.get("month") != cur_month:
+        top = {"month": cur_month, "entries": []}; save_top_nap(top)
+    return JSONResponse(top)
+
+@app.post("/api/admin/top-nap/reset")
+async def reset_top_nap(request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Khong co quyen")
+    top = {"month": _current_month_str(), "entries": []}; save_top_nap(top)
     return JSONResponse({"ok": True})
 
 if __name__=="__main__":
