@@ -15,15 +15,7 @@ function switchAuthTab(tab){
   if(sl)sl.style.display=tab==='login'?'':'none';
   if(sr)sr.style.display=tab==='register'?'':'none';
   if(tab==='register'){selectedOptValue=null;}
-  // Re-ensure hCaptcha widget sau khi tab được hiện lại
-  if(typeof hcaptcha!=='undefined'&&typeof ensureHCaptchaWidget==='function'){
-    setTimeout(function(){
-      if(tab==='login') ensureHCaptchaWidget('login-hcaptcha','_loginCaptchaWidgetId');
-      else ensureHCaptchaWidget('reg-hcaptcha','_regCaptchaWidgetId');
-    },100);
-  }
 }
-
 let _forgotEmail='',_forgotOtp='';
 function openForgotModal(){
   _forgotEmail='';_forgotOtp='';
@@ -82,14 +74,14 @@ async function doLogin(){
   const p=document.getElementById('login-pass').value.trim();
   const err=document.getElementById('login-err');const btn=document.getElementById('login-btn');
   if(!u||!p){err.style.display='block';err.textContent='Vui lòng nhập đầy đủ';return;}
-  // hCaptcha verify
-  const hToken = hcaptcha.getResponse(window._loginCaptchaWidgetId);
-  if(!hToken){err.style.display='block';err.textContent='❌ Vui lòng xác minh CAPTCHA!';return;}
+  // Custom captcha verify
+  const cpToken = getCaptchaToken('login-captcha-wrap');
+  if(!cpToken){err.style.display='block';err.textContent='❌ Vui lòng xác minh CAPTCHA!';return;}
   btn.disabled=true;btn.textContent='⏳ Đang kết nối server...';err.style.display='none';
   const _loginAc=new AbortController();
   const _loginTid=setTimeout(()=>{_loginAc.abort();},20000);
   try{
-    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,hcaptcha_token:hToken}),signal:_loginAc.signal});
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,captcha_token:cpToken}),signal:_loginAc.signal});
     clearTimeout(_loginTid);
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Sai thông tin');
     SESSION_TOKEN=d.token;CURRENT_USER=d.username;IS_ADMIN=d.is_admin||false;
@@ -102,7 +94,7 @@ async function doLogin(){
     playSfx('success');showApp();
   }catch(e){
     err.style.display='block';err.textContent=e.message;playSfx('error');
-    hcaptcha.reset(window._loginCaptchaWidgetId);
+    resetCaptcha('login-captcha-wrap');
   }
   finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
 }
@@ -133,18 +125,18 @@ async function doRegisterSendOtp(){
   if(u.length<6||p.length<6){err.style.display='block';err.textContent='Username & mật khẩu tối thiểu 6 ký tự';return;}
   if(!em.toLowerCase().endsWith('@gmail.com')){err.style.display='block';err.textContent='Chỉ chấp nhận @gmail.com';return;}
   if(!verifyCaptcha()){err.style.display='block';err.textContent='❌ CAPTCHA sai! Thử lại.';generateCaptcha();return;}
-  // hCaptcha verify
-  const hToken = hcaptcha.getResponse(window._regCaptchaWidgetId);
-  if(!hToken){err.style.display='block';err.textContent='❌ Vui lòng xác minh CAPTCHA!';return;}
+  // Custom captcha verify
+  const cpToken = getCaptchaToken('reg-captcha-wrap');
+  if(!cpToken){err.style.display='block';err.textContent='❌ Vui lòng xác minh CAPTCHA!';return;}
   btn.disabled=true;btn.textContent='⏳ Đang gửi OTP...';err.style.display='none';
   try{
-    const r=await fetch('/api/register/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,email:em,hcaptcha_token:hToken})});
+    const r=await fetch('/api/register/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,email:em,captcha_token:cpToken})});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Lỗi gửi OTP');
     document.getElementById('reg-step1').style.display='none';
     document.getElementById('reg-step2').style.display='block';
     _startRegOtpTimer();
     showToast('📨 OTP đã gửi về Gmail!','#4f9eff');
-  }catch(e){err.style.display='block';err.textContent=e.message;hcaptcha.reset(window._regCaptchaWidgetId);}
+  }catch(e){err.style.display='block';err.textContent=e.message;resetCaptcha('reg-captcha-wrap');}
   finally{btn.disabled=false;btn.textContent='📧 Gửi mã OTP xác minh';}
 }
 
@@ -345,30 +337,21 @@ function doLogout(){
 }
 
 
-// ── hCaptcha init ──────────────────────────────────────────
-window._loginCaptchaWidgetId = null;
-window._regCaptchaWidgetId   = null;
-const _HCAPTCHA_SITEKEY = '6e146f7c-115a-4e36-903a-e908c5d46064';
 
-// Helper: đảm bảo widget còn sống, nếu không thì render lại
-function ensureHCaptchaWidget(elId, widgetKey) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  // Kiểm tra widget còn tồn tại không (hcaptcha xóa iframe khi DOM bị ẩn/reset)
-  const hasFrame = el.querySelector('iframe');
-  if (window[widgetKey] !== null && hasFrame) return; // còn sống, không làm gì
-  // Widget bị mất → xóa sạch innerHTML rồi render lại
-  el.innerHTML = '';
-  window[widgetKey] = null;
-  try {
-    window[widgetKey] = hcaptcha.render(el, {sitekey: _HCAPTCHA_SITEKEY, theme: 'dark'});
-  } catch(e) {
-    console.warn('hCaptcha render error:', e);
+
+// ── Init custom captcha khi trang load ───────────────────
+(function() {
+  function _tryInitCaptchas() {
+    if(typeof initCaptcha === 'function') {
+      initCaptcha('login-captcha-wrap');
+      initCaptcha('reg-captcha-wrap');
+    } else {
+      setTimeout(_tryInitCaptchas, 100);
+    }
   }
-}
-
-// Được gọi bởi hCaptcha API sau khi load xong (onload=onHCaptchaLoad)
-window.onHCaptchaLoad = function() {
-  ensureHCaptchaWidget('login-hcaptcha', '_loginCaptchaWidgetId');
-  ensureHCaptchaWidget('reg-hcaptcha',   '_regCaptchaWidgetId');
-};
+  if(document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _tryInitCaptchas);
+  } else {
+    _tryInitCaptchas();
+  }
+})();

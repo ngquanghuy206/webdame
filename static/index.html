@@ -94,10 +94,8 @@
       </div>
       <!-- Error -->
       <div class="auth-err" id="login-err"></div>
-      <!-- hCaptcha -->
-      <div style="display:flex;justify-content:center">
-        <div id="login-hcaptcha"></div>
-      </div>
+      <!-- Custom Captcha login -->
+      <div id="login-captcha-wrap"></div>
       <!-- Login button -->
       <button class="auth-btn-new" id="login-btn" type="button" onclick="doLogin()">Đăng nhập</button>
       <!-- Divider -->
@@ -129,8 +127,8 @@
       <!-- CAPTCHA -->
       <div>
         <div class="auth-field-label-new">Xác minh bảo mật</div>
-        <div style="display:flex;justify-content:center;margin-top:6px">
-          <div id="reg-hcaptcha"></div>
+        <div style="margin-top:6px">
+          <div id="reg-captcha-wrap"></div>
         </div>
       </div>
       <div class="auth-err" id="reg-err"></div>
@@ -1436,7 +1434,7 @@
 
 <script src="/static/globals.js?v=18"></script>
 <script src="/static/captcha.js?v=18"></script>
-<script src="https://js.hcaptcha.com/1/api.js?onload=onHCaptchaLoad&render=explicit" async defer></script>
+
 <script src="/static/auth.js?v=18"></script>
 <script src="/static/dame.js?v=18"></script>
 <script src="/static/history.js?v=18"></script>
