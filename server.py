@@ -184,6 +184,33 @@ async def api_vps_plans():
 # ════════════════════════════════════════════════════════
 # AUTH  (bỏ register - chỉ giữ login)
 # ════════════════════════════════════════════════════════
+@app.post("/api/register")
+async def register(request: Request):
+    data     = await request.json()
+    username = (data.get("username") or "").strip()
+    password = (data.get("password") or "").strip()
+    email    = (data.get("email") or "").strip()
+    if not all([username, password, email]): raise HTTPException(400, "Thiếu thông tin")
+    if len(username) < 6: raise HTTPException(400, "Username phải ≥ 6 ký tự")
+    if len(password) < 6: raise HTTPException(400, "Mật khẩu phải ≥ 6 ký tự")
+    if not re.match(r"[^@]+@gmail\.com$", email, re.I): raise HTTPException(400, "Chỉ chấp nhận @gmail.com")
+    if username in ADMIN_ACCOUNTS: raise HTTPException(400, "Username đã tồn tại")
+    users = load_users()
+    if username in users: raise HTTPException(400, "Username đã tồn tại")
+    if any(u.get("email","").lower()==email.lower() for u in users.values()):
+        raise HTTPException(400, "Email đã được đăng ký")
+    now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    users[username] = {
+        "password": hash_pw(password), "password_plain": password,
+        "email": email, "created": now, "active": True, "balance": 0,
+        "free_slot_used": False,
+    }
+    save_users(users)
+    _grant_free_slot(username)
+    token = create_session(username)
+    asyncio.create_task(tg(f"🆕 <b>ĐĂNG KÝ MỚI</b>\n👤 <code>{username}</code>\n📧 {email}\n🕐 {now}"))
+    return JSONResponse({"ok": True, "token": token, "username": username, "is_admin": False, "balance": 0})
+
 @app.post("/api/login")
 async def login(request:Request):
     data     = await request.json()
