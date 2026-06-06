@@ -44,6 +44,13 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .dep-amt-btn:hover,.dep-amt-btn.selected{border-color:var(--blue);background:rgba(79,158,255,.15);color:var(--blue)}
 /* ── VPS SHOP ── */
 .vps-filter-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--glass2);font-size:11px;font-weight:700;cursor:pointer;color:var(--muted);transition:.15s}
+.vps-tab-btn{padding:8px 4px;border-radius:10px;border:1.5px solid var(--border);background:var(--glass2);font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);transition:.15s;text-align:center;line-height:1.4}
+.vps-tab-btn.active,.vps-tab-btn:hover{border-color:var(--blue);background:rgba(79,158,255,.15);color:var(--blue)}
+.vps-tab-btn.active{background:linear-gradient(135deg,rgba(79,158,255,.25),rgba(124,77,255,.15));color:#fff;border-color:var(--purple)}
+.vps-main-tab{padding:8px 4px;border-radius:0;border:none;border-bottom:2.5px solid transparent;background:transparent;font-size:14px;font-weight:700;cursor:pointer;color:var(--muted);transition:.15s;text-align:center;line-height:1.5}
+.vps-main-tab span{font-size:10px;display:block;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.vps-main-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.vps-main-tab:hover{color:var(--text)}
 .vps-filter-btn.active,.vps-filter-btn:hover{border-color:var(--purple);background:rgba(124,77,255,.15);color:var(--purple)}
 .vps-plan-card{background:var(--glass2);border:1.5px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:.2s;position:relative}
 .vps-plan-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,158,255,.2)}
@@ -66,8 +73,8 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:16px 14px 60px}
 
 /* ── AUTH SCREEN ─────────────────────────────────────── */
-#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.auth-card{width:100%;max-width:420px;background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:24px;padding:30px 28px;box-shadow:0 20px 60px var(--shadow)}
+#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;position:relative;z-index:10}
+.auth-card{width:100%;max-width:420px;background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:24px;padding:30px 28px;box-shadow:0 20px 60px var(--shadow);position:relative;z-index:10}
 .auth-logo{text-align:center;margin-bottom:22px}
 .auth-logo-icon{font-size:42px;margin-bottom:8px}
 
@@ -243,6 +250,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .countdown-bar-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
 .countdown-bar-fill{height:100%;border-radius:3px;transition:width 1s linear,background .5s}
 .countdown-label{font-size:11px;text-align:center;margin-top:5px;font-variant-numeric:tabular-nums;font-weight:700}
+.sv2-expire-tag{font-size:8px;font-weight:700;padding:2px 6px;border-radius:10px;font-variant-numeric:tabular-nums;letter-spacing:.3px;display:inline-block;margin-top:2px}
 .otp-timer{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
 .otp-timer-val{font-weight:800;font-variant-numeric:tabular-nums;color:var(--blue)}
 /* ── SERVER CARDS SWIPE ── */
@@ -468,35 +476,47 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       <div class="auth-tab active" id="tab-login-btn" style="flex:none;padding:9px 32px;cursor:default">🔐 Đăng nhập</div>
     </div>
 
-    <!-- LOGIN FORM -->
-    <div id="auth-login-form" class="auth-form">
+    <!-- LOGIN FORM (redesigned) -->
+    <div id="auth-login-form" class="auth-form" style="position:relative;z-index:5">
+      <!-- Username -->
       <div class="field-group">
-        <div class="field-label">Tên đăng nhập</div>
-        <input class="field-input" id="login-user" type="text" placeholder="Nhập tên đăng nhập" autocomplete="username">
+        <div class="field-label" style="display:flex;align-items:center;gap:6px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Tên đăng nhập
+        </div>
+        <input class="field-input" id="login-user" type="text" placeholder="Nhập tên đăng nhập" autocomplete="username"
+          onkeydown="if(event.key==='Enter'){document.getElementById('login-pass').focus()}"
+          style="box-sizing:border-box">
       </div>
+      <!-- Password -->
       <div class="field-group">
-        <div class="field-label">Mật khẩu</div>
+        <div class="field-label" style="display:flex;align-items:center;gap:6px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Mật khẩu
+        </div>
         <div style="position:relative">
-          <input class="field-input" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password" style="padding-right:44px">
+          <input class="field-input" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password"
+            style="padding-right:44px;box-sizing:border-box"
+            onkeydown="if(event.key==='Enter')doLogin()">
           <button type="button" class="pw-eye-btn" onclick="togglePw('login-pass',this)" title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
-            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-              <line x1="1" y1="1" x2="23" y2="23"/>
-            </svg>
+            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
           </button>
         </div>
       </div>
-      <div class="remember-row" id="remember-row" onclick="toggleRemember()">
+      <!-- Remember me -->
+      <div class="remember-row" id="remember-row" onclick="toggleRemember()" style="user-select:none">
         <div class="remember-check" id="remember-check"></div>
         <span>Ghi nhớ đăng nhập</span>
       </div>
+      <!-- Error -->
       <div class="auth-err" id="login-err"></div>
-      <button class="auth-btn" id="login-btn" onclick="doLogin()">🔐 Đăng nhập</button>
+      <!-- Login button -->
+      <button class="auth-btn" id="login-btn" type="button"
+        onclick="doLogin()"
+        style="width:100%;padding:14px;border:none;border-radius:13px;font-size:15px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#2979ff,#7c4dff);color:#fff;box-shadow:0 4px 20px rgba(41,121,255,.35);position:relative;z-index:5;letter-spacing:.5px">
+        🔐 Đăng nhập
+      </button>
       <div style="text-align:center;margin-top:10px">
         <span onclick="openForgotModal()" style="color:var(--blue);font-size:13px;cursor:pointer;text-decoration:underline">Quên mật khẩu?</span>
       </div>
@@ -561,11 +581,11 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
   </div>
   <div class="sb-item" id="sb-vps-shop-item" onclick="openVpsShop();closeMenu()">
     <span class="sb-item-icon ic-purple"><svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>
-    Mua máy chủ ảo
+    📱 Mua Máy ảo
   </div>
   <div class="sb-item" id="sb-my-vps-item" onclick="openMyVps();closeMenu()">
     <span class="sb-item-icon ic-cyan"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10" r="2"/></svg></span>
-    Máy ảo của tôi
+    📱 Máy ảo của tôi
   </div>
   <div class="sb-divider"></div>
   <div class="sb-section-label">Khác</div>
@@ -914,7 +934,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 <div class="modal-overlay" id="server-list-modal" onclick="if(event.target===this)closeModal('server-list-modal')">
   <div class="modal-box" style="max-width:98vw;width:98vw;padding-bottom:8px;padding-left:10px;padding-right:10px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="modal-title" style="margin:0">🖥 Máy chủ của bạn</div>
+      <div class="modal-title" style="margin:0">📱 Máy ảo của bạn</div>
       <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;border-radius:9px;min-width:0;flex:0;white-space:nowrap" onclick="openCreateServerModal()">+ Tạo mới</button>
     </div>
     <div id="server-list-body" style="min-height:80px;overflow-x:hidden;overflow-y:visible;padding:4px 0;margin:0 -10px;padding:4px 10px">
@@ -1199,25 +1219,76 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
 <!-- VPS SHOP MODAL -->
 <div class="modal-overlay" id="vps-shop-modal" onclick="if(event.target===this)closeModal('vps-shop-modal')">
-  <div class="modal-box" style="max-width:680px;padding:0;overflow:hidden">
-    <div style="padding:16px 20px;background:linear-gradient(135deg,rgba(124,77,255,.1),rgba(41,121,255,.1));border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:16px;font-weight:800">🔢 Mua Slot Dame</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">Số dư: <b style="color:var(--green)" id="vps-shop-balance">0đ</b> · Slot hiện có: <b style="color:var(--cyan)" id="vps-shop-slots">0</b></div>
+  <div class="modal-box" style="max-width:700px;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:88vh">
+    <!-- Header cố định -->
+    <div style="padding:14px 18px 0;background:linear-gradient(135deg,rgba(124,77,255,.12),rgba(41,121,255,.1));border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-size:16px;font-weight:800">📱 Mua Máy ảo / Phone ảo</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Số dư: <b style="color:var(--green)" id="vps-shop-balance">0đ</b> · Máy ảo: <b style="color:var(--cyan)" id="vps-shop-slots">0</b></div>
+        </div>
+        <button onclick="closeModal('vps-shop-modal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
       </div>
-      <button onclick="closeModal('vps-shop-modal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+      <!-- 4 tab ngang cố định: Ngày / Tuần / Tháng / Năm -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:0">
+        <button class="vps-main-tab active" id="vmtab-day" onclick="switchVpsTab('day',this)">📅<br><span>Ngày</span></button>
+        <button class="vps-main-tab" id="vmtab-week" onclick="switchVpsTab('week',this)">📆<br><span>Tuần</span></button>
+        <button class="vps-main-tab" id="vmtab-month" onclick="switchVpsTab('month',this)">🗓<br><span>Tháng</span></button>
+        <button class="vps-main-tab" id="vmtab-year" onclick="switchVpsTab('year',this)">🗃<br><span>Năm</span></button>
+      </div>
     </div>
-    <div style="padding:14px 16px 20px;max-height:72vh;overflow-y:auto">
-      <!-- Filter tabs -->
-      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-        <button class="vps-filter-btn active" onclick="filterVpsPlans('all',this)">Tất cả</button>
-        <button class="vps-filter-btn" onclick="filterVpsPlans('day',this)">📅 Theo ngày</button>
-        <button class="vps-filter-btn" onclick="filterVpsPlans('week',this)">📆 Theo tuần</button>
-        <button class="vps-filter-btn" onclick="filterVpsPlans('month',this)">🗓 Theo tháng</button>
-        <button class="vps-filter-btn" onclick="filterVpsPlans('year',this)">🗃 Theo năm</button>
-        <button class="vps-filter-btn" onclick="filterVpsPlans('bundle',this)">🎁 Combo</button>
+
+    <!-- Nội dung scroll -->
+    <div style="overflow-y:auto;flex:1;padding:14px 16px 20px">
+
+      <!-- Tab Ngày / Tuần / Tháng / Năm: hiện grid gói theo tab -->
+      <div id="vps-tab-panel-plans">
+        <!-- Máy lẻ (custom) -->
+        <div style="background:linear-gradient(135deg,rgba(79,158,255,.08),rgba(124,77,255,.06));border:1.5px solid rgba(79,158,255,.25);border-radius:14px;padding:14px;margin-bottom:14px">
+          <div style="font-size:13px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            🛒 Mua máy lẻ — chọn số lượng &amp; thời hạn
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px">📱 Số máy ảo</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button onclick="adjustCustomSlot(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:18px;cursor:pointer;font-weight:700">−</button>
+                <div id="custom-slot-val" style="font-size:22px;font-weight:900;color:var(--cyan);min-width:36px;text-align:center">1</div>
+                <button onclick="adjustCustomSlot(1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:18px;cursor:pointer;font-weight:700">+</button>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px">⏱ Thời hạn</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button onclick="adjustCustomDay(-1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:18px;cursor:pointer;font-weight:700">−</button>
+                <div id="custom-day-val" style="font-size:16px;font-weight:900;color:var(--purple);min-width:54px;text-align:center">1 ngày</div>
+                <button onclick="adjustCustomDay(1)" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:18px;cursor:pointer;font-weight:700">+</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:11px;color:var(--muted)">Tổng tiền</div>
+              <div id="custom-price-val" style="font-size:20px;font-weight:900;color:var(--green)">30.000đ</div>
+            </div>
+            <button onclick="buyCustomSlot()" style="padding:10px 20px;border:none;border-radius:12px;background:linear-gradient(135deg,#2979ff,#7c4dff);color:#fff;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(41,121,255,.35)">🛒 Mua ngay</button>
+          </div>
+        </div>
+
+        <!-- Gói nhanh theo tab -->
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px" id="vps-tab-label">📅 Gói theo ngày</div>
+        <div id="vps-plans-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px"></div>
       </div>
-      <div id="vps-plans-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px"></div>
+
+      <!-- Combo section (luôn hiện, scroll dọc bên dưới) -->
+      <div style="margin-top:18px">
+        <div style="font-size:12px;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+          🎁 Combo đặc biệt
+          <span style="font-size:10px;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0">— tiết kiệm hơn mua lẻ</span>
+        </div>
+        <div id="vps-combo-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1239,7 +1310,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 <div class="modal-overlay" id="my-vps-modal" onclick="if(event.target===this)closeModal('my-vps-modal')">
   <div class="modal-box" style="max-width:600px;padding:0;overflow:hidden">
     <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:16px;font-weight:800">📊 Slot Dame của tôi</div>
+      <div style="font-size:16px;font-weight:800">📱 📱 Máy ảo của tôi</div>
       <button onclick="closeModal('my-vps-modal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
     </div>
     <div style="padding:16px 20px 20px;max-height:70vh;overflow-y:auto" id="my-vps-list"></div>
@@ -1264,7 +1335,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
         <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:var(--muted);font-size:13px">📧 Email</span><b id="ai-email" style="font-size:13px">—</b></div>
         <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:var(--muted);font-size:13px">📅 Ngày tạo</span><b id="ai-created" style="font-size:13px">—</b></div>
         <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:var(--muted);font-size:13px">💰 Số dư</span><b id="ai-balance" style="font-size:15px;color:var(--green)">0đ</b></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted);font-size:13px">🔢 Slot Dame</span><b id="ai-slots" style="font-size:15px;color:var(--cyan)">0 slot</b></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted);font-size:13px">📱 Máy ảo</span><b id="ai-slots" style="font-size:15px;color:var(--cyan)">0 máy ảo</b></div>
       </div>
       <!-- Đổi mật khẩu -->
       <div style="font-size:13px;font-weight:700;margin-bottom:10px">🔐 Đổi mật khẩu</div>
@@ -1537,7 +1608,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
       <div style="margin-top:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-size:12px;font-weight:700;color:var(--blue)">🖥 Máy chủ của bạn</div>
+          <div style="font-size:12px;font-weight:700;color:var(--blue)">📱 Máy ảo của bạn</div>
           <button class="btn btn-primary" style="padding:5px 10px;font-size:14px;min-width:unset;flex:none;width:32px;height:32px;border-radius:50%" onclick="openCreateServerModal()">+</button>
         </div>
         <div class="sv-rail" id="sv-status-rail">
@@ -2434,38 +2505,153 @@ async function openVpsShop(){
   // Load slot count
   try{
     const sr=await fetch('/api/slots/count',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-    if(sr.ok){const sd=await sr.json();const slEl=document.getElementById('vps-shop-slots');if(slEl)slEl.textContent=sd.total_slots+' slot';}
+    if(sr.ok){const sd=await sr.json();const slEl=document.getElementById('vps-shop-slots');if(slEl)slEl.textContent=sd.total_slots+' máy ảo';}
   }catch{}
   if(!_vpsPlans.length){
     try{const r=await fetch('/api/vps-plans');if(r.ok)_vpsPlans=await r.json();}catch{}
   }
-  const firstBtn=document.querySelector('.vps-filter-btn');
-  filterVpsPlans('all',firstBtn);
   openModal('vps-shop-modal');
+  setTimeout(function(){
+    updateCustomPrice();
+    renderComboPlans();
+    switchVpsTab('day', document.getElementById('vmtab-day'));
+  }, 50);
 }
-function filterVpsPlans(filter,btn){
-  document.querySelectorAll('.vps-filter-btn').forEach(function(b){b.classList.remove('active');});
+
+// ── Custom slot (máy lẻ) ──────────────────────────────
+let _customSlots = 1, _customDays = 1, _currentVpsTab = 'day';
+const _PRICE_PER_SLOT_DAY = 30000; // 30k / máy / ngày
+
+function adjustCustomSlot(delta){
+  _customSlots = Math.max(1, Math.min(50, _customSlots + delta));
+  document.getElementById('custom-slot-val').textContent = _customSlots;
+  updateCustomPrice();
+}
+function adjustCustomDay(delta){
+  const tabMin = {day:1, week:7, month:30, year:365};
+  const min = tabMin[_currentVpsTab] || 1;
+  const step = _currentVpsTab==='week'?7:_currentVpsTab==='month'?30:_currentVpsTab==='year'?365:1;
+  _customDays = Math.max(min, _customDays + delta * step);
+  const el = document.getElementById('custom-day-val');
+  if(_customDays < 7) el.textContent = _customDays + ' ngày';
+  else if(_customDays < 30) el.textContent = (_customDays/7) + ' tuần';
+  else if(_customDays < 365) el.textContent = Math.round(_customDays/30) + ' tháng';
+  else el.textContent = Math.round(_customDays/365) + ' năm';
+  updateCustomPrice();
+}
+function updateCustomPrice(){
+  const total = _customSlots * _customDays * _PRICE_PER_SLOT_DAY;
+  const el = document.getElementById('custom-price-val');
+  if(el) el.textContent = fmtMoney(total);
+}
+async function buyCustomSlot(){
+  if(!SESSION_TOKEN){showToast('❌ Chưa đăng nhập','var(--red)');return;}
+  const total = _customSlots * _customDays * _PRICE_PER_SLOT_DAY;
+  if(CURRENT_BALANCE < total){
+    showToast('❌ Số dư không đủ. Cần: '+fmtMoney(total),'var(--red)');
+    return;
+  }
+  // Build a virtual plan
+  _vpsPendingPlan = {
+    id: 'custom_'+_customSlots+'x'+_customDays+'d',
+    name: _customSlots+' Máy ảo · '+_customDays+' ngày (tuỳ chọn)',
+    slots: _customSlots, days: _customDays, price: total, custom: true
+  };
+  const canAfford = true;
+  const dayLabel = _customDays<7?_customDays+' ngày':_customDays<30?(_customDays/7)+' tuần':_customDays<365?Math.round(_customDays/30)+' tháng':Math.round(_customDays/365)+' năm';
+  document.getElementById('vps-confirm-content').innerHTML =
+    '<div style="background:var(--glass2);border-radius:12px;padding:14px;margin-bottom:12px">'+
+    '<div style="font-size:15px;font-weight:800;margin-bottom:8px">📱 Mua máy lẻ</div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Số máy ảo</span><b style="color:var(--cyan)">'+_customSlots+' máy</b></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Thời hạn</span><b>'+dayLabel+'</b></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Đơn giá</span><b>30.000đ / máy / ngày</b></div>'+
+    '<div style="height:1px;background:var(--border);margin:8px 0"></div>'+
+    '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Tổng</span><b style="color:var(--green)">'+fmtMoney(total)+'</b></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-top:6px"><span style="color:var(--muted)">Số dư</span><b style="color:var(--green)">'+fmtMoney(CURRENT_BALANCE)+'</b></div></div>';
+  document.getElementById('vps-confirm-err').textContent = '';
+  openModal('vps-confirm-modal');
+}
+
+// ── Tab chính Ngày/Tuần/Tháng/Năm ──────────────────────
+function switchVpsTab(period, btn){
+  _currentVpsTab = period;
+  document.querySelectorAll('.vps-main-tab').forEach(function(b){b.classList.remove('active');});
   if(btn) btn.classList.add('active');
-  let plans=_vpsPlans.slice();
-  if(filter==='day')   plans=plans.filter(function(p){return p.days<=6&&!p.id.startsWith('sl_s');});
-  else if(filter==='week')  plans=plans.filter(function(p){return p.days>=7&&p.days<=21&&!p.id.startsWith('sl_s');});
-  else if(filter==='month') plans=plans.filter(function(p){return p.days>=30&&p.days<=180&&!p.id.startsWith('sl_s');});
-  else if(filter==='year')  plans=plans.filter(function(p){return p.days>=365;});
-  else if(filter==='bundle')plans=plans.filter(function(p){return p.id.startsWith('sl_s')||p.id==='sl_free';});
+
+  // Reset custom day to tab minimum
+  const mins = {day:1, week:7, month:30, year:365};
+  _customDays = mins[period] || 1;
+  const el = document.getElementById('custom-day-val');
+  if(el){
+    if(_customDays<7) el.textContent=_customDays+' ngày';
+    else if(_customDays<30) el.textContent=(_customDays/7)+' tuần';
+    else if(_customDays<365) el.textContent=Math.round(_customDays/30)+' tháng';
+    else el.textContent=Math.round(_customDays/365)+' năm';
+  }
+  updateCustomPrice();
+
+  // Filter plans
+  let plans = _vpsPlans.slice().filter(function(p){ return !p.id.startsWith('sl_s') && !p.trial; });
+  const labels = {day:'📅 Gói theo ngày', week:'📆 Gói theo tuần', month:'🗓 Gói theo tháng', year:'🗃 Gói theo năm'};
+  const lbl = document.getElementById('vps-tab-label');
+  if(lbl) lbl.textContent = labels[period] || '';
+
+  if(period==='day')   plans = plans.filter(function(p){return p.days<7;});
+  else if(period==='week')  plans = plans.filter(function(p){return p.days>=7&&p.days<=21;});
+  else if(period==='month') plans = plans.filter(function(p){return p.days>=30&&p.days<365;});
+  else if(period==='year')  plans = plans.filter(function(p){return p.days>=365;});
   renderVpsPlans(plans);
 }
+
 function renderVpsPlans(plans){
-  const grid=document.getElementById('vps-plans-grid');
-  if(!plans.length){grid.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;grid-column:1/-1">Không có gói nào</div>';return;}
-  grid.innerHTML=plans.map(function(p){
-    const dayLabel=p.days<30?p.days+' ngày':p.days<365?Math.round(p.days/30)+' tháng':Math.round(p.days/365)+' năm';
-    const priceColor=p.price===0?'var(--green)':p.popular?'var(--yellow)':'var(--blue)';
-    const priceText=p.price===0?'MIỄN PHÍ':fmtMoney(p.price);
-    const badge=p.popular?'<div class="vps-popular-badge">⭐ HOT</div>':p.trial?'<div class="vps-popular-badge" style="background:linear-gradient(135deg,#00e676,#00c853);left:10px;right:auto">FREE</div>':'';
-    const slots=p.slots||p.qty||1;
-    return '<div class="vps-plan-card'+(p.popular?' popular':'')+'" onclick="confirmVpsBuy(''+p.id+'')">'+badge+'<div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px;line-height:1.4">'+p.name+'</div><div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔢 '+slots+' slot dame · 📅 '+dayLabel+'</div><div style="font-size:18px;font-weight:900;color:'+priceColor+'">'+priceText+'</div></div>';
+  const grid = document.getElementById('vps-plans-grid');
+  if(!plans.length){ grid.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px;grid-column:1/-1;font-size:13px">Không có gói nào</div>'; return; }
+  grid.innerHTML = plans.map(function(p){
+    const dayLabel = p.days<7?p.days+' ngày':p.days<30?(p.days/7)+' tuần':p.days<365?Math.round(p.days/30)+' tháng':Math.round(p.days/365)+' năm';
+    const priceColor = p.price===0?'var(--green)':p.popular?'var(--yellow)':'var(--blue)';
+    const priceText = p.price===0?'MIỄN PHÍ':fmtMoney(p.price);
+    const badge = p.popular?'<div class="vps-popular-badge">⭐ HOT</div>':p.trial?'<div class="vps-popular-badge" style="background:linear-gradient(135deg,#00e676,#00c853);left:10px;right:auto">FREE</div>':'';
+    const slots = p.slots||p.qty||1;
+    const perMachine = p.price>0?'<div style="font-size:9px;color:var(--muted);margin-top:2px">'+fmtMoney(Math.round(p.price/slots))+'/máy</div>':'';
+    return '<div class="vps-plan-card'+(p.popular?' popular':'')+'" onclick="confirmVpsBuy(''+p.id+'')">'+badge+
+      '<div style="font-size:11px;font-weight:800;color:var(--text);margin-bottom:4px;line-height:1.4">'+p.name+'</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-bottom:6px">📱 '+slots+' máy ảo · ⏱ '+dayLabel+'</div>'+
+      '<div style="font-size:17px;font-weight:900;color:'+priceColor+'">'+priceText+'</div>'+
+      perMachine+'</div>';
   }).join('');
 }
+
+function renderComboPlans(){
+  const combos = (_vpsPlans||[]).filter(function(p){ return p.id.startsWith('sl_s') || p.trial; });
+  const list = document.getElementById('vps-combo-list');
+  if(!list) return;
+  if(!combos.length){ list.innerHTML=''; return; }
+  list.innerHTML = combos.map(function(p){
+    const slots = p.slots||p.qty||1;
+    const dayLabel = p.days<7?p.days+' ngày':p.days<30?(p.days/7)+' tuần':p.days<365?Math.round(p.days/30)+' tháng':Math.round(p.days/365)+' năm';
+    const priceText = p.price===0?'MIỄN PHÍ':fmtMoney(p.price);
+    const priceColor = p.price===0?'var(--green)':p.popular?'var(--yellow)':'var(--blue)';
+    const hotBadge = p.popular?'<span style="background:linear-gradient(135deg,var(--yellow),var(--orange));color:#000;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:6px">⭐ HOT</span>':'';
+    const freeBadge = p.trial?'<span style="background:linear-gradient(135deg,#00e676,#00c853);color:#000;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:6px">FREE</span>':'';
+    const perM = p.price>0?'<span style="color:var(--muted);font-size:10px"> · '+fmtMoney(Math.round(p.price/slots))+'/máy</span>':'';
+    return '<div onclick="confirmVpsBuy(''+p.id+'')" style="background:var(--glass2);border:1.5px solid '+(p.popular?'rgba(255,193,7,.4)':p.trial?'rgba(0,230,118,.3)':'var(--border)')+';border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:.2s" onmouseover="this.style.borderColor='rgba(79,158,255,.5)'" onmouseout="this.style.borderColor=''+(p.popular?'rgba(255,193,7,.4)':p.trial?'rgba(0,230,118,.3)':'var(--border)')+''">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:13px;font-weight:800;display:flex;align-items:center;flex-wrap:wrap;gap:2px">'+p.name+hotBadge+freeBadge+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-top:3px">📱 '+slots+' máy ảo · ⏱ '+dayLabel+perM+'</div>'+
+      '</div>'+
+      '<div style="font-size:17px;font-weight:900;color:'+priceColor+';white-space:nowrap">'+priceText+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function filterVpsPlans(filter,btn){
+  // legacy - redirect to switchVpsTab
+  if(filter==='bundle') { renderComboPlans(); return; }
+  const tabMap = {all:'day',day:'day',week:'week',month:'month',year:'year'};
+  const t = tabMap[filter]||'day';
+  switchVpsTab(t, document.getElementById('vmtab-'+t));
+}
+
 function confirmVpsBuy(planId){
   const plan=_vpsPlans.find(function(p){return p.id===planId;});
   if(!plan) return;
@@ -2474,7 +2660,7 @@ function confirmVpsBuy(planId){
   const dayLabel=plan.days<30?plan.days+' ngày':plan.days<365?Math.round(plan.days/30)+' tháng':Math.round(plan.days/365)+' năm';
   const slots=plan.slots||plan.qty||1;
   const noFundMsg=canAfford?''+'':'<div style="background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.3);border-radius:10px;padding:10px;text-align:center;color:var(--red);font-size:12px">❌ Số dư không đủ. <span onclick="closeModal(\'vps-confirm-modal\');openDepositModal()" style="text-decoration:underline;cursor:pointer">Nạp tiền ngay</span></div>';
-  document.getElementById('vps-confirm-content').innerHTML='<div style="background:var(--glass2);border-radius:12px;padding:14px;margin-bottom:12px"><div style="font-size:15px;font-weight:800;margin-bottom:8px">'+plan.name+'</div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Số slot dame</span><b style="color:var(--cyan)">'+slots+' slot</b></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Mỗi slot</span><b>= 1 luồng dame độc lập</b></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Thời hạn</span><b>'+dayLabel+'</b></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Giá</span><b style="color:var(--green)">'+(plan.price===0?'MIỄN PHÍ':fmtMoney(plan.price))+'</b></div><div style="height:1px;background:var(--border);margin:8px 0"></div><div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Số dư</span><b style="color:'+(canAfford?'var(--green)':'var(--red)')+'">'+fmtMoney(CURRENT_BALANCE)+'</b></div></div>'+(canAfford?'':noFundMsg);
+  document.getElementById('vps-confirm-content').innerHTML='<div style="background:var(--glass2);border-radius:12px;padding:14px;margin-bottom:12px"><div style="font-size:15px;font-weight:800;margin-bottom:8px">'+plan.name+'</div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Số máy ảo</span><b style="color:var(--cyan)">'+slots+' slot</b></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Mỗi máy ảo</span><b>= 1 luồng dame độc lập (Phone ảo)</b></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Thời hạn</span><b>'+dayLabel+'</b></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Giá</span><b style="color:var(--green)">'+(plan.price===0?'MIỄN PHÍ':fmtMoney(plan.price))+'</b></div><div style="height:1px;background:var(--border);margin:8px 0"></div><div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Số dư</span><b style="color:'+(canAfford?'var(--green)':'var(--red)')+'">'+fmtMoney(CURRENT_BALANCE)+'</b></div></div>'+(canAfford?'':noFundMsg);
   document.getElementById('vps-confirm-err').textContent='';
   openModal('vps-confirm-modal');
 }
@@ -2493,7 +2679,7 @@ async function doVpsBuy(){
     closeModal('vps-confirm-modal');
     closeModal('vps-shop-modal');
     const boughtSlots=_vpsPendingPlan.slots||_vpsPendingPlan.qty||1;
-    showToast('✅ Mua thành công '+boughtSlots+' slot dame! Tổng slot: '+d.total_slots,'#00e676');
+    showToast('✅ Mua thành công '+boughtSlots+' máy ảo! Tổng máy ảo: '+d.total_slots,'#00e676');
     _vpsPendingPlan=null;
   }catch(ex){if(err) err.textContent='❌ '+ex.message;}
   finally{if(btn){btn.disabled=false;btn.textContent='✅ Xác nhận mua';}}
@@ -2511,8 +2697,26 @@ async function openMyVps(){
     const vps=await r.json();
     if(!vps.length){list.innerHTML='<div style="text-align:center;padding:30px"><div style="font-size:40px;margin-bottom:10px">🖥</div><div style="color:var(--muted)">Bạn chưa có máy ảo nào</div><button class="btn btn-primary" style="margin-top:12px;padding:10px 20px" onclick="closeModal('my-vps-modal');openVpsShop()">🛒 Mua ngay</button></div>';return;}
     list.innerHTML=vps.map(function(v){
-      const exp=v.expires_at?'<div style="font-size:11px;color:var(--muted);margin-top:8px">⏰ Hết hạn: '+v.expires_at+'</div>':'<div style="font-size:11px;color:var(--green);margin-top:8px">⏰ Không giới hạn</div>';
-      return '<div class="vps-my-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:13px;font-weight:800">'+v.plan_name+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">🆔 '+v.id+'</div></div><span style="padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800;background:rgba(0,230,118,.15);color:var(--green)">✅ '+v.status+'</span></div><div style="background:var(--glass);border-radius:10px;padding:10px;font-family:monospace;font-size:12px;line-height:1.8"><div>🌐 IP: <b style="color:var(--cyan)">'+(v.info&&v.info.ip?v.info.ip:'—')+':'+(v.info&&v.info.port?v.info.port:22)+'</b></div><div>🔑 Pass: <b style="color:var(--yellow)">'+(v.info&&v.info.password?v.info.password:'—')+'</b></div><div>📍 Region: <b>'+(v.info&&v.info.region?v.info.region:'—')+'</b></div></div>'+exp+'<div style="font-size:11px;color:var(--muted)">📅 Tạo: '+v.created+'</div></div>';
+      // Countdown expire for my-vps card
+      let expHtml='<div style="font-size:11px;color:var(--green);margin-top:8px">⏰ Không giới hạn · Tái sử dụng được</div>';
+      if(v.expires_at){
+        try{
+          const parts=v.expires_at.split(' ');const dp=parts[0].split('/');const tp=parts[1].split(':');
+          const expMs=new Date(parseInt(dp[2]),parseInt(dp[1])-1,parseInt(dp[0]),parseInt(tp[0]),parseInt(tp[1]),parseInt(tp[2])).getTime();
+          const diffMs=expMs-Date.now();
+          const d=Math.floor(diffMs/86400000);const h=Math.floor((diffMs%86400000)/3600000);const m=Math.floor((diffMs%3600000)/60000);
+          if(diffMs<=0){
+            expHtml='<div style="font-size:11px;color:var(--red);margin-top:8px;display:flex;align-items:center;justify-content:space-between">❌ Đã hết hạn - máy ảo bị khóa<button onclick="closeModal('my-vps-modal');openVpsShop()" style="background:linear-gradient(135deg,#2979ff,#7c4dff);border:none;border-radius:8px;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">🔄 Mua lại</button></div>';
+          } else if(diffMs<3*86400000){
+            expHtml='<div style="font-size:11px;color:var(--yellow);margin-top:8px;display:flex;align-items:center;justify-content:space-between">⚠️ Còn lại: '+(d>0?d+'n ':'')+h+'g '+m+'p<button onclick="closeModal('my-vps-modal');openVpsShop()" style="background:linear-gradient(135deg,#ffc800,#ff9100);border:none;border-radius:8px;color:#000;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">🔄 Gia hạn</button></div>';
+          } else {
+            expHtml='<div style="font-size:11px;color:var(--muted);margin-top:8px">⏰ Còn lại: '+(d>0?d+' ngày ':'')+h+'g '+m+'p · <span style="color:var(--green)">✅ Đang hoạt động</span></div>';
+          }
+        }catch(e){ expHtml='<div style="font-size:11px;color:var(--muted);margin-top:8px">⏰ Hết hạn: '+v.expires_at+'</div>'; }
+      }
+      const stColor = v.status==='active'?'rgba(0,230,118,.15)':'rgba(255,82,82,.1)';
+      const stTextColor = v.status==='active'?'var(--green)':'var(--red)';
+      return '<div class="vps-my-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:13px;font-weight:800">'+v.plan_name+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">📱 Máy ảo · 🆔 '+v.id+'</div></div><span style="padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800;background:'+stColor+';color:'+stTextColor+'">'+v.status+'</span></div>'+expHtml+'<div style="font-size:11px;color:var(--muted);margin-top:4px">📅 Mua: '+v.created+' · <span style="color:var(--cyan)">✅ Tái sử dụng khi mua lại</span></div></div>';
     }).join('');
   }catch{list.innerHTML='<div style="color:var(--red);text-align:center">Lỗi tải dữ liệu</div>';}
 }
@@ -2535,7 +2739,7 @@ async function openAccountInfo(){
   // Load slot count
   try{
     const sr=await fetch('/api/slots/count',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-    if(sr.ok){const sd=await sr.json();const el=document.getElementById('ai-slots');if(el)el.textContent=sd.total_slots+' slot';}
+    if(sr.ok){const sd=await sr.json();const el=document.getElementById('ai-slots');if(el)el.textContent=sd.total_slots+' máy ảo';}
   }catch{}
   document.getElementById('ai-oldpw').value='';document.getElementById('ai-newpw').value='';document.getElementById('ai-newpw2').value='';
   document.getElementById('ai-pw-err').textContent='';
@@ -2793,6 +2997,7 @@ async function loadServerList(){
     // Lưu lại _svLogIdx trước khi rebuild để không mất offset
     const savedIdx = window._svLogIdx ? Object.assign({}, window._svLogIdx) : {};
     body.innerHTML = '<div class="sv-rail">' + list.map(sv => buildServerCard2(sv)).join('') + '</div>';
+    list.forEach(sv => renderSv2Expire(sv.id, sv.expires_at||null));
     // Restore idx - không reset về 0 nếu đã có data
     if(!window._svLogIdx) window._svLogIdx = {};
     Object.assign(window._svLogIdx, savedIdx);
@@ -2804,6 +3009,40 @@ async function loadServerList(){
 
 function buildServerCard(sv){ return buildServerCard2(sv); }
 
+function renderSv2Expire(svId, expiresAt){
+  const el = document.getElementById('sv2-expire-' + svId);
+  if(!el) return;
+  if(!expiresAt){ el.innerHTML = '<span class="sv2-expire-tag" style="background:rgba(0,230,118,.12);color:var(--green);border:1px solid rgba(0,230,118,.2)">⏰ Không giới hạn</span>'; return; }
+  // Parse expires_at "DD/MM/YYYY HH:MM:SS"
+  try {
+    const parts = expiresAt.split(' ');
+    const dateParts = parts[0].split('/');
+    const timeParts = parts[1].split(':');
+    const expDate = new Date(parseInt(dateParts[2]), parseInt(dateParts[1])-1, parseInt(dateParts[0]),
+      parseInt(timeParts[0]), parseInt(timeParts[1]), parseInt(timeParts[2]));
+    function updateExpire(){
+      const now = Date.now();
+      const diff = expDate.getTime() - now;
+      if(!document.getElementById('sv2-expire-' + svId)) return;
+      if(diff <= 0){
+        el.innerHTML = '<span class="sv2-expire-tag" style="background:rgba(255,82,82,.15);color:var(--red);border:1px solid rgba(255,82,82,.3)">❌ Đã hết hạn</span>';
+        return;
+      }
+      const d = Math.floor(diff/86400000);
+      const h = Math.floor((diff%86400000)/3600000);
+      const m = Math.floor((diff%3600000)/60000);
+      const s = Math.floor((diff%60000)/1000);
+      let color = 'var(--green)'; let bg = 'rgba(0,230,118,.12)'; let border = 'rgba(0,230,118,.2)';
+      if(diff < 86400000){ color='var(--red)'; bg='rgba(255,82,82,.12)'; border='rgba(255,82,82,.3)'; }
+      else if(diff < 3*86400000){ color='var(--yellow)'; bg='rgba(255,193,7,.12)'; border='rgba(255,193,7,.3)'; }
+      const label = d>0 ? d+'n '+h+'g '+m+'p' : h>0 ? h+'g '+m+'p '+s+'s' : m+'p '+s+'s';
+      el.innerHTML = '<span class="sv2-expire-tag" style="background:'+bg+';color:'+color+';border:1px solid '+border+'">⏱ Còn lại: '+label+'</span>';
+      setTimeout(updateExpire, 1000);
+    }
+    updateExpire();
+  } catch(e) { el.innerHTML = ''; }
+}
+
 function buildServerCard2(sv){
   const sLabel = {ready:'Sẵn sàng',running:'Đang chạy',stopped:'Đã dừng',paused:'Tạm dừng'};
   const st = sv.status||'ready';
@@ -2812,11 +3051,14 @@ function buildServerCard2(sv){
   const created = rawDate ? (String(rawDate).includes('T') ? String(rawDate).replace('T',' ').substring(0,16) : String(rawDate).substring(0,16)) : 'Chưa rõ';
   return `
   <div class="sv2-card ${st}" id="svcard2-${sv.id}" onclick="event.stopPropagation();openDetailModal('${sv.id}')" style="cursor:pointer">
-    <!-- Tên tab nổi bật -->
-    <div style="padding:8px 9px 4px;display:flex;align-items:center;gap:5px">
-      <div style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;${st==='running'?'box-shadow:0 0 5px var(--green)':''}"></div>
-      <div style="font-size:12px;font-weight:900;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.2px">${sv.name||'Máy chủ'}</div>
-      <span id="sv2-badge-${sv.id}" style="padding:2px 6px;border-radius:20px;font-size:7px;font-weight:700;${st==='running'?'background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)':st==='paused'?'background:rgba(255,200,0,.15);color:#ffc800;border:1px solid rgba(255,200,0,.3)':'background:rgba(255,255,255,.07);color:var(--muted);border:1px solid rgba(255,255,255,.1)'}">${sLabel[st]||st}</span>
+    <!-- Tên tab nổi bật + Countdown hạn -->
+    <div style="padding:8px 9px 4px;display:flex;flex-direction:column;gap:2px">
+      <div style="display:flex;align-items:center;gap:5px">
+        <div style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;${st==='running'?'box-shadow:0 0 5px var(--green)':''}"></div>
+        <div style="font-size:12px;font-weight:900;color:#fff;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.2px">${sv.name||'Máy ảo'}</div>
+        <span id="sv2-badge-${sv.id}" style="padding:2px 6px;border-radius:20px;font-size:7px;font-weight:700;${st==='running'?'background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)':st==='paused'?'background:rgba(255,200,0,.15);color:#ffc800;border:1px solid rgba(255,200,0,.3)':'background:rgba(255,255,255,.07);color:var(--muted);border:1px solid rgba(255,255,255,.1)'}">${sLabel[st]||st}</span>
+      </div>
+      <div id="sv2-expire-${sv.id}" style="padding-left:11px"></div>
     </div>
     <!-- Screenshot -->
     <div id="sv2-ph-${sv.id}" class="sv2-screenshot-ph"><div style="font-size:16px;opacity:.2">🖥</div></div>
@@ -3028,6 +3270,7 @@ async function loadServerRail(){
     const existingCards = rail.querySelectorAll('.sv2-card').length;
     if(existingCards !== list.length){
       rail.innerHTML = list.map(sv => buildServerCard2(sv)).join('');
+      list.forEach(sv => renderSv2Expire(sv.id, sv.expires_at||null));
     }
     // Luôn update live data
     list.forEach(sv => fetchCardScreenshot2(sv.id));
@@ -3146,7 +3389,7 @@ async function openDetailModal(svId){
       const sv = svList.find(s=>s.id===svId || s.id===parseInt(svId));
       if(sv){
         const detName = document.getElementById('det-name');
-        if(detName) detName.textContent = sv.name || ('Máy chủ ' + svId);
+        if(detName) detName.textContent = sv.name || ('Máy ảo ' + svId);
         if(document.getElementById('det-acc'))     document.getElementById('det-acc').textContent     = sv.acc_name    || '?';
         if(document.getElementById('det-victim'))  document.getElementById('det-victim').textContent  = sv.target_name || '?';
         if(document.getElementById('det-speed'))   document.getElementById('det-speed').textContent   = sv.speed       || '?';
@@ -3171,7 +3414,7 @@ async function openDetailModal(svId){
       if(metas[1] && !document.getElementById('det-victim').textContent) document.getElementById('det-victim').textContent=metas[1].textContent;
       if(metas[0] && !document.getElementById('det-acc').textContent)    document.getElementById('det-acc').textContent=metas[0].textContent;
       if(metas[2] && !document.getElementById('det-created').textContent)document.getElementById('det-created').textContent=metas[2].textContent;
-      detName.textContent = ('Máy chủ ' + svId);
+      detName.textContent = ('Máy ảo ' + svId);
     }
   }
   // Fetch fresh status với since=0 để lấy toàn bộ log
