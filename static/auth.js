@@ -7,9 +7,15 @@ function switchAuthTab(tab){
   if(tab==='register'){const s1=document.getElementById('reg-step1');const s2=document.getElementById('reg-step2');if(s1)s1.style.display='block';if(s2)s2.style.display='none';}
   document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');
   document.getElementById('tab-reg-btn').classList.toggle('active',tab==='register');
-  if(tab==='register'){selectedOptValue=null;generateCaptcha();}
+  // update titles
+  const tl=document.getElementById('auth-title-login'),tr=document.getElementById('auth-title-register');
+  const sl=document.getElementById('auth-sub-login'),sr=document.getElementById('auth-sub-register');
+  if(tl)tl.style.display=tab==='login'?'':'none';
+  if(tr)tr.style.display=tab==='register'?'':'none';
+  if(sl)sl.style.display=tab==='login'?'':'none';
+  if(sr)sr.style.display=tab==='register'?'':'none';
+  if(tab==='register'){selectedOptValue=null;}
 }
-
 let _forgotEmail='',_forgotOtp='';
 function openForgotModal(){
   _forgotEmail='';_forgotOtp='';
@@ -83,7 +89,9 @@ async function doLogin(){
     const maxAge=rememberMe?60*60*24*30:60*60*8;
     document.cookie=`session_token=${SESSION_TOKEN};path=/;SameSite=Lax;max-age=${maxAge}`;
     playSfx('success');showApp();
-  }catch(e){err.style.display='block';err.textContent=e.message;playSfx('error');}
+  }catch(e){
+    err.style.display='block';err.textContent=e.message;playSfx('error');
+  }
   finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
 }
 
@@ -239,9 +247,14 @@ function toggleRemember(){
   rememberMe=!rememberMe;
   localStorage.setItem('zct_remember',rememberMe?'1':'0');
   const el=document.getElementById('remember-check');
-  el.classList.toggle('checked',rememberMe);el.textContent=rememberMe?'✓':'';
+  el.classList.toggle('checked',rememberMe);
+  el.classList.toggle('remember-check-new',true);
+  el.textContent=rememberMe?'✓':'';
 }
 
 // showApp, closeWelcome, goHome, welcomeCreateServer, welcomeServerList, doLogout
-// defined in app.js — removed duplicate here
+// đã được định nghĩa đầy đủ trong app.js — không duplicate ở đây
+
+
+
 
