@@ -515,6 +515,15 @@ async def admin_deposits(request:Request):
     if not username or not is_admin(username): raise HTTPException(403,"Không có quyền")
     return JSONResponse(load_deposits())
 
+@app.get("/api/purchase/history")
+async def purchase_history(request:Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401,"Chưa đăng nhập")
+    purchases = load_purchases()
+    if not is_admin(username):
+        purchases = [p for p in purchases if p.get("username")==username]
+    return JSONResponse(purchases[:100])
+
 # ════════════════════════════════════════════════════════
 # DAME SLOTS (thay thế VPS Pool)
 # Mỗi slot = 1 luồng dame độc lập. user có N slot thì chạy N dame cùng lúc.
