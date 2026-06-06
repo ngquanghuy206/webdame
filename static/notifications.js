@@ -170,6 +170,9 @@ async function adminDeleteSubNotif(id) {
 // ── TOP NẠP LEADERBOARD ───────────────────────────────────
 async function openTopNapModal() {
   openModal('top-nap-modal');
+  // Nút reset chỉ hiện với admin
+  const adminCtrl = document.getElementById('top-nap-admin-ctrl');
+  if(adminCtrl) adminCtrl.style.display = IS_ADMIN ? 'block' : 'none';
   const list = document.getElementById('top-nap-list');
   if(list) list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Đang tải...</div>';
   try {

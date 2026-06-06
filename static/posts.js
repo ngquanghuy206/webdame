@@ -169,8 +169,33 @@ async function reactPost(postId, emoji){
       method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
       body:JSON.stringify({emoji})
     });
-    // Refresh
-    if(_postsTabActive==='feed'){ _postPage=0; _postsCache=[]; await loadPostsFeed(true); }
+    // Update reaction tại chỗ, không reload cả feed
+    const cached = _postsCache.find(p=>p.id===postId);
+    if(cached){
+      // Toggle: nếu đã react emoji này thì bỏ, ngược lại thêm vào
+      if(!cached.reactions) cached.reactions={};
+      // Xóa user khỏi tất cả emoji cũ
+      Object.keys(cached.reactions).forEach(e=>{
+        cached.reactions[e] = (cached.reactions[e]||[]).filter(u=>u!==CURRENT_USER);
+      });
+      // Nếu emoji khác với emoji cũ thì thêm mới
+      const hadEmoji = Object.entries(cached.reactions).find(([,u])=>u.includes(CURRENT_USER))?.[0];
+      if(hadEmoji !== emoji){
+        if(!cached.reactions[emoji]) cached.reactions[emoji]=[];
+        cached.reactions[emoji].push(CURRENT_USER);
+      }
+      // Re-render chỉ card đó
+      const card = document.getElementById('post-card-'+postId);
+      if(card){
+        const newCard = document.createElement('div');
+        newCard.innerHTML = renderPostCard(cached, true);
+        const newEl = newCard.firstElementChild;
+        card.replaceWith(newEl);
+      }
+    } else {
+      // Không có cache thì mới reload
+      if(_postsTabActive==='feed'){ _postPage=0; _postsCache=[]; await loadPostsFeed(true); }
+    }
     if(_activePostId===postId) openViewPost(postId);
   }catch{}
 }

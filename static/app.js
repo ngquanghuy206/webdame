@@ -359,25 +359,33 @@ function toggleRemember(){
   el.classList.toggle('checked',rememberMe);el.textContent=rememberMe?'✓':'';
 }
 
+function refreshSidebarVisibility(){
+  // Admin-only section (Tạo Hot Deal, Tạo thông báo)
+  const adminSection=document.getElementById('sb-admin-section');
+  if(adminSection) adminSection.style.display=IS_ADMIN?'block':'none';
+  // Admin Panel menu item
+  const mgmt=document.getElementById('mgmt-menu-item');
+  if(mgmt) mgmt.style.display=IS_ADMIN?'flex':'none';
+  // Items ẩn với admin
+  const depItem=document.getElementById('sb-deposit-item');
+  if(depItem) depItem.style.display=IS_ADMIN?'none':'flex';
+  const depHistItem=document.getElementById('sb-dep-hist-item');
+  if(depHistItem) depHistItem.style.display=IS_ADMIN?'none':'flex';
+  const purHistItem=document.getElementById('sb-pur-hist-item');
+  if(purHistItem) purHistItem.style.display=IS_ADMIN?'none':'flex';
+  const vpsShopItem=document.getElementById('sb-vps-shop-item');
+  if(vpsShopItem) vpsShopItem.style.display=IS_ADMIN?'none':'flex';
+  const myVpsItem=document.getElementById('sb-my-vps-item');
+  if(myVpsItem) myVpsItem.style.display=IS_ADMIN?'none':'flex';
+  // top-nap-admin-ctrl: nút Reset bảng xếp hạng, chỉ admin thấy (xử lý riêng qua openTopNapModal)
+}
+
 function showApp(){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app-screen').style.display='none';
   document.getElementById('welcome-screen').style.display='block';
   const badge=document.getElementById('user-badge-el');
   if(badge)badge.innerHTML=(IS_ADMIN?'👑 ':'👤 ')+CURRENT_USER+' <span style="color:#1877f2;font-size:12px" title="Đã xác minh">✔</span>';
-  const mgmt=document.getElementById('mgmt-menu-item');
-  if(mgmt)mgmt.style.display=IS_ADMIN?'flex':'none';
-  // Hide deposit/vps items for admin
-  const depItem=document.getElementById('sb-deposit-item');
-  if(depItem)depItem.style.display=IS_ADMIN?'none':'flex';
-  const depHistItem=document.getElementById('sb-dep-hist-item');
-  if(depHistItem)depHistItem.style.display=IS_ADMIN?'none':'flex';
-  const purHistItem=document.getElementById('sb-pur-hist-item');
-  if(purHistItem)purHistItem.style.display=IS_ADMIN?'none':'flex';
-  const vpsShopItem=document.getElementById('sb-vps-shop-item');
-  if(vpsShopItem)vpsShopItem.style.display=IS_ADMIN?'none':'flex';
-  const myVpsItem=document.getElementById('sb-my-vps-item');
-  if(myVpsItem)myVpsItem.style.display=IS_ADMIN?'none':'flex';
   // Sidebar user info
   const sbName=document.getElementById('sb-name-el');
   if(sbName)sbName.innerHTML=CURRENT_USER+' <span style="color:#1877f2;font-size:12px" title="Đã xác minh">✔</span>';
@@ -399,12 +407,8 @@ function showApp(){
   if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
   startClock();loadHistory();
   if(!IS_ADMIN) refreshBalance();
-  // Show/hide admin-only sidebar section
-  const adminSection = document.getElementById('sb-admin-section');
-  console.log('[ADMIN DEBUG] IS_ADMIN=', IS_ADMIN, 'adminSection=', adminSection);
-  if(adminSection) adminSection.style.display = IS_ADMIN ? 'block' : 'none';
-  const topNapAdmin = document.getElementById('top-nap-admin-ctrl');
-  if(topNapAdmin) topNapAdmin.style.display = IS_ADMIN ? '' : 'none';
+  // Apply all sidebar visibility rules (tập trung tại refreshSidebarVisibility)
+  refreshSidebarVisibility();
   // Load hot deals + notifications
   setTimeout(()=>{
     if(typeof loadHotDeals === 'function') loadHotDeals();
@@ -1420,7 +1424,11 @@ function toggleMenu(){
   const sb=document.getElementById('main-sidebar');
   const ov=document.getElementById('sidebar-overlay');
   if(sb.classList.contains('open')){closeMenu();}
-  else{sb.classList.add('open');ov.classList.add('open');}
+  else{
+    sb.classList.add('open');ov.classList.add('open');
+    // Refresh toàn bộ visibility mỗi lần mở sidebar
+    refreshSidebarVisibility();
+  }
 }
 function closeMenu(){
   document.getElementById('main-sidebar').classList.remove('open');
@@ -2217,6 +2225,8 @@ function startClock(){
       .catch(()=>{
         clearTimeout(_tid);
         // fallback: dùng /api/history nếu /api/me không có
+        // Re-read IS_ADMIN từ storage để đảm bảo đúng
+        IS_ADMIN = rememberMe ? localStorage.getItem('zct_admin')==='1' : sessionStorage.getItem('zct_admin')==='1';
         fetch('/api/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}})
           .then(r2=>{ if(r2.ok)showApp(); else{SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});} })
           .catch(()=>{SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});});
