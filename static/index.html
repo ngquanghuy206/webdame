@@ -693,6 +693,10 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div class="welcome-topbar-logo">🐬 FB Dame Tool</div>
     <div class="welcome-topbar-right">
       <div class="welcome-clock" id="clock-welcome">--:--:--</div>
+      <div onclick="openInboxPage()" title="Hộp thư" style="width:38px;height:38px;border-radius:11px;border:1px solid rgba(79,158,255,.25);background:rgba(79,158,255,.08);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span id="chat-unread-dot-welcome" style="display:none;position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:#ff4d4d;border:1.5px solid var(--bg1)"></span>
+      </div>
       <div class="hamburger-btn" onclick="toggleMenu()">
         <span></span><span></span><span></span>
       </div>
@@ -1484,9 +1488,9 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div class="topbar-right">
       <div class="clock" id="clock">--:--:--</div>
       <div class="user-badge" id="user-badge-el">👤 ...</div>
-      <div id="chat-icon-btn" onclick="openChatAdmin()" title="Chat với Admin" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4f9eff,#7c4dff);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        <span id="chat-unread-dot" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#ff4d4d;border:1.5px solid var(--bg)"></span>
+      <div id="chat-icon-btn" onclick="openInboxPage()" title="Hộp thư" style="width:38px;height:38px;border-radius:12px;background:var(--glass2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span id="chat-unread-dot" style="display:none;position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:#ff4d4d;border:1.5px solid var(--bg1)"></span>
       </div>
       <div class="hamburger-btn" onclick="toggleMenu()" title="Menu">
         <span></span><span></span><span></span>
@@ -4085,7 +4089,60 @@ document.addEventListener('keydown', e=>{
 
 <!-- CHAT WITH ADMIN MODAL -->
 <!-- CHAT WITH ADMIN MODAL -->
-<div class="modal-overlay" id="chat-admin-modal" onclick="if(event.target===this)closeChatAdmin()" style="z-index:20000;align-items:flex-end;padding:0">
+<!-- ═══════════════════════════════════════════════════════
+     INBOX PAGE (full-screen, kiểu chototmmo)
+════════════════════════════════════════════════════════ -->
+<div id="inbox-page" style="display:none;position:fixed;inset:0;z-index:25000;background:var(--bg1);flex-direction:column;overflow:hidden">
+  <!-- Header -->
+  <div style="height:54px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg1)">
+    <button onclick="closeInboxPage()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px 8px 4px 0">←</button>
+    <span style="font-size:16px;font-weight:800">💬 Hộp thư</span>
+    <div style="width:32px"></div>
+  </div>
+  <!-- Search bar -->
+  <div style="padding:10px 14px;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--bg1)">
+    <div style="background:var(--glass2);border-radius:20px;padding:9px 14px;display:flex;align-items:center;gap:8px;border:1px solid var(--border)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="15" height="15"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="inbox-search" placeholder="Tìm kiếm..." style="background:none;border:none;outline:none;font-size:14px;color:var(--text);width:100%" oninput="filterInboxThreads(this.value)">
+    </div>
+  </div>
+  <!-- Thread list -->
+  <div id="inbox-thread-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
+    <div style="text-align:center;color:var(--muted);padding:40px 0">⏳ Đang tải...</div>
+  </div>
+</div>
+
+<!-- CHAT THREAD PAGE (full-screen) -->
+<div id="chat-thread-page" style="display:none;position:fixed;inset:0;z-index:26000;background:var(--bg1);flex-direction:column;overflow:hidden">
+  <!-- Header -->
+  <div style="height:56px;padding:0 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg1)">
+    <button onclick="closeChatThreadPage()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px 8px 4px 0;flex-shrink:0">←</button>
+    <div id="chat-thread-avatar" style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ffd740,#ff9800);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0">👑</div>
+    <div style="flex:1;min-width:0">
+      <div id="chat-thread-name" style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Admin</div>
+      <div style="font-size:11px;color:#00c882;display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:#00c882;display:inline-block"></span>Đang hoạt động</div>
+    </div>
+  </div>
+  <!-- Messages -->
+  <div id="chat-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch"></div>
+  <!-- Input -->
+  <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;background:var(--bg1)">
+    <label for="chat-img-input" style="width:36px;height:36px;border-radius:50%;background:var(--glass2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border:1px solid var(--border)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="17" height="17"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    </label>
+    <input type="file" id="chat-img-input" accept="image/*" style="display:none" onchange="chatAttachImage(this)">
+    <div style="flex:1;background:var(--glass2);border-radius:22px;padding:0 14px;display:flex;align-items:center;border:1px solid var(--border)">
+      <textarea id="chat-input-text" placeholder="Nhập tin nhắn..." rows="1" style="flex:1;background:none;border:none;outline:none;padding:10px 0;color:var(--text);font-size:14px;resize:none;font-family:inherit;max-height:90px;overflow-y:auto;-webkit-overflow-scrolling:touch" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chatSend();}"></textarea>
+    </div>
+    <button onclick="chatSend()" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4f9eff,#7c4dff);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 10px rgba(79,158,255,.4)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="chat-admin-modal" onclick="if(event.target===this)closeChatAdmin()" style="z-index:20000;align-items:flex-end;padding:0;display:none!important"></div>
+
+
   <div id="chat-admin-box" style="width:100%;max-width:500px;margin:0 auto;background:var(--bg);border-radius:20px 20px 0 0;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.5)">
     <!-- Header -->
     <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:linear-gradient(135deg,rgba(79,158,255,.08),rgba(124,77,255,.08))">
@@ -4129,17 +4186,81 @@ const ADMIN_VIP_BADGE = '<span style="background:linear-gradient(135deg,#ffd740,
 
 function _userInitial(name){ return (name||'?')[0].toUpperCase(); }
 
-function openChatAdmin(){
-  _chatOpen = true;
-  document.getElementById('chat-admin-modal').style.display = 'flex';
-  document.getElementById('chat-unread-dot').style.display = 'none';
+// ══════════════════════════════════════════════════════
+// INBOX PAGE — giống chototmmo
+// ══════════════════════════════════════════════════════
+function openInboxPage(){
+  const page = document.getElementById('inbox-page');
+  if(page){ page.style.display='flex'; document.body.style.overflow='hidden'; }
+  document.getElementById('chat-unread-dot').style.display='none';
+  const d2=document.getElementById('chat-unread-dot-welcome');if(d2)d2.style.display='none';
+  loadInboxThreads();
+}
+function closeInboxPage(){
+  const page = document.getElementById('inbox-page');
+  if(page){ page.style.display='none'; }
+  const tp = document.getElementById('chat-thread-page');
+  if(tp){ tp.style.display='none'; }
+  document.body.style.overflow='';
+}
+function openChatThreadPage(){
+  const page = document.getElementById('chat-thread-page');
+  if(page){ page.style.display='flex'; }
+  _chatOpen=true;
+  _chatLastId=null; _chatMessages=[];
   _loadChatMessages(true);
   _startChatPoll();
 }
+function closeChatThreadPage(){
+  _chatOpen=false; _stopChatPoll();
+  const page = document.getElementById('chat-thread-page');
+  if(page){ page.style.display='none'; }
+}
+
+async function loadInboxThreads(){
+  const list = document.getElementById('inbox-thread-list');
+  if(!list) return;
+  list.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px 0">⏳ Đang tải...</div>';
+  // User chỉ có 1 thread với admin
+  try{
+    const r = await fetch('/api/chat/messages', {headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(!r.ok) throw new Error();
+    const d = await r.json();
+    const msgs = d.messages||[];
+    const lastMsg = msgs.length ? msgs[msgs.length-1] : null;
+    const lastText = lastMsg ? (lastMsg.text || (lastMsg.img?'[Ảnh]':'')) : 'Gửi tin nhắn cho Admin';
+    const lastTime = lastMsg ? (lastMsg.time||'') : '';
+    list.innerHTML = `<div onclick="openChatAdminThread()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);background:var(--bg1);transition:.15s" onmouseover="this.style.background='var(--glass)'" onmouseout="this.style.background='var(--bg1)'">
+      <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#ffd740,#ff9800);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👑</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:14px;font-weight:800;color:var(--text)">Nguyễn Hoàng Khánh Nam</span>
+          <span style="font-size:11px;color:var(--muted);flex-shrink:0;margin-left:8px">${lastTime}</span>
+        </div>
+        <div style="font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${lastText}</div>
+      </div>
+    </div>`;
+  }catch{
+    list.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px 0">⏳ Đang tải...</div>';
+  }
+}
+
+function filterInboxThreads(q){
+  // Chỉ 1 thread nên filter đơn giản
+  const item = document.querySelector('#inbox-thread-list > div');
+  if(!item) return;
+  item.style.display = q ? (item.textContent.toLowerCase().includes(q.toLowerCase())?'':'none') : '';
+}
+
+function openChatAdminThread(){
+  document.getElementById('chat-thread-name').textContent='Nguyễn Hoàng Khánh Nam';
+  openChatThreadPage();
+}
+
+// Legacy — giữ để không break code cũ
+function openChatAdmin(){ openInboxPage(); }
 function closeChatAdmin(){
-  _chatOpen = false;
-  document.getElementById('chat-admin-modal').style.display = 'none';
-  _stopChatPoll();
+  closeInboxPage();
 }
 
 function _startChatPoll(){
@@ -4187,7 +4308,7 @@ function _renderChatMessages(){
     if(m.img && m.img.length > 10){
       bodyHtml = `<img src="${m.img}" style="max-width:200px;max-height:180px;border-radius:10px;display:block;cursor:pointer;margin-bottom:${m.text?'4px':'0'}" onclick="window.open(this.src)">`;
     }
-    if(m.text) bodyHtml += `<span style="white-space:pre-wrap;word-break:break-word">${m.text}</span>`;
+    if(m.text) bodyHtml += `<span style="white-space:pre-wrap;word-break:break-all;overflow-wrap:anywhere">${m.text}</span>`;
 
     const bubbleBg = isUser ? 'linear-gradient(135deg,#4f9eff,#7c4dff)' : 'var(--glass2)';
     const bubbleRadius = isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px';
@@ -4330,7 +4451,7 @@ async function _loadAdminThreadMessages(){
       const avatarContent = isUser ? initial : ADMIN_AVATAR_EMOJI;
       let bodyHtml = '';
       if(m.img && m.img.length > 10) bodyHtml += `<img src="${m.img}" style="max-width:180px;max-height:160px;border-radius:8px;display:block;cursor:pointer" onclick="window.open(this.src)">`;
-      if(m.text) bodyHtml += `<span style="white-space:pre-wrap;word-break:break-word">${m.text}</span>`;
+      if(m.text) bodyHtml += `<span style="white-space:pre-wrap;word-break:break-all;overflow-wrap:anywhere">${m.text}</span>`;
       const bubbleBg = isUser ? 'linear-gradient(135deg,#4f9eff,#7c4dff)' : 'rgba(255,215,64,.12)';
       const bubbleBorder = isUser ? 'none' : '1px solid rgba(255,215,64,.3)';
       const textColor = isUser ? '#fff' : 'var(--text)';
