@@ -598,6 +598,17 @@ async def slots_buy(request:Request):
     data    = await request.json()
     plan_id = data.get("plan_id","")
     plan    = next((p for p in DAME_SLOT_PLANS if p["id"]==plan_id), None)
+    # Custom plan (mua máy lẻ tuỳ chọn từ frontend)
+    if not plan and data.get("custom"):
+        try:
+            slots_c = int(data.get("slots",1))
+            days_c  = int(data.get("days",1))
+            price_c = int(data.get("price",0))
+            name_c  = str(data.get("name","Máy lẻ tuỳ chọn"))
+            if slots_c<1 or days_c<1 or price_c<0: raise ValueError("invalid")
+            plan = {"id":plan_id,"name":name_c,"slots":slots_c,"days":days_c,"price":price_c}
+        except:
+            raise HTTPException(400,"Gói không hợp lệ")
     if not plan: raise HTTPException(400,"Gói không tồn tại")
 
     price = plan.get("price",0)
