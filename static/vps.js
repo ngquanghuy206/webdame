@@ -270,6 +270,7 @@ async function openAccountInfo(){
     const atEl=document.getElementById('ai-username-at');if(atEl)atEl.textContent=d.username;
     document.getElementById('ai-role').textContent=d.is_admin?'👑 Quản trị viên':'👤 Thành viên';
     document.getElementById('ai-email').textContent=d.email||'—';
+    // Format created date shorter
     const cr=d.created||'—';
     const crEl=document.getElementById('ai-created');if(crEl)crEl.textContent=cr;
     document.getElementById('ai-balance').innerHTML=d.is_admin?'<span style="color:#ffd740;font-weight:900">∞</span>':fmtMoney(d.balance||0);
