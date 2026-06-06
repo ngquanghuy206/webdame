@@ -258,6 +258,8 @@ function showApp(){
   document.getElementById('welcome-screen').style.display='block';
   const badge=document.getElementById('user-badge-el');
   if(badge)badge.innerHTML=(IS_ADMIN?'👑 ':'👤 ')+CURRENT_USER+' <span style="color:#1877f2;font-size:12px" title="Đã xác minh">✔</span>';
+  const adminSection=document.getElementById('sb-admin-section');
+  if(adminSection)adminSection.style.display=IS_ADMIN?'block':'none';
   const mgmt=document.getElementById('mgmt-menu-item');
   if(mgmt)mgmt.style.display=IS_ADMIN?'flex':'none';
   // Hide deposit/vps items for admin
