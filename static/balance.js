@@ -3,9 +3,7 @@
 // ═══════════════════════════════════════════════════════
 let CURRENT_BALANCE = 0;
 function fmtMoney(n){
-  if(n>=1000000) return (n/1000000).toFixed(n%1000000===0?0:1)+'M đ';
-  if(n>=1000) return (n/1000).toFixed(n%1000===0?0:1)+'K đ';
-  return n.toLocaleString('vi-VN')+'đ';
+  return Number(n||0).toLocaleString('vi-VN') + ' VND';
 }
 function updateBalanceDisplay(bal){
   CURRENT_BALANCE = bal||0;

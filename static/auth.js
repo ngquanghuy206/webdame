@@ -279,6 +279,16 @@ function showApp(){
   if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
   startClock();loadHistory();
   if(!IS_ADMIN) refreshBalance();
+  // Show/hide admin-only sidebar section
+  const adminSection = document.getElementById('sb-admin-section');
+  if(adminSection) adminSection.style.display = IS_ADMIN ? 'block' : 'none';
+  const topNapAdmin = document.getElementById('top-nap-admin-ctrl');
+  if(topNapAdmin) topNapAdmin.style.display = IS_ADMIN ? '' : 'none';
+  // Load hot deals + notifications
+  setTimeout(()=>{
+    if(typeof loadHotDeals === 'function') loadHotDeals();
+    if(typeof loadNotifications === 'function') loadNotifications();
+  }, 300);
   // Poll unread chat count for admin badge
   if(IS_ADMIN){
     loadAdminChatThreads();
