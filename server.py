@@ -74,7 +74,8 @@ async def _cleanup_expired():
 
 async def lifespan(app: FastAPI):
     await _register_tg_webhook()
-    asyncio.create_task(_cleanup_expired())
+    loop = asyncio.get_event_loop()
+    loop.create_task(_cleanup_expired())
     yield
 
 app = FastAPI(lifespan=lifespan)
