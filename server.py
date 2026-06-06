@@ -31,8 +31,50 @@ async def _register_tg_webhook():
         print(f"[TG Webhook] Loi: {e}")
 
 @asynccontextmanager
+async def _cleanup_expired():
+    """Background task: tự xóa slot hết hạn và hot deal hết hạn mỗi 5 phút"""
+    while True:
+        try:
+            now_ts = int(time.time())
+            now_dt = datetime.now()
+
+            # ── Xóa hot deal hết hạn hoặc hết lượt ──
+            deals = load_hot_deals()
+            active_deals = [d for d in deals if d.get("expires_at", 0) > now_ts and d.get("qty_left", 0) > 0]
+            if len(active_deals) != len(deals):
+                save_hot_deals(active_deals)
+
+            # ── Xóa slot hết hạn của từng user ──
+            users = load_users()
+            changed = False
+            for uname, udata in users.items():
+                slots = udata.get("slots", [])
+                valid_slots = []
+                for s in slots:
+                    exp = s.get("expires_at")
+                    if exp is None:
+                        valid_slots.append(s)
+                    else:
+                        try:
+                            exp_dt = datetime.strptime(exp, "%d/%m/%Y %H:%M:%S")
+                            if exp_dt > now_dt:
+                                valid_slots.append(s)
+                        except:
+                            pass  # slot lỗi format → bỏ
+                if len(valid_slots) != len(slots):
+                    users[uname]["slots"] = valid_slots
+                    changed = True
+            if changed:
+                save_users(users)
+
+        except Exception as e:
+            pass  # không crash background task
+
+        await asyncio.sleep(300)  # chạy mỗi 5 phút
+
 async def lifespan(app: FastAPI):
     await _register_tg_webhook()
+    asyncio.create_task(_cleanup_expired())
     yield
 
 app = FastAPI(lifespan=lifespan)
