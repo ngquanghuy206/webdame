@@ -458,6 +458,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .auth-input-new{width:100%;padding:15px 16px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;font-size:15px;color:#fff;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s}
 .auth-input-new:focus{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.1)}
 .auth-input-new::placeholder{color:rgba(255,255,255,.25)}
+.auth-input-new:-webkit-autofill,.auth-input-new:-webkit-autofill:hover,.auth-input-new:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 1000px #252525 inset!important;-webkit-text-fill-color:#fff!important;border-color:rgba(255,255,255,.2)!important;caret-color:#fff}
 .auth-btn-new{width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;background:#fff;color:#111;box-shadow:0 4px 20px rgba(255,255,255,.15);transition:opacity .15s,transform .15s;letter-spacing:.2px}
 .auth-btn-new:hover{opacity:.92;transform:translateY(-1px)}
 .auth-btn-new:disabled{opacity:.4;cursor:not-allowed;transform:none}

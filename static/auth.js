@@ -251,7 +251,6 @@ function toggleRemember(){
   el.classList.toggle('remember-check-new',true);
   el.textContent=rememberMe?'✓':'';
 }
-}
 
 function showApp(){
   document.getElementById('auth-screen').style.display='none';
