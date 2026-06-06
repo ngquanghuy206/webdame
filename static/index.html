@@ -536,7 +536,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       </div>
       <div class="field-group">
         <div class="field-label">Gmail</div>
-        <input class="field-input" id="reg-email" type="email" placeholder="example@gmail.com">
+        <input class="field-input" id="reg-email" type="email" placeholder="example@gmail.com" onkeydown="if(event.key==='Enter')doRegisterSendOtp()">
       </div>
       <!-- CAPTCHA -->
       <div class="field-group">
@@ -4048,7 +4048,18 @@ document.addEventListener('keydown', e=>{
   }
   if(e.key==='Enter'){
     const authScr=document.getElementById('auth-screen');
-    if(authScr&&authScr.style.display!=='none') doLogin();
+    if(authScr&&authScr.style.display!=='none'){
+      // Kiểm tra tab đang active
+      const regForm=document.getElementById('auth-register-form');
+      const regStep2=document.getElementById('reg-step2');
+      if(regForm&&regForm.style.display!=='none'){
+        // Đang ở tab đăng ký
+        if(regStep2&&regStep2.style.display!=='none') doRegisterVerify();
+        else doRegisterSendOtp();
+      } else {
+        doLogin();
+      }
+    }
   }
 });
 
