@@ -11,7 +11,7 @@
     // Verify ngầm — nếu token hết hạn mới kick về login
     const _ac=new AbortController(),_tid=setTimeout(()=>_ac.abort(),5000);
     fetch('/api/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN},signal:_ac.signal})
-      .then(r=>{clearTimeout(_tid);if(!r.ok){SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});document.getElementById('welcome-screen').style.display='none';document.getElementById('auth-screen').style.display='flex';}})
+      .then(r=>{clearTimeout(_tid);if(!r.ok){SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});document.getElementById('welcome-screen').style.display='none';const _as=document.getElementById('auth-screen');_as.style.display='flex';if(typeof _reinitCaptchas==='function')setTimeout(_reinitCaptchas,100);}})
       .catch(()=>{clearTimeout(_tid);});
   }
   setActiveStep(1);
