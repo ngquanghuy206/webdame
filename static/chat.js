@@ -11,23 +11,43 @@ const ADMIN_VIP_BADGE = '<span style="background:linear-gradient(135deg,#ffd740,
 
 function _userInitial(name){ return (name||'?')[0].toUpperCase(); }
 
+// Cache avatar từ server
+const _avatarCache = {};
+async function _fetchAndCacheAvatar(username){
+  if(_avatarCache[username] !== undefined) return _avatarCache[username];
+  // Thử localStorage trước (nhanh hơn)
+  try{
+    const local = localStorage.getItem('zct_avatar_'+username);
+    if(local){ _avatarCache[username]=local; return local; }
+  }catch(e){}
+  // Fetch từ server
+  try{
+    const r = await fetch('/api/user/avatar/'+encodeURIComponent(username),{
+      headers:{'Authorization':'Bearer '+SESSION_TOKEN}
+    });
+    const d = await r.json();
+    _avatarCache[username] = d.avatar||'';
+    if(d.avatar) try{localStorage.setItem('zct_avatar_'+username, d.avatar);}catch(e){}
+    return _avatarCache[username];
+  }catch(e){ _avatarCache[username]=''; return ''; }
+}
+
 function _getAdminAvatarHtml(size){
   size = size||32;
+  // Try localStorage cache first (sync)
   try{
-    // Try to get admin avatar from localStorage (stored as zct_avatar_ADMINUSERNAME)
-    // We don't know the exact admin username from client, check IS_ADMIN or stored key
     const keys=Object.keys(localStorage);
     for(const k of keys){
       if(k.startsWith('zct_avatar_')){
-        const user=k.replace('zct_avatar_','');
-        // Check if this is admin by trying - just use first avatar found if IS_ADMIN
         const src=localStorage.getItem(k);
-        if(src && IS_ADMIN){
+        if(src){
+          _avatarCache[k.replace('zct_avatar_','')] = src;
           return `<img src="${src}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,215,64,.4)" alt="">`;
         }
       }
     }
   }catch(e){}
+  // Fallback emoji — async load sẽ refresh khi reload
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,#ffd740,#ff9800);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*.5)}px;flex-shrink:0">👑</div>`;
 }
 

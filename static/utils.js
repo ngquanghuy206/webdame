@@ -27,11 +27,15 @@ function openLightbox(src, type){
   }
   _lightboxSrc = src;
   _lightboxType = type;
-  const ov = document.getElementById('lightbox-overlay');
+  let ov = document.getElementById('lightbox-overlay');
+  if(!ov) return;
+  // Move lightbox to body root để thoát stacking context của các page (overflow:hidden)
+  if(ov.parentElement !== document.body){
+    document.body.appendChild(ov);
+  }
   const img = document.getElementById('lightbox-img');
   const vid = document.getElementById('lightbox-video');
   const saveBtn = document.getElementById('lightbox-save-btn');
-  if(!ov) return;
   if(type==='video'){
     img.style.display='none'; img.src='';
     vid.style.display='block'; vid.src=src;

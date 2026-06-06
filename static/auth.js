@@ -159,6 +159,12 @@ function handleAvatarChange(input){
     try{localStorage.setItem('zct_avatar_'+CURRENT_USER,e.target.result);}catch(ex){}
     // Update sidebar avatar
     if(sbAv){sbAv.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}
+    // Lưu avatar lên server để người khác thấy
+    fetch('/api/user/avatar',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
+      body:JSON.stringify({avatar:e.target.result})
+    }).catch(()=>{});
     showToast('✅ Đã cập nhật ảnh đại diện','#00e676');
   };
   reader.readAsDataURL(file);

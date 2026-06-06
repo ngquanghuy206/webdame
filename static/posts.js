@@ -73,7 +73,7 @@ function renderPostsFeed(){
 }
 
 function renderPostCard(p, inFeed=true){
-  const isAdmin = p.author === 'knammelbel206';
+  const isAdmin = p.is_admin || (p.author === 'knammelbel206');
   const authorDisplay = isAdmin
     ? `<span style="font-weight:800;color:#ffd740">${p.author}</span><span style="background:linear-gradient(135deg,#ffd740,#ff9800);color:#000;font-size:9px;font-weight:900;padding:2px 7px;border-radius:20px;margin-left:5px">VIP</span>`
     : `<span style="font-weight:700">${p.author}</span>`;
@@ -115,7 +115,7 @@ function renderPostCard(p, inFeed=true){
   return `<div style="${cardStyle}" id="post-card-${p.id}">
     <!-- Author row -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <div style="width:40px;height:40px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;flex-shrink:0">${isAdmin?'👑':avatarLetter}</div>
+      ${(p.author_avatar) ? `<img src="${p.author_avatar}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${isAdmin?'rgba(255,215,64,.5)':'rgba(79,158,255,.3)'}" alt="">` : `<div style="width:40px;height:40px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;flex-shrink:0">${isAdmin?'👑':avatarLetter}</div>`}
       <div style="flex:1;min-width:0">
         <div style="font-size:14px">${authorDisplay}</div>
         <div style="font-size:11px;color:var(--muted)">${p.created||''}</div>
