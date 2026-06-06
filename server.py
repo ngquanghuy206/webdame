@@ -9,17 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 try: import aiohttp; HAS_AIOHTTP = True
 except: HAS_AIOHTTP = False
 
-
-    try:
-        import base64, json, time
-        data = json.loads(base64.b64decode(token + "==").decode())
-        if not data.get("solved"): return False
-        # Token hợp lệ trong 10 phút
-        if time.time()*1000 - data.get("ts", 0) > 600_000: return False
-        return True
-    except:
-        return False
-
 # URL server để đăng ký Telegram webhook (Render tự set RENDER_EXTERNAL_URL)
 SITE_URL = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/") or "https://dzimeomeo.onrender.com"
 
@@ -320,7 +309,8 @@ async def register_send_otp(request: Request):
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
     email    = (data.get("email") or "").strip()
-    if not all([username, password, email]): raise HTTPException(400, "Thiếu thông tin")    if len(username) < 6: raise HTTPException(400, "Username phải ≥ 6 ký tự")
+    if not all([username, password, email]): raise HTTPException(400, "Thiếu thông tin")
+    if len(username) < 6: raise HTTPException(400, "Username phải ≥ 6 ký tự")
     if len(password) < 6: raise HTTPException(400, "Mật khẩu phải ≥ 6 ký tự")
     if not re.match(r"[^@]+@gmail\.com$", email, re.I): raise HTTPException(400, "Chỉ chấp nhận @gmail.com")
     if username in ADMIN_ACCOUNTS: raise HTTPException(400, "Username đã tồn tại")
@@ -379,7 +369,8 @@ async def login(request:Request):
     data     = await request.json()
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
-    if not username or not password: raise HTTPException(400,"Thiếu thông tin")    if username in ADMIN_ACCOUNTS:
+    if not username or not password: raise HTTPException(400,"Thiếu thông tin")
+    if username in ADMIN_ACCOUNTS:
         if ADMIN_ACCOUNTS[username] != hash_pw(password): raise HTTPException(401,"Sai mật khẩu")
         return JSONResponse({"ok":True,"token":create_session(username),"username":username,"is_admin":True,"balance":0})
     users = load_users()
