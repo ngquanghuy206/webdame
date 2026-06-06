@@ -1311,6 +1311,32 @@ async def tg_webhook(request: Request):
         posts = [p for p in posts if p["id"] != post_id]
         save_posts(posts)
         reply = "❌ Bài đăng đã bị từ chối và xóa."
+    elif cdata.startswith("approve_"):
+        order_id = cdata[len("approve_"):]
+        deposits = load_deposits()
+        dep = next((d for d in deposits if d["order_id"]==order_id), None)
+        if dep and dep.get("status")=="pending":
+            dep["status"] = "approved"
+            dep["approved_at"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            save_deposits(deposits)
+            users = load_users()
+            target = dep["username"]
+            if target in users:
+                users[target]["balance"] = users[target].get("balance",0) + dep["amount"]
+                save_users(users)
+            reply = f"✅ Đã duyệt nạp {dep['amount']:,}đ cho {target}"
+        else:
+            reply = "⚠️ Đơn không tồn tại hoặc đã xử lý rồi"
+    elif cdata.startswith("reject_"):
+        order_id = cdata[len("reject_"):]
+        deposits = load_deposits()
+        dep = next((d for d in deposits if d["order_id"]==order_id), None)
+        if dep and dep.get("status")=="pending":
+            dep["status"] = "rejected"
+            save_deposits(deposits)
+            reply = f"❌ Đã từ chối đơn nạp của {dep['username']}"
+        else:
+            reply = "⚠️ Đơn không tồn tại hoặc đã xử lý rồi"
     else:
         return JSONResponse({"ok": True})
     if HAS_AIOHTTP:
