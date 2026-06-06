@@ -399,11 +399,9 @@ function showApp(){
   if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
   startClock();loadHistory();
   if(!IS_ADMIN) refreshBalance();
-  // Show/hide admin-only sidebar items
-  const adminHotDeal = document.getElementById('sb-admin-hotdeal-item');
-  if(adminHotDeal) adminHotDeal.style.display = IS_ADMIN ? 'flex' : 'none';
-  const adminNotif = document.getElementById('sb-admin-notif-item');
-  if(adminNotif) adminNotif.style.display = IS_ADMIN ? 'flex' : 'none';
+  // Show/hide admin-only sidebar section
+  const adminSection = document.getElementById('sb-admin-section');
+  if(adminSection) adminSection.style.display = IS_ADMIN ? 'block' : 'none';
   const topNapAdmin = document.getElementById('top-nap-admin-ctrl');
   if(topNapAdmin) topNapAdmin.style.display = IS_ADMIN ? '' : 'none';
   // Load hot deals + notifications
