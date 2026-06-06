@@ -11,15 +11,16 @@ except: HAS_AIOHTTP = False
 
 HCAPTCHA_SECRET = "ES_79a6528cce374e0c840f699343e89afa"
 
-async def verify_hcaptcha(token: str) -> bool:
+def verify_captcha_token(token: str) -> bool:
+    """Verify client-signed captcha token. Token = base64(JSON{ts,solved,r,...})"""
     if not token: return False
     try:
-        async with aiohttp.ClientSession() as s:
-            r = await s.post('https://hcaptcha.com/siteverify',
-                data={'secret': HCAPTCHA_SECRET, 'response': token},
-                timeout=aiohttp.ClientTimeout(total=8))
-            d = await r.json()
-            return d.get('success', False)
+        import base64, json, time
+        data = json.loads(base64.b64decode(token + "==").decode())
+        if not data.get("solved"): return False
+        # Token hợp lệ trong 10 phút
+        if time.time()*1000 - data.get("ts", 0) > 600_000: return False
+        return True
     except:
         return False
 
@@ -324,8 +325,8 @@ async def register_send_otp(request: Request):
     password = (data.get("password") or "").strip()
     email    = (data.get("email") or "").strip()
     if not all([username, password, email]): raise HTTPException(400, "Thiếu thông tin")
-    htoken = data.get("hcaptcha_token","")
-    if not await verify_hcaptcha(htoken): raise HTTPException(400, "❌ Xác minh CAPTCHA thất bại")
+    cptoken = data.get("captcha_token","")
+    if not verify_captcha_token(cptoken): raise HTTPException(400, "❌ Xác minh CAPTCHA thất bại")
     if len(username) < 6: raise HTTPException(400, "Username phải ≥ 6 ký tự")
     if len(password) < 6: raise HTTPException(400, "Mật khẩu phải ≥ 6 ký tự")
     if not re.match(r"[^@]+@gmail\.com$", email, re.I): raise HTTPException(400, "Chỉ chấp nhận @gmail.com")
@@ -386,8 +387,8 @@ async def login(request:Request):
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
     if not username or not password: raise HTTPException(400,"Thiếu thông tin")
-    htoken = data.get("hcaptcha_token","")
-    if not await verify_hcaptcha(htoken): raise HTTPException(400,"❌ Xác minh CAPTCHA thất bại")
+    cptoken = data.get("captcha_token","")
+    if not verify_captcha_token(cptoken): raise HTTPException(400,"❌ Xác minh CAPTCHA thất bại")
     if username in ADMIN_ACCOUNTS:
         if ADMIN_ACCOUNTS[username] != hash_pw(password): raise HTTPException(401,"Sai mật khẩu")
         return JSONResponse({"ok":True,"token":create_session(username),"username":username,"is_admin":True,"balance":0})
