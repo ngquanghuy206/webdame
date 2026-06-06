@@ -401,6 +401,7 @@ function showApp(){
   if(!IS_ADMIN) refreshBalance();
   // Show/hide admin-only sidebar section
   const adminSection = document.getElementById('sb-admin-section');
+  console.log('[ADMIN DEBUG] IS_ADMIN=', IS_ADMIN, 'adminSection=', adminSection);
   if(adminSection) adminSection.style.display = IS_ADMIN ? 'block' : 'none';
   const topNapAdmin = document.getElementById('top-nap-admin-ctrl');
   if(topNapAdmin) topNapAdmin.style.display = IS_ADMIN ? '' : 'none';
@@ -2201,9 +2202,25 @@ function startClock(){
   if(rememberMe&&CURRENT_USER){const u=document.getElementById('login-user');if(u)u.value=CURRENT_USER;}
   if(SESSION_TOKEN&&CURRENT_USER){
     const _ac=new AbortController(),_tid=setTimeout(()=>_ac.abort(),5000);
-    fetch('/api/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN},signal:_ac.signal})
-      .then(r=>{clearTimeout(_tid);if(r.ok)showApp();else{SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});}})
-      .catch(()=>{clearTimeout(_tid);SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});});
+    // Verify session + re-fetch IS_ADMIN from server để đảm bảo đúng
+    fetch('/api/me',{headers:{'Authorization':'Bearer '+SESSION_TOKEN},signal:_ac.signal})
+      .then(async r=>{
+        clearTimeout(_tid);
+        if(r.ok){
+          try{ const d=await r.json(); IS_ADMIN=d.is_admin||false; CURRENT_USER=d.username||CURRENT_USER; }catch(e){}
+          showApp();
+        } else {
+          SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;
+          ['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});
+        }
+      })
+      .catch(()=>{
+        clearTimeout(_tid);
+        // fallback: dùng /api/history nếu /api/me không có
+        fetch('/api/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}})
+          .then(r2=>{ if(r2.ok)showApp(); else{SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});} })
+          .catch(()=>{SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});});
+      });
   }
   setActiveStep(1);
   setInterval(()=>{if(dameRunning)updateRunUI();},1000);
