@@ -158,21 +158,21 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 #sidebar-overlay.open{display:block;animation:fadeOverlay .2s ease}
 @keyframes fadeOverlay{from{opacity:0}to{opacity:1}}
 /* Sidebar panel */
-#main-sidebar{position:fixed;top:0;left:-280px;width:270px;height:100%;z-index:9995;background:linear-gradient(180deg,#0d1322 0%,#0a0f1e 100%);border-right:1px solid rgba(79,158,255,.15);box-shadow:8px 0 40px rgba(0,0,0,.6);display:flex;flex-direction:column;transition:left .28s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+#main-sidebar{position:fixed;top:0;left:-280px;width:270px;height:100%;z-index:9995;background:var(--bg2);border-right:1px solid var(--border);box-shadow:8px 0 40px rgba(0,0,0,.4);display:flex;flex-direction:column;transition:left .28s cubic-bezier(.4,0,.2,1);overflow-y:auto}
 #main-sidebar.open{left:0}
-.sb-header{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 14px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
+.sb-header{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
 .sb-logo{display:flex;align-items:center;gap:10px}
 .sb-logo-img{font-size:22px}
-.sb-logo-text{font-size:13px;font-weight:800;color:#fff;letter-spacing:.5px}
+.sb-logo-text{font-size:13px;font-weight:800;color:var(--text);letter-spacing:.5px}
 .sb-close{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted)}
 .sb-close:hover{background:rgba(255,255,255,.12);color:#fff}
 .sb-user{margin:14px 16px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(79,158,255,.12),rgba(124,77,255,.08));border:1px solid rgba(79,158,255,.2);display:flex;align-items:center;gap:11px}
 .sb-user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue2),var(--purple));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.sb-user-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:1px}
+.sb-user-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:1px}
 .sb-user-role{font-size:10px;color:var(--blue);font-weight:600}
-.sb-section-label{padding:14px 18px 6px;font-size:9.5px;font-weight:700;letter-spacing:1.8px;color:rgba(79,158,255,.55);text-transform:uppercase}
-.sb-item{display:flex;align-items:center;gap:13px;padding:12px 18px;font-size:13.5px;font-weight:600;color:rgba(255,255,255,.82);cursor:pointer;position:relative;transition:all .15s;border-left:3px solid transparent}
-.sb-item:hover{background:rgba(255,255,255,.06);color:#fff;border-left-color:var(--blue)}
+.sb-section-label{padding:14px 18px 6px;font-size:9.5px;font-weight:700;letter-spacing:1.8px;color:var(--muted);text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:13px;padding:12px 18px;font-size:13.5px;font-weight:600;color:var(--text);cursor:pointer;position:relative;transition:all .15s;border-left:3px solid transparent}
+.sb-item:hover{background:var(--glass);color:var(--text);border-left-color:var(--blue)}
 .sb-item.active{background:rgba(79,158,255,.1);color:var(--blue);border-left-color:var(--blue)}
 .sb-item-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0}
 .sb-item-icon svg{width:17px;height:17px}
@@ -189,13 +189,13 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .sb-item-tag{margin-left:auto;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:.5px}
 .sb-item-tag.hot{background:rgba(255,89,89,.2);color:#ff5959;border:1px solid rgba(255,89,89,.3)}
 .sb-item-tag.new{background:rgba(0,200,150,.15);color:#00c896;border:1px solid rgba(0,200,150,.25)}
-.sb-divider{height:1px;background:rgba(255,255,255,.06);margin:8px 16px}
+.sb-divider{height:1px;background:var(--border);margin:8px 16px}
 .sb-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;cursor:pointer}
-.sb-toggle-row:hover{background:rgba(255,255,255,.05)}
-.sb-toggle-label{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;color:rgba(255,255,255,.75)}
+.sb-toggle-row:hover{background:var(--glass)}
+.sb-toggle-label{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;color:var(--text)}
 .sb-toggle-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0}
 .sb-toggle-icon svg{width:17px;height:17px}
-.sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.sb-footer{margin-top:auto;padding:14px 18px;border-top:1px solid var(--border);flex-shrink:0}
 .sb-logout{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:12px;background:rgba(255,89,89,.08);border:1px solid rgba(255,89,89,.2);cursor:pointer;font-size:13px;font-weight:700;color:#ff5959;transition:all .15s}
 .sb-logout:hover{background:rgba(255,89,89,.15)}
 /* Welcome topbar */
@@ -2163,7 +2163,10 @@ function showApp(){
   const sbRole=document.getElementById('sb-role-el');
   if(sbRole)sbRole.textContent=IS_ADMIN?'👑 Admin':'Thành viên';
   const sbAv=document.getElementById('sb-avatar-el');
-  if(sbAv)sbAv.textContent=IS_ADMIN?'👑':'👤';
+  if(sbAv){
+    const letter=(CURRENT_USER||'?')[0].toUpperCase();
+    sbAv.innerHTML=`<span style="font-size:15px;font-weight:800;color:#fff">${IS_ADMIN?'👑':letter}</span>`;
+  }
   if(!IS_ADMIN)setTimeout(loadAvatar,100);
   const sbBal=document.getElementById('sb-balance-el');
   if(sbBal)sbBal.style.display=IS_ADMIN?'none':'block';
@@ -4376,33 +4379,28 @@ function _stopAdminChatPoll(){
 <!-- ══════════════════════════════════════════════════════
      POSTS FEED MODAL
 ══════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="posts-feed-modal" onclick="if(event.target===this)closeModal('posts-feed-modal')" style="z-index:18000;align-items:flex-end;padding:0">
-  <div style="width:100%;max-width:600px;margin:0 auto;background:var(--bg);border-radius:20px 20px 0 0;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.5)">
-    <!-- Header -->
-    <div style="padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;background:linear-gradient(135deg,rgba(255,80,160,.07),rgba(79,158,255,.07))">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:17px;font-weight:900;display:flex;align-items:center;gap:8px">
-          📝 Bài đăng cộng đồng
-        </div>
-        <button onclick="closeModal('posts-feed-modal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
-      </div>
-      <!-- Tabs: Feed / Chờ duyệt (admin only) -->
-      <div style="display:flex;gap:8px">
-        <button id="posts-tab-feed" onclick="switchPostsTab('feed')" style="padding:6px 16px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:linear-gradient(135deg,#ff50a0,#ff9800);color:#fff">🔥 Feed</button>
-        <button id="posts-tab-pending" onclick="switchPostsTab('pending')" style="display:none;padding:6px 16px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:700;background:transparent;color:var(--muted)">⏳ Chờ duyệt <span id="posts-pending-count" style="background:#ff4d4d;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:2px"></span></button>
-        <button onclick="openCreatePost()" style="margin-left:auto;display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:800;background:linear-gradient(135deg,#4f9eff,#7c4dff);color:#fff;box-shadow:0 2px 10px rgba(79,158,255,.35)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Đăng bài
-        </button>
-      </div>
-    </div>
-    <!-- Feed content -->
-    <div id="posts-feed-content" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px">
-      <div style="text-align:center;color:var(--muted);padding:40px 0">⏳ Đang tải...</div>
-    </div>
-    <div id="posts-load-more-row" style="display:none;padding:10px;text-align:center;flex-shrink:0">
-      <button onclick="loadMorePosts()" style="padding:8px 22px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;font-weight:700">Xem thêm ↓</button>
-    </div>
+<!-- POSTS FEED PAGE (full-screen, kiểu Facebook) -->
+<div id="posts-feed-page" style="display:none;position:fixed;inset:0;z-index:18000;background:var(--bg);flex-direction:column;overflow:hidden;-webkit-overflow-scrolling:touch">
+  <!-- Header cố định -->
+  <div style="padding:0 16px;height:54px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1">
+    <button onclick="closePostsFeedPage()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px 8px 4px 0;line-height:1">←</button>
+    <div style="font-size:16px;font-weight:900">📝 Bài đăng cộng đồng</div>
+    <button onclick="openCreatePost()" style="display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:800;background:linear-gradient(135deg,#4f9eff,#7c4dff);color:#fff;box-shadow:0 2px 10px rgba(79,158,255,.35)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Đăng bài
+    </button>
+  </div>
+  <!-- Tabs: Feed / Chờ duyệt (admin only) -->
+  <div style="display:flex;gap:8px;padding:10px 16px 8px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg)">
+    <button id="posts-tab-feed" onclick="switchPostsTab('feed')" style="padding:6px 16px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:700;background:linear-gradient(135deg,#ff50a0,#ff9800);color:#fff">🔥 Feed</button>
+    <button id="posts-tab-pending" onclick="switchPostsTab('pending')" style="display:none;padding:6px 16px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:700;background:transparent;color:var(--muted)">⏳ Chờ duyệt <span id="posts-pending-count" style="background:#ff4d4d;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:2px"></span></button>
+  </div>
+  <!-- Feed content cuộn -->
+  <div id="posts-feed-content" style="flex:1;overflow-y:auto;display:block;-webkit-overflow-scrolling:touch;overscroll-behavior:contain">
+    <div style="text-align:center;color:var(--muted);padding:40px 0">⏳ Đang tải...</div>
+  </div>
+  <div id="posts-load-more-row" style="display:none;padding:10px;text-align:center;flex-shrink:0">
+    <button onclick="loadMorePosts()" style="padding:8px 22px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;font-weight:700">Xem thêm ↓</button>
   </div>
 </div>
 
@@ -4481,11 +4479,17 @@ let _createPostMedia = []; // {type, data, name}
 let _postsTabActive = 'feed';
 
 function openPostsFeed(){
-  openModal('posts-feed-modal');
+  const page = document.getElementById('posts-feed-page');
+  if(page){ page.style.display='flex'; document.body.style.overflow='hidden'; }
   // Show pending tab for admin
   const pendingTab = document.getElementById('posts-tab-pending');
   if(pendingTab) pendingTab.style.display = IS_ADMIN ? 'inline-flex' : 'none';
   switchPostsTab('feed');
+}
+
+function closePostsFeedPage(){
+  const page = document.getElementById('posts-feed-page');
+  if(page){ page.style.display='none'; document.body.style.overflow=''; }
 }
 
 function switchPostsTab(tab){
@@ -4535,7 +4539,8 @@ function renderPostsFeed(){
     el.innerHTML='<div style="text-align:center;color:var(--muted);padding:50px 20px"><div style="font-size:48px;margin-bottom:12px">📭</div><div style="font-size:14px">Chưa có bài đăng nào</div><div style="font-size:12px;margin-top:6px">Hãy là người đầu tiên đăng bài!</div></div>';
     return;
   }
-  el.innerHTML = _postsCache.map(p => renderPostCard(p)).join('');
+  el.style.display='block';
+  el.innerHTML = _postsCache.map(p => renderPostCard(p)).join('<div style="height:8px;background:var(--glass2)"></div>');
 }
 
 function renderPostCard(p, inFeed=true){
@@ -4570,7 +4575,15 @@ function renderPostCard(p, inFeed=true){
   const commentCount = (p.comments||[]).length;
   const adminActions = IS_ADMIN ? `<button onclick="event.stopPropagation();adminDeletePost('${p.id}')" style="background:none;border:none;cursor:pointer;color:#ff5050;font-size:12px;padding:4px 8px;border-radius:8px;hover:background:rgba(255,80,80,.1)">🗑 Xóa</button>` : '';
 
-  return `<div style="background:var(--glass);border:1px solid var(--border);border-radius:18px;padding:14px 14px 10px;overflow:hidden" id="post-card-${p.id}">
+  // inFeed=true: Facebook flat style (no border/radius); inFeed=false: trong view-post-modal, dùng card nhẹ
+  const cardStyle = inFeed
+    ? `background:var(--bg);padding:12px 16px 0;`
+    : `background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:14px 14px 10px;overflow:hidden;`;
+  const actionBarStyle = inFeed
+    ? `border-top:1px solid var(--border);margin-top:8px;`
+    : `border-top:1px solid var(--border);margin-top:8px;`;
+
+  return `<div style="${cardStyle}" id="post-card-${p.id}">
     <!-- Author row -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <div style="width:40px;height:40px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;flex-shrink:0">${isAdmin?'👑':avatarLetter}</div>
@@ -4585,12 +4598,12 @@ function renderPostCard(p, inFeed=true){
     <!-- Media -->
     ${mediaHtml}
     <!-- Reaction summary bar -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
       <span>${topEmojis?`<span>${topEmojis}</span> `:''}${totalReacts>0?totalReacts+' lượt thích':''}</span>
       <span onclick="openViewPost('${p.id}')" style="cursor:pointer">${commentCount} bình luận</span>
     </div>
     <!-- Action buttons -->
-    <div style="display:flex;gap:0;margin-top:6px">
+    <div style="display:flex;gap:0;${actionBarStyle}">
       <div style="flex:1;position:relative">
         <button onclick="toggleReactPicker('${p.id}',event)" style="width:100%;padding:7px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:700;color:${myReact?'#ff50a0':'var(--muted)'};border-radius:10px;display:flex;align-items:center;justify-content:center;gap:5px">
           ${myReact||'👍'} ${myReact?'Đã thích':'Thích'}
@@ -4603,6 +4616,7 @@ function renderPostCard(p, inFeed=true){
         💬 Bình luận
       </button>
     </div>
+    ${inFeed?'<div style="height:12px"></div>':''}
   </div>`;
 }
 
