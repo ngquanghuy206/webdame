@@ -23,7 +23,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;transition:background .3s,color .3s,border-color .3s}
 :root{
-  --bg1:#0a0e1a;--bg2:#0d1428;--bg3:#0f1830;
+  --bg1:#0a0e1a;--bg2:#0d1428;--bg3:#0f1830;--bg:#0a0e1a;
   --glass:rgba(255,255,255,0.04);--glass2:rgba(255,255,255,0.08);
   --border:rgba(255,255,255,0.1);
   --blue:#4f9eff;--blue2:#2979ff;--cyan:#00e5ff;--purple:#7c4dff;
@@ -31,7 +31,7 @@
   --text:#f0f4ff;--muted:rgba(240,244,255,0.45);--shadow:rgba(0,0,0,0.5);
 }
 [data-theme="light"]{
-  --bg1:#e8edf8;--bg2:#dde4f5;--bg3:#d4dcf0;
+  --bg1:#e8edf8;--bg2:#dde4f5;--bg3:#d4dcf0;--bg:#e8edf8;
   --glass:rgba(255,255,255,0.6);--glass2:rgba(255,255,255,0.85);
   --border:rgba(0,0,0,0.1);--text:#1a1f35;--muted:rgba(26,31,53,0.5);--shadow:rgba(0,0,0,0.12);
 }
@@ -4380,7 +4380,7 @@ function _stopAdminChatPoll(){
      POSTS FEED MODAL
 ══════════════════════════════════════════════════════ -->
 <!-- POSTS FEED PAGE (full-screen, kiểu Facebook) -->
-<div id="posts-feed-page" style="display:none;position:fixed;inset:0;z-index:18000;background:var(--bg);flex-direction:column;overflow:hidden;-webkit-overflow-scrolling:touch">
+<div id="posts-feed-page" style="display:none;position:fixed;inset:0;z-index:25000;background:var(--bg1);flex-direction:column;overflow:hidden;-webkit-overflow-scrolling:touch">
   <!-- Header cố định -->
   <div style="padding:0 16px;height:54px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1">
     <button onclick="closePostsFeedPage()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px 8px 4px 0;line-height:1">←</button>
