@@ -9,6 +9,20 @@ from fastapi.middleware.cors import CORSMiddleware
 try: import aiohttp; HAS_AIOHTTP = True
 except: HAS_AIOHTTP = False
 
+HCAPTCHA_SECRET = "ES_79a6528cce374e0c840f699343e89afa"
+
+async def verify_hcaptcha(token: str) -> bool:
+    if not token: return False
+    try:
+        async with aiohttp.ClientSession() as s:
+            r = await s.post('https://hcaptcha.com/siteverify',
+                data={'secret': HCAPTCHA_SECRET, 'response': token},
+                timeout=aiohttp.ClientTimeout(total=8))
+            d = await r.json()
+            return d.get('success', False)
+    except:
+        return False
+
 # URL server để đăng ký Telegram webhook (Render tự set RENDER_EXTERNAL_URL)
 SITE_URL = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/") or "https://dzimeomeo.onrender.com"
 
@@ -310,6 +324,8 @@ async def register_send_otp(request: Request):
     password = (data.get("password") or "").strip()
     email    = (data.get("email") or "").strip()
     if not all([username, password, email]): raise HTTPException(400, "Thiếu thông tin")
+    htoken = data.get("hcaptcha_token","")
+    if not await verify_hcaptcha(htoken): raise HTTPException(400, "❌ Xác minh CAPTCHA thất bại")
     if len(username) < 6: raise HTTPException(400, "Username phải ≥ 6 ký tự")
     if len(password) < 6: raise HTTPException(400, "Mật khẩu phải ≥ 6 ký tự")
     if not re.match(r"[^@]+@gmail\.com$", email, re.I): raise HTTPException(400, "Chỉ chấp nhận @gmail.com")
@@ -370,6 +386,8 @@ async def login(request:Request):
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
     if not username or not password: raise HTTPException(400,"Thiếu thông tin")
+    htoken = data.get("hcaptcha_token","")
+    if not await verify_hcaptcha(htoken): raise HTTPException(400,"❌ Xác minh CAPTCHA thất bại")
     if username in ADMIN_ACCOUNTS:
         if ADMIN_ACCOUNTS[username] != hash_pw(password): raise HTTPException(401,"Sai mật khẩu")
         return JSONResponse({"ok":True,"token":create_session(username),"username":username,"is_admin":True,"balance":0})
@@ -398,8 +416,14 @@ async def api_me(request:Request):
         admin_user = users.get(username, {})
         return JSONResponse({"username":username,"is_admin":True,"balance":0,"email":"admin@system","created":"--","avatar":admin_user.get("avatar","")})
     user = users.get(username,{})
+    deposits = load_deposits()
+    purchases = load_purchases()
+    total_deposited = sum(d.get("amount",0) for d in deposits if d.get("username")==username and d.get("status")=="approved")
+    total_spent = sum(p.get("price",0) for p in purchases if p.get("username")==username)
     return JSONResponse({"username":username,"is_admin":False,
-        "balance":user.get("balance",0),"email":user.get("email",""),"created":user.get("created",""),"avatar":user.get("avatar","")})
+        "balance":user.get("balance",0),"email":user.get("email",""),"created":user.get("created",""),
+        "avatar":user.get("avatar",""),
+        "total_deposited":total_deposited,"total_spent":total_spent})
 
 @app.post("/api/user/avatar")
 async def update_avatar(request:Request):
