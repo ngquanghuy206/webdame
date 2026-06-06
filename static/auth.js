@@ -342,15 +342,13 @@ function doLogout(){
 window._loginCaptchaWidgetId = null;
 window._regCaptchaWidgetId   = null;
 
-function initHCaptcha() {
-  if(typeof hcaptcha === 'undefined') {
-    setTimeout(initHCaptcha, 300); return;
-  }
+// Được gọi bởi hCaptcha API sau khi load xong (onload=onHCaptchaLoad)
+window.onHCaptchaLoad = function() {
+  const SITEKEY = '6e146f7c-115a-4e36-903a-e908c5d46064';
   const loginEl = document.getElementById('login-hcaptcha');
   const regEl   = document.getElementById('reg-hcaptcha');
   if(loginEl && window._loginCaptchaWidgetId === null)
-    window._loginCaptchaWidgetId = hcaptcha.render(loginEl, {sitekey:'4650897c-b35c-4044-a92a-1d9adf786764', theme:'dark'});
+    window._loginCaptchaWidgetId = hcaptcha.render(loginEl, {sitekey: SITEKEY, theme:'dark'});
   if(regEl && window._regCaptchaWidgetId === null)
-    window._regCaptchaWidgetId   = hcaptcha.render(regEl,   {sitekey:'4650897c-b35c-4044-a92a-1d9adf786764', theme:'dark'});
-}
-document.addEventListener('DOMContentLoaded', initHCaptcha);
+    window._regCaptchaWidgetId   = hcaptcha.render(regEl,   {sitekey: SITEKEY, theme:'dark'});
+};
