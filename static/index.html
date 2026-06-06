@@ -2098,13 +2098,13 @@ async function loadDepositHistoryStandalone(){
     list.innerHTML=data.map(d=>{
       const statusColor=d.status==='approved'?'var(--green)':d.status==='rejected'?'var(--red)':'var(--yellow)';
       const statusText=d.status==='approved'?'✅ Thành công':d.status==='rejected'?'❌ Từ chối':'⏳ Chờ duyệt';
-      return \`<div style="background:var(--glass2);border-radius:12px;padding:12px;margin-bottom:8px">
+      return `<div style="background:var(--glass2);border-radius:12px;padding:12px;margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <b style="font-size:14px;color:var(--green)">${\`${(d.amount||0).toLocaleString()}đ\`}</b>
+          <b style="font-size:14px;color:var(--green)">${`${(d.amount||0).toLocaleString()}đ`}</b>
           <span style="font-size:12px;color:\${statusColor}">\${statusText}</span>
         </div>
         <div style="font-size:11px;color:var(--muted)">\${d.order_id} · \${d.created}</div>
-      </div>\`;
+      </div>`;
     }).join('');
   }catch(ex){list.innerHTML='<div style="color:var(--red);text-align:center">Lỗi tải dữ liệu</div>';}
 }
@@ -2116,7 +2116,7 @@ async function loadPurchaseHistoryStandalone(){
     const r=await fetch('/api/purchase/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
     const data=await r.json();
     if(!data.length){list.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px">📭 Chưa có lịch sử mua</div>';return;}
-    list.innerHTML=data.map(d=>\`<div style="background:var(--glass2);border-radius:12px;padding:12px;margin-bottom:8px">
+    list.innerHTML=data.map(d=>`<div style="background:var(--glass2);border-radius:12px;padding:12px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <b style="font-size:13px" id="pur-id-disp">\${d.id||'#dzixmode?????'}</b>
         <span style="font-size:12px;color:var(--cyan)">\${d.qty} máy ảo</span>
@@ -2127,7 +2127,7 @@ async function loadPurchaseHistoryStandalone(){
         <span>Hết hạn: \${d.expires_at}</span>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:2px">\${d.created}</div>
-    </div>\`).join('');
+    </div>`).join('');
   }catch(ex){list.innerHTML='<div style="color:var(--red);text-align:center">Lỗi tải dữ liệu</div>';}
 }
 
