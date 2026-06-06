@@ -1,4 +1,5 @@
 import asyncio, uuid, json, os, hashlib, secrets, re, time, random, string
+from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -8,12 +9,35 @@ from fastapi.middleware.cors import CORSMiddleware
 try: import aiohttp; HAS_AIOHTTP = True
 except: HAS_AIOHTTP = False
 
-app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# URL server để đăng ký Telegram webhook (Render tự set RENDER_EXTERNAL_URL)
+SITE_URL = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/") or "https://dzimeomeo.onrender.com"
 
 TG_BOT_TOKEN   = "7818000635:AAGJ4troYL-SpYEfoTqxj_axm4B-YPt1hvU"
 TG_ADMIN_ID    = 7454964260
+
+async def _register_tg_webhook():
+    if not HAS_AIOHTTP: return
+    webhook_url = f"{SITE_URL}/api/tg_webhook"
+    try:
+        async with aiohttp.ClientSession() as s:
+            r = await s.post(
+                f"https://api.telegram.org/bot{TG_BOT_TOKEN}/setWebhook",
+                json={"url": webhook_url, "allowed_updates": ["callback_query", "message"]},
+                timeout=aiohttp.ClientTimeout(total=10)
+            )
+            data = await r.json()
+            print(f"[TG Webhook] {webhook_url} -> {data}")
+    except Exception as e:
+        print(f"[TG Webhook] Loi: {e}")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await _register_tg_webhook()
+    yield
+
+app = FastAPI(lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.mount("/static", StaticFiles(directory="static"), name="static")
 RESEND_API_KEY = "re_Tj3Eyk2M_NgQf9E2sKdnmbSmdMsJefXpt"
 FROM_EMAIL     = "onboarding@resend.dev"
 LOGO_URL       = "https://i.imgur.com/1qYFul7.jpeg"
@@ -318,10 +342,35 @@ async def api_me(request:Request):
     if not username: raise HTTPException(401,"Chưa đăng nhập")
     users = load_users()
     if is_admin(username):
-        return JSONResponse({"username":username,"is_admin":True,"balance":0,"email":"admin@system","created":"--"})
+        # Admin avatar stored in users too
+        admin_user = users.get(username, {})
+        return JSONResponse({"username":username,"is_admin":True,"balance":0,"email":"admin@system","created":"--","avatar":admin_user.get("avatar","")})
     user = users.get(username,{})
     return JSONResponse({"username":username,"is_admin":False,
-        "balance":user.get("balance",0),"email":user.get("email",""),"created":user.get("created","")})
+        "balance":user.get("balance",0),"email":user.get("email",""),"created":user.get("created",""),"avatar":user.get("avatar","")})
+
+@app.post("/api/user/avatar")
+async def update_avatar(request:Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401,"Chua dang nhap")
+    data = await request.json()
+    avatar = data.get("avatar","")  # base64 data URL
+    # Limit size ~500KB
+    if len(avatar) > 700000: raise HTTPException(400,"Anh qua lon (toi da 500KB)")
+    users = load_users()
+    if username not in users:
+        users[username] = {}
+    users[username]["avatar"] = avatar
+    save_users(users)
+    return JSONResponse({"ok":True,"avatar":avatar})
+
+@app.get("/api/user/avatar/{username}")
+async def get_user_avatar(username:str, request:Request):
+    caller = get_session_user(get_token(request))
+    if not caller: raise HTTPException(401,"Chua dang nhap")
+    users = load_users()
+    u = users.get(username,{})
+    return JSONResponse({"username":username,"avatar":u.get("avatar","")})
 
 @app.post("/api/change-password")
 async def change_password(request:Request):
@@ -1243,9 +1292,12 @@ async def post_create(request: Request):
     media = data.get("media") or []  # list of {type, data, name}
     if not text and not media: raise HTTPException(400, "Bài viết trống")
     posts = load_posts()
+    users = load_users()
+    author_avatar = users.get(username, {}).get("avatar", "")
     post = {
         "id": str(uuid.uuid4())[:10],
         "author": username,
+        "author_avatar": author_avatar,
         "text": text,
         "media": media[:5],  # max 5 files
         "status": "pending" if not is_admin(username) else "approved",
