@@ -14,6 +14,7 @@ async function openVpsShop(){
     try{const r=await fetch('/api/vps-plans');if(r.ok)_vpsPlans=await r.json();}catch{}
   }
   openModal('vps-shop-modal');
+  if(typeof renderHotDealShopList === 'function') renderHotDealShopList();
   setTimeout(function(){
     updateCustomPrice();
     renderComboPlans();

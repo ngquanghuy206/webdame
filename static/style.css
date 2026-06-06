@@ -427,3 +427,17 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;color:#fff;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4);pointer-events:none;max-width:90vw;text-align:center}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+/* ── HOT DEAL CAROUSEL ── */
+#hd-carousel-track::-webkit-scrollbar{display:none}
+#hd-carousel-track{-ms-overflow-style:none;scrollbar-width:none}
+/* ── BELL ANIMATION ── */
+@keyframes bellRing{
+  0%{transform:rotate(0)}
+  15%{transform:rotate(15deg)}
+  30%{transform:rotate(-15deg)}
+  45%{transform:rotate(10deg)}
+  60%{transform:rotate(-10deg)}
+  75%{transform:rotate(5deg)}
+  90%{transform:rotate(-5deg)}
+  100%{transform:rotate(0)}
+}

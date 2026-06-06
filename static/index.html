@@ -208,6 +208,18 @@
     📝 Bài đăng
     <span class="sb-item-tag new">NEW</span>
   </div>
+  <div class="sb-item" onclick="openTopNapModal();closeMenu()">
+    <span class="sb-item-icon ic-yellow"><svg viewBox="0 0 24 24" fill="none" stroke="#ffc800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+    🏆 Bảng xếp hạng nạp
+  </div>
+  <div class="sb-item" id="sb-admin-hotdeal-item" style="display:none" onclick="openAdminHotDealModal();closeMenu()">
+    <span class="sb-item-icon" style="background:rgba(255,100,0,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#ff6d00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+    🔥 Tạo Hot Deal
+  </div>
+  <div class="sb-item" id="sb-admin-notif-item" style="display:none" onclick="openAdminNotifModal();closeMenu()">
+    <span class="sb-item-icon" style="background:rgba(255,152,0,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+    📢 Tạo thông báo
+  </div>
   <div class="sb-divider"></div>
   <div class="sb-section-label">Khác</div>
   <div class="sb-item" onclick="openModal('admin-modal');closeMenu()">
@@ -266,6 +278,10 @@
       <div onclick="openInboxPage()" title="Hộp thư" style="width:38px;height:38px;border-radius:11px;border:1px solid rgba(79,158,255,.25);background:rgba(79,158,255,.08);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0">
         <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         <span id="chat-unread-dot-welcome" style="display:none;position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:#ff4d4d;border:1.5px solid var(--bg1)"></span>
+      </div>
+      <div id="bell-btn" onclick="event.stopPropagation();toggleBellDrop()" title="Thông báo" style="width:38px;height:38px;border-radius:11px;border:1px solid rgba(255,152,0,.25);background:rgba(255,152,0,.08);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0">
+        <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="bell-badge" style="display:none;position:absolute;top:4px;right:4px;min-width:16px;height:16px;border-radius:8px;background:#ff4d4d;border:1.5px solid var(--bg1);font-size:9px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px"></span>
       </div>
       <div class="hamburger-btn" onclick="toggleMenu()">
         <span></span><span></span><span></span>
@@ -340,6 +356,9 @@
         <div class="wab-desc">Xem, quản lý, khởi động lại các máy chủ đã tạo. Theo dõi trạng thái realtime.</div>
       </button>
     </div>
+
+    <!-- HOT DEAL CAROUSEL -->
+    <div id="hot-deal-carousel-wrap" style="margin-bottom:18px;display:none"></div>
 
     <!-- COPYRIGHT -->
     <div style="text-align:center;margin-top:32px;padding:20px 0 8px;border-top:1px solid rgba(255,255,255,.06)">
@@ -461,29 +480,41 @@
       </div>
       <!-- Step bar -->
       <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;background:var(--glass2)">
-        <div id="sv-step-bar-0" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;transition:.3s;background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff">📛 Tên</div>
-        <div id="sv-step-bar-1" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;transition:.3s;color:var(--muted)">1 · Cookie</div>
-        <div id="sv-step-bar-2" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;transition:.3s;color:var(--muted)">2 · Target</div>
-        <div id="sv-step-bar-3" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;transition:.3s;color:var(--muted)">3 · Chạy</div>
+        <div id="sv-step-bar-0" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;transition:.3s;background:linear-gradient(135deg,var(--blue2),var(--purple));color:#fff">🖥 Slot</div>
+        <div id="sv-step-bar-1" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;transition:.3s;color:var(--muted)">📛 Tên</div>
+        <div id="sv-step-bar-2" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;transition:.3s;color:var(--muted)">🍪 Cookie</div>
+        <div id="sv-step-bar-3" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;transition:.3s;color:var(--muted)">🎯 Target</div>
       </div>
     </div>
 
     <div style="padding:20px">
 
-    <!-- ── BƯỚC 0: TÊN MÁY CHỦ ── -->
+    <!-- ── BƯỚC 0: CHỌN SLOT ── -->
     <div id="sv-step-0">
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px">🖥 Chọn máy chủ (slot)</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+        Chọn slot đã mua để sử dụng cho lần dame này.
+      </div>
+      <div id="sv-slot-list" style="max-height:260px;overflow-y:auto"></div>
+      <div id="sv-err-slot" class="auth-err" style="margin-bottom:8px;display:none"></div>
+      <button class="btn btn-primary" id="sv-btn-slot-next" style="width:100%;padding:13px;font-size:14px;margin-top:4px" onclick="svWizardNext(0)">Tiếp theo →</button>
+    </div>
+
+    <!-- ── BƯỚC 1: TÊN MÁY CHỦ ── -->
+    <div id="sv-step-1" style="display:none">
       <div style="font-size:15px;font-weight:700;margin-bottom:6px">📛 Đặt tên máy chủ</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">
         Tên dùng để phân biệt các máy chủ, không ảnh hưởng chức năng.
       </div>
       <div class="field-label">Tên máy chủ</div>
       <input id="sv-name" class="field-input" placeholder="VD: Dame target ABC, Máy chủ 1..." style="margin-bottom:16px"/>
-      <button class="btn btn-primary" style="width:100%;padding:13px;font-size:14px" onclick="svWizardNext(0)">Tiếp theo →</button>
+      <button class="btn btn-primary" style="width:100%;padding:13px;font-size:14px" onclick="svWizardNext(1)">Tiếp theo →</button>
+      <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:8px" onclick="svWizardBack(1)">← Đổi slot</button>
     </div>
 
     <!-- ── BƯỚC 1: COOKIE ── -->
-    <div id="sv-step-1" style="display:none">
-      <div style="font-size:13px;font-weight:800;color:var(--blue);margin-bottom:4px">🍪 BƯỚC 1 — NHẬP COOKIE FACEBOOK</div>
+    <div id="sv-step-2" style="display:none">
+      <div style="font-size:13px;font-weight:800;color:var(--blue);margin-bottom:4px">🍪 BƯỚC 2 — NHẬP COOKIE FACEBOOK</div>
       <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">
         Hỗ trợ mọi format: <b>header string</b>, <b>JSON array</b> (Cookie-Editor), nhiều dòng.
       </div>
@@ -501,11 +532,11 @@
       <input id="sv-tab-name" class="field-input" type="text" placeholder="VD: Acc chính, Nick dự phòng..." style="font-size:13px;margin-bottom:14px"/>
       <div id="sv-err1" class="auth-err" style="margin-bottom:8px"></div>
       <button class="btn btn-primary" id="sv-btn-cookie" style="width:100%;padding:13px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="svWizardCookieVerify()"><span class="sb-item-icon" style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg></span>Xác nhận Cookie</button>
-      <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:8px" onclick="svWizardBack(1)">← Đổi tên</button>
+      <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:8px" onclick="svWizardBack(2)">← Đổi tên</button>
     </div>
 
     <!-- ── BƯỚC 2: TARGET ── -->
-    <div id="sv-step-2" style="display:none">
+    <div id="sv-step-3" style="display:none">
       <!-- Acc confirmed -->
       <div id="sv-acc-confirmed" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);margin-bottom:14px">
         <div style="font-size:26px">🍪</div>
@@ -515,21 +546,22 @@
         </div>
         <button onclick="svWizardBack(2)" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px" title="Đổi cookie">✏️</button>
       </div>
-      <div style="font-size:13px;font-weight:800;color:var(--blue);margin-bottom:8px">🎯 BƯỚC 2 — NHẬP LINK TARGET</div>
+      <div style="font-size:13px;font-weight:800;color:var(--blue);margin-bottom:8px">🎯 BƯỚC 3 — NHẬP LINK TARGET</div>
       <input id="sv-target" class="field-input" type="text" placeholder="https://www.facebook.com/username hoặc UID..." style="margin-bottom:10px">
       <div class="field-label" style="font-size:12px;margin-bottom:6px">👤 Tên nạn nhân (tuỳ chọn)</div>
       <input id="sv-victim-name" class="field-input" type="text" placeholder="VD: Nguyễn Văn A..." style="font-size:13px;margin-bottom:14px"/>
       <div id="sv-err2" class="auth-err" style="margin-bottom:8px"></div>
       <button class="btn btn-primary" style="width:100%;padding:13px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="svWizardTargetConfirm()"><span class="sb-item-icon" style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Xác nhận Target →</button>
-      <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:8px" onclick="svWizardBack(2)">← Đổi cookie</button>
+      <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:8px" onclick="svWizardBack(3)">← Đổi cookie</button>
     </div>
 
     <!-- ── BƯỚC 3: XÁC NHẬN & CHẠY ── -->
-    <div id="sv-step-3" style="display:none">
+    <div id="sv-step-4" style="display:none">
       <div style="background:var(--glass2);border-radius:14px;padding:14px;margin-bottom:16px">
         <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:10px">📋 Tóm tắt cấu hình</div>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">🖥 Máy chủ</span><span id="sv-sum-name" style="font-weight:700;color:var(--text)">—</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">🖥 Slot</span><span id="sv-sum-slot" style="font-weight:700;color:var(--blue)">—</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">📛 Tên</span><span id="sv-sum-name" style="font-weight:700;color:var(--text)">—</span></div>
           <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">🍪 Cookie acc</span><span id="sv-sum-acc" style="font-weight:700;color:var(--green)">—</span></div>
           <div style="height:1px;background:var(--border)"></div>
           <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">👤 Nạn nhân</span><span id="sv-sum-victim" style="font-weight:700;color:var(--red)">—</span></div>
@@ -548,7 +580,7 @@
       <div id="sv-err3" class="auth-err" style="margin-bottom:10px"></div>
       <button class="btn btn-primary" id="sv-btn-start" style="width:100%;padding:14px;font-size:15px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="svWizardStartAndSave()"><span class="sb-item-icon" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>Lưu & Chạy ngay</button>
       <button class="btn" style="width:100%;padding:12px;font-size:13px;background:var(--glass2);border:1px solid var(--border);color:var(--muted)" onclick="svWizardSaveOnly()">💾 Chỉ lưu (chạy sau)</button>
-      <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:6px" onclick="svWizardBack(3)">← Đổi target</button>
+      <button class="btn btn-outline" style="width:100%;padding:10px;font-size:12px;margin-top:6px" onclick="svWizardBack(4)">← Đổi target</button>
     </div>
 
     </div><!-- end padding -->
@@ -931,6 +963,9 @@
         <div id="vps-plans-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px"></div>
       </div>
 
+      <!-- Hot Deal section in shop -->
+      <div id="hot-deal-shop-section" style="margin-top:18px;display:none"></div>
+
       <!-- Combo section (luôn hiện, scroll dọc bên dưới) -->
       <div style="margin-top:18px">
         <div style="font-size:12px;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px">
@@ -983,9 +1018,9 @@
             <img id="ai-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover" alt="avatar"/>
             <span id="ai-avatar-icon">👤</span>
           </div>
-          <label for="ai-avatar-input" title="Đổi ảnh đại diện" style="position:absolute;bottom:2px;right:2px;width:26px;height:26px;border-radius:50%;background:#4f9eff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #1a2040">
+          <div onclick="event.preventDefault();event.stopPropagation();document.getElementById('ai-avatar-input').click()" title="Đổi ảnh đại diện" style="position:absolute;bottom:2px;right:2px;width:26px;height:26px;border-radius:50%;background:#4f9eff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #1a2040">
             <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="13" height="13"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          </label>
+          </div>
           <input type="file" id="ai-avatar-input" accept="image/*" style="display:none" onchange="handleAvatarChange(this)">
         </div>
       </div>
@@ -1424,9 +1459,9 @@
   <div id="chat-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch"></div>
   <!-- Input -->
   <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;background:var(--bg1)">
-    <label for="chat-img-input" style="width:36px;height:36px;border-radius:50%;background:var(--glass2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border:1px solid var(--border)">
+    <div onclick="event.preventDefault();event.stopPropagation();document.getElementById('chat-img-input').click()" style="width:36px;height:36px;border-radius:50%;background:var(--glass2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border:1px solid var(--border)">
       <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="17" height="17"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-    </label>
+    </div>
     <input type="file" id="chat-img-input" accept="image/*" style="display:none" onchange="chatAttachImage(this)">
     <div style="flex:1;background:var(--glass2);border-radius:22px;padding:0 14px;display:flex;align-items:center;border:1px solid var(--border)">
       <textarea id="chat-input-text" placeholder="Nhập tin nhắn..." rows="1" style="flex:1;background:none;border:none;outline:none;padding:10px 0;color:var(--text);font-size:14px;resize:none;font-family:inherit;max-height:90px;overflow-y:auto;-webkit-overflow-scrolling:touch" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chatSend();}"></textarea>
@@ -1469,9 +1504,9 @@
   </div>
   <div id="admin-thread-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch"></div>
   <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;background:var(--bg1)">
-    <label for="admin-img-input" style="width:36px;height:36px;border-radius:50%;background:var(--glass2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border:1px solid var(--border)">
+    <div onclick="event.preventDefault();event.stopPropagation();document.getElementById('admin-img-input').click()" style="width:36px;height:36px;border-radius:50%;background:var(--glass2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;border:1px solid var(--border)">
       <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="17" height="17"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-    </label>
+    </div>
     <input type="file" id="admin-img-input" accept="image/*" style="display:none" onchange="adminAttachImage(this)">
     <div style="flex:1;background:var(--glass2);border-radius:22px;padding:0 14px;display:flex;align-items:center;border:1px solid var(--border)">
       <textarea id="admin-reply-text2" placeholder="Nhập reply..." rows="1" style="flex:1;background:none;border:none;outline:none;padding:10px 0;color:var(--text);font-size:14px;resize:none;font-family:inherit;max-height:90px;overflow-y:auto;-webkit-overflow-scrolling:touch" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();adminChatReplyNew();}"></textarea>
@@ -1531,15 +1566,15 @@
       <div id="create-post-media-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
       <!-- Media buttons -->
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-        <label for="post-media-input" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);background:var(--glass2)">
+        <div onclick="event.preventDefault();event.stopPropagation();document.getElementById('post-media-input').click()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);background:var(--glass2);user-select:none;-webkit-user-select:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           Ảnh / Video
-        </label>
+        </div>
         <input type="file" id="post-media-input" accept="image/*,video/*" multiple style="display:none" onchange="handlePostMediaAdd(this)">
-        <label for="post-file-input" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);background:var(--glass2)">
+        <div onclick="event.preventDefault();event.stopPropagation();document.getElementById('post-file-input').click()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);background:var(--glass2);user-select:none;-webkit-user-select:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           File
-        </label>
+        </div>
         <input type="file" id="post-file-input" multiple style="display:none" onchange="handlePostFileAdd(this)">
       </div>
       <div id="create-post-err" style="color:#ff5050;font-size:12px;min-height:16px;margin-top:8px"></div>
@@ -1561,9 +1596,9 @@
     <!-- Comment input -->
     <div style="padding:10px 12px;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0">
       <div style="display:flex;gap:8px;align-items:flex-end">
-        <label for="comment-media-input" style="width:34px;height:34px;border-radius:50%;background:var(--glass2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+        <div onclick="event.preventDefault();event.stopPropagation();document.getElementById('comment-media-input').click()" style="width:34px;height:34px;border-radius:50%;background:var(--glass2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
           <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        </label>
+        </div>
         <input type="file" id="comment-media-input" accept="image/*,video/*" style="display:none" onchange="handleCommentMedia(this)">
         <textarea id="comment-text-input" placeholder="Viết bình luận..." rows="1" style="flex:1;background:var(--glass2);border:none;border-radius:12px;padding:9px 12px;color:var(--text);font-size:14px;resize:none;outline:none;font-family:inherit;max-height:80px" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitComment();}"></textarea>
         <button onclick="submitComment()" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ff50a0,#ff9800);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -1576,6 +1611,8 @@
 </div>
 
 <script src="/static/posts.js"></script>
+<script src="/static/hotdeal.js"></script>
+<script src="/static/notifications.js"></script>
 
 <!-- LIGHTBOX VIEWER -->
 <div id="lightbox-overlay" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;z-index:99000;background:rgba(0,0,0,.92);align-items:center;justify-content:center;flex-direction:column">
@@ -1589,11 +1626,148 @@
 
 <!-- PENDING APPROVAL MODAL -->
 <div class="modal-overlay" id="pending-approval-modal" onclick="if(event.target===this)closeModal('pending-approval-modal')">
-  <div class="modal-box" style="max-width:320px;text-align:center">
+  <div class="modal-box" style="max-width:320px;text-align:center;position:relative">
+    <button onclick="closeModal('pending-approval-modal')" style="position:absolute;top:10px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1;padding:4px 6px;border-radius:50%;transition:background 0.2s" onmouseover="this.style.background='rgba(128,128,128,0.15)'" onmouseout="this.style.background='none'">✕</button>
     <div style="font-size:48px;margin-bottom:12px">⏳</div>
     <div style="font-size:17px;font-weight:800;margin-bottom:8px">Đang chờ duyệt</div>
-    <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:20px">Bài viết của bạn đã được gửi thành công.<br>Vui lòng chờ Admin duyệt bài nhé!</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:20px">Bài viết của bạn đã được gửi thành công! 🎉<br><br>Vui lòng chờ Admin xem xét và duyệt bài — bài sẽ xuất hiện trên Feed sau khi được duyệt nhé!</div>
     <button class="close-btn" onclick="closeModal('pending-approval-modal')" style="width:100%;margin:0">Đã hiểu</button>
+  </div>
+</div>
+
+<!-- ═══ BELL DROPDOWN ═══ -->
+<div id="bell-dropdown" style="display:none;position:fixed;top:62px;right:12px;width:300px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:8000;opacity:0;transform:translateY(-8px);transition:opacity .18s,transform .18s;overflow:hidden"></div>
+
+<!-- ═══ MAIN NOTIFICATION MODAL ═══ -->
+<div class="modal-overlay" id="main-notif-modal" onclick="if(event.target===this)closeModal('main-notif-modal')">
+  <div class="modal-box" style="max-width:380px;padding:0;overflow:hidden">
+    <div style="background:linear-gradient(135deg,rgba(124,77,255,.15),rgba(41,121,255,.1));padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:15px;font-weight:800">🔔 Thông báo</div>
+      <button onclick="closeModal('main-notif-modal')" style="background:none;border:none;font-size:18px;color:var(--muted);cursor:pointer">✕</button>
+    </div>
+    <div style="padding:18px">
+      <img id="main-notif-img" src="" style="width:100%;border-radius:12px;margin-bottom:14px;display:none">
+      <div id="main-notif-text" style="font-size:14px;line-height:1.7;color:var(--text)"></div>
+    </div>
+    <div style="padding:0 18px 16px">
+      <button class="close-btn" onclick="closeModal('main-notif-modal')" style="width:100%;margin:0">Đã hiểu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN: HOT DEAL MODAL ═══ -->
+<div class="modal-overlay" id="admin-hotdeal-modal" onclick="if(event.target===this)closeModal('admin-hotdeal-modal')">
+  <div class="modal-box" style="max-width:480px;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:88vh">
+    <div style="padding:14px 18px;background:linear-gradient(135deg,rgba(255,100,0,.12),rgba(255,50,0,.08));border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div style="font-size:16px;font-weight:800">🔥 Tạo Hot Deal</div>
+      <button onclick="closeModal('admin-hotdeal-modal')" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:16px">
+      <div style="display:grid;gap:10px;margin-bottom:14px">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">Tiêu đề deal</div>
+          <input id="ahd-title" class="field-input" placeholder="VD: 3 Máy ảo siêu deal tuần này!">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">📱 Số máy ảo</div>
+            <input id="ahd-slots" class="field-input" type="number" value="1" min="1" placeholder="Số máy ảo">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">⏱ Thời hạn máy ảo</div>
+            <input id="ahd-duration" class="field-input" placeholder="VD: 1d, 7d, 1m, 1y">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">💰 Giá bán (VND)</div>
+            <input id="ahd-price" class="field-input" type="number" placeholder="VD: 150000">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">🏷 Giá gốc (VND)</div>
+            <input id="ahd-orig" class="field-input" type="number" placeholder="VD: 200000">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">🛒 Số lượt mua</div>
+            <input id="ahd-qty" class="field-input" type="number" value="10" min="1" placeholder="Tối đa bao nhiêu lượt">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">⏳ Deal hết hạn sau</div>
+            <input id="ahd-expires" class="field-input" placeholder="VD: 24h, 3d, 1m">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">🖼 URL ảnh (tùy chọn)</div>
+          <input id="ahd-imgurl" class="field-input" placeholder="https://...">
+        </div>
+      </div>
+      <div id="ahd-err" style="color:#ff5050;font-size:12px;margin-bottom:8px"></div>
+      <button id="ahd-create-btn" onclick="adminCreateHotDeal()" style="width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff6d00,#ff3d00);color:#fff;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:16px">🔥 Tạo Hot Deal</button>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Deal đang hoạt động</div>
+      <div id="admin-hotdeal-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN: NOTIFICATIONS MODAL ═══ -->
+<div class="modal-overlay" id="admin-notif-modal" onclick="if(event.target===this)closeModal('admin-notif-modal')">
+  <div class="modal-box" style="max-width:460px;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:88vh">
+    <div style="padding:14px 18px;background:linear-gradient(135deg,rgba(124,77,255,.12),rgba(41,121,255,.1));border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div style="font-size:16px;font-weight:800">📢 Quản lý thông báo</div>
+      <button onclick="closeModal('admin-notif-modal')" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:16px">
+      <!-- Main notification -->
+      <div style="font-size:12px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">📌 Thông báo chính (popup khi mở web)</div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">Nội dung (xuống dòng tự động)</div>
+        <textarea id="anotif-main-text" style="width:100%;min-height:120px;padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:13px;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box" placeholder="Nhập nội dung thông báo...&#10;Xuống dòng bình thường sẽ được giữ nguyên"></textarea>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">URL ảnh (tùy chọn)</div>
+        <input id="anotif-main-img" class="field-input" placeholder="https://... (để trống nếu không có ảnh)">
+      </div>
+      <button id="anotif-save-btn" onclick="adminSaveMainNotif()" style="width:100%;padding:11px;border:none;border-radius:12px;background:linear-gradient(135deg,#2979ff,#7c4dff);color:#fff;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:18px">💾 Lưu thông báo</button>
+
+      <!-- Sub notifications / bell -->
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div style="font-size:12px;font-weight:800;color:#ff9800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">🔔 Gửi thông báo chuông</div>
+        <textarea id="anotif-sub-text" style="width:100%;min-height:80px;padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:13px;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box;margin-bottom:10px" placeholder="Nội dung thông báo gửi tới chuông của user..."></textarea>
+        <button id="anotif-sub-btn" onclick="adminSendSubNotif()" style="width:100%;padding:11px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff9800,#ff6d00);color:#fff;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:14px">🔔 Gửi thông báo</button>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Thông báo đã gửi</div>
+        <div id="anotif-sub-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOP NẠP MODAL ═══ -->
+<div class="modal-overlay" id="top-nap-modal" onclick="if(event.target===this)closeModal('top-nap-modal')">
+  <div class="modal-box" style="max-width:420px;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:88vh">
+    <div style="padding:14px 18px;background:linear-gradient(135deg,rgba(255,215,0,.12),rgba(255,165,0,.08));border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="font-size:16px;font-weight:800">🏆 Bảng xếp hạng nạp</div>
+        <div id="top-nap-month" style="font-size:11px;color:var(--muted)">Tháng hiện tại</div>
+      </div>
+      <button onclick="closeModal('top-nap-modal')" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:16px">
+      <div style="background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(255,165,0,.06));border:1px solid rgba(255,215,0,.2);border-radius:14px;padding:14px;margin-bottom:16px;font-size:12px;line-height:1.7;color:var(--text)">
+        🎁 <b>Phần thưởng cuối tháng:</b><br>
+        🥇 Top 1 — Quà đặc biệt + 500.000 VND<br>
+        🥈 Top 2 — Phần quà + 200.000 VND<br>
+        🥉 Top 3 — Phần quà + 100.000 VND<br>
+        4️⃣ Top 4 — Voucher 50.000 VND<br>
+        5️⃣ Top 5 — Voucher 20.000 VND<br>
+        <span style="color:var(--muted);font-size:11px">* Bảng tự reset vào đầu mỗi tháng</span>
+      </div>
+      <div id="top-nap-list"><div style="text-align:center;padding:20px;color:var(--muted)">Đang tải...</div></div>
+      <div id="top-nap-admin-ctrl" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+        <button onclick="adminResetTopNap()" style="width:100%;padding:10px;border:none;border-radius:12px;background:rgba(255,80,80,.15);color:#ff5050;font-size:13px;font-weight:700;cursor:pointer">🔄 Reset bảng xếp hạng</button>
+      </div>
+    </div>
   </div>
 </div>
 </body>

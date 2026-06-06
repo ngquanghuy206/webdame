@@ -399,6 +399,26 @@ function showApp(){
   if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
   startClock();loadHistory();
   if(!IS_ADMIN) refreshBalance();
+  // Show/hide admin-only sidebar items
+  const adminHotDeal = document.getElementById('sb-admin-hotdeal-item');
+  if(adminHotDeal) adminHotDeal.style.display = IS_ADMIN ? 'flex' : 'none';
+  const adminNotif = document.getElementById('sb-admin-notif-item');
+  if(adminNotif) adminNotif.style.display = IS_ADMIN ? 'flex' : 'none';
+  const topNapAdmin = document.getElementById('top-nap-admin-ctrl');
+  if(topNapAdmin) topNapAdmin.style.display = IS_ADMIN ? '' : 'none';
+  // Load hot deals + notifications
+  setTimeout(()=>{
+    if(typeof loadHotDeals === 'function') loadHotDeals();
+    if(typeof loadNotifications === 'function') loadNotifications();
+    // Show main notification popup if content exists
+    setTimeout(async ()=>{
+      try {
+        const rn = await fetch('/api/notifications',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+        const nd = await rn.json();
+        if(nd.main && nd.main.text && nd.main.text.trim()) openMainNotifModal();
+      } catch(e){}
+    }, 800);
+  }, 300);
   // Poll unread chat count for admin badge
   if(IS_ADMIN){
     // Poll unread badge mỗi 15s
@@ -786,9 +806,7 @@ function downloadHist(idx){
 // ═══════════════════════════════════════════════════════
 let CURRENT_BALANCE = 0;
 function fmtMoney(n){
-  if(n>=1000000) return (n/1000000).toFixed(n%1000000===0?0:1)+'M đ';
-  if(n>=1000) return (n/1000).toFixed(n%1000===0?0:1)+'K đ';
-  return n.toLocaleString('vi-VN')+'đ';
+  return Number(n||0).toLocaleString('vi-VN') + ' VND';
 }
 function updateBalanceDisplay(bal){
   if(IS_ADMIN){ // admin always shows ∞
