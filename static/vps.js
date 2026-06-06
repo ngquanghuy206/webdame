@@ -262,26 +262,30 @@ async function openMyVps(){
 async function openAccountInfo(){
   openModal('account-info-modal');
   loadAvatar();
+  // Hiện data global ngay để tránh "undefined"
+  const _tick='<span style="color:#1877f2;font-size:14px" title="Đã xác minh">✔</span>';
+  const _uEl=document.getElementById('ai-username');
+  if(_uEl)_uEl.innerHTML=(CURRENT_USER||'—')+' '+_tick;
+  const _atEl=document.getElementById('ai-username-at');if(_atEl)_atEl.textContent=CURRENT_USER||'—';
+  const _roleEl=document.getElementById('ai-role');if(_roleEl)_roleEl.textContent=IS_ADMIN?'👑 Quản trị viên':'👤 Thành viên';
+  const _balEl=document.getElementById('ai-balance');if(_balEl)_balEl.innerHTML=IS_ADMIN?'<span style="color:#ffd740;font-weight:900">∞</span>':fmtMoney(0);
+  if(IS_ADMIN){
+    const _sl=document.getElementById('ai-slots');if(_sl)_sl.innerHTML='<span style="font-weight:900;color:#00e5ff">∞</span> máy ảo';
+    const _sb=document.getElementById('ai-slot-badge');if(_sb)_sb.innerHTML='📱 <span style="font-weight:900;color:#00e5ff">∞</span> máy ảo';
+  }
   try{
     const r=await fetch('/api/me',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
     const d=await r.json();
-    const tick='<span style="color:#1877f2;font-size:14px" title="Đã xác minh">✔</span>';
-    document.getElementById('ai-username').innerHTML=d.username+' '+tick;
-    const atEl=document.getElementById('ai-username-at');if(atEl)atEl.textContent=d.username;
-    document.getElementById('ai-role').textContent=d.is_admin?'👑 Quản trị viên':'👤 Thành viên';
-    document.getElementById('ai-email').textContent=d.email||'—';
-    // Format created date shorter
-    const cr=d.created||'—';
-    const crEl=document.getElementById('ai-created');if(crEl)crEl.textContent=cr;
-    document.getElementById('ai-balance').innerHTML=d.is_admin?'<span style="color:#ffd740;font-weight:900">∞</span>':fmtMoney(d.balance||0);
+    if(_uEl&&d.username)_uEl.innerHTML=d.username+' '+_tick;
+    if(_atEl&&d.username)_atEl.textContent=d.username;
+    if(_roleEl)_roleEl.textContent=d.is_admin?'👑 Quản trị viên':'👤 Thành viên';
+    const crEl=document.getElementById('ai-created');if(crEl)crEl.textContent=d.created||'—';
+    const emailEl=document.getElementById('ai-email');if(emailEl)emailEl.textContent=d.email||'—';
+    if(_balEl)_balEl.innerHTML=d.is_admin?'<span style="color:#ffd740;font-weight:900">∞</span>':fmtMoney(d.balance||0);
     updateBalanceDisplay(d.balance||0);
   }catch{}
-  // Load slot count
   try{
-    if(IS_ADMIN){
-      const el=document.getElementById('ai-slots');if(el)el.innerHTML='<span style="font-weight:900;color:#00e5ff">∞</span> máy ảo';
-      const badge=document.getElementById('ai-slot-badge');if(badge)badge.innerHTML='📱 <span style="font-weight:900;color:#00e5ff">∞</span> máy ảo';
-    } else {
+    if(!IS_ADMIN){
       const sr=await fetch('/api/slots/count',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
       if(sr.ok){
         const sd=await sr.json();

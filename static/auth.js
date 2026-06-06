@@ -290,6 +290,7 @@ function showApp(){
   const titleEl=document.querySelector('#welcome-screen .welcome-title');
   if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
   startClock();loadHistory();
+  if(typeof loadNotifications==='function') loadNotifications();
   if(!IS_ADMIN) refreshBalance();
   // Poll unread chat count for admin badge
   if(IS_ADMIN){

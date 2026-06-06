@@ -32,7 +32,7 @@ function toggleBellDrop() {
     renderBellDrop();
     drop.style.display = '';
     requestAnimationFrame(()=>{ drop.style.opacity='1'; drop.style.transform='translateY(0)'; });
-    document.addEventListener('click', closeBellOnOutside, {once:true});
+    setTimeout(()=>{ document.addEventListener('click', closeBellOnOutside, {once:true}); }, 0);
   } else {
     closeBellDrop();
   }

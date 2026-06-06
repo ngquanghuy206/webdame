@@ -176,7 +176,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .sb-logout{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:12px;background:rgba(255,89,89,.08);border:1px solid rgba(255,89,89,.2);cursor:pointer;font-size:13px;font-weight:700;color:#ff5959;transition:all .15s}
 .sb-logout:hover{background:rgba(255,89,89,.15)}
 /* Welcome topbar */
-.welcome-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0;position:relative;z-index:1}
+.welcome-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0;position:sticky;top:0;z-index:300;background:var(--bg1)}
 .welcome-topbar-logo{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--blue);letter-spacing:.5px}
 .welcome-topbar-right{display:flex;align-items:center;gap:10px}
 .welcome-clock{font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -293,7 +293,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .btn.copied{background:linear-gradient(135deg,var(--green),#00a040)!important;color:#fff}
 
 /* ── MODALS ──────────────────────────────────────────── */
-.modal-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
 .modal-overlay.open{display:flex}
 .modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:520px;box-shadow:0 30px 80px var(--shadow);margin:auto;animation:popIn .2s ease}
 @keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
@@ -348,7 +348,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 
 /* ── WELCOME SCREEN ──────────────────────────────────── */
 #welcome-screen{display:none;position:fixed;inset:0;z-index:200;background:var(--bg1);overflow-y:auto;overflow-x:hidden}
-.welcome-wrap{max-width:700px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:1}
+.welcome-wrap{max-width:700px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:0}
 .welcome-hero{text-align:center;padding:40px 20px 32px;position:relative}
 .welcome-hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:30px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);font-size:11px;font-weight:700;color:var(--blue);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:20px}
 .welcome-title{font-size:38px;font-weight:900;line-height:1.1;margin-bottom:8px;background:linear-gradient(135deg,var(--blue),var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
