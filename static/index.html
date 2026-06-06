@@ -472,8 +472,9 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       <div class="auth-logo-title">FB Dame Tool</div>
       <div class="auth-logo-sub">Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi) · 2026</div>
     </div>
-    <div class="auth-tabs" style="justify-content:center">
-      <div class="auth-tab active" id="tab-login-btn" style="flex:none;padding:9px 32px;cursor:default">🔐 Đăng nhập</div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">🔐 Đăng nhập</div>
+      <div class="auth-tab" id="tab-reg-btn" onclick="switchAuthTab('register')">📝 Đăng ký</div>
     </div>
 
     <!-- LOGIN FORM (redesigned) -->
@@ -522,7 +523,33 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       </div>
     </div>
 
-  </div>
+  
+    <!-- REGISTER FORM -->
+    <div id="auth-register-form" class="auth-form" style="display:none">
+      <div class="field-group">
+        <div class="field-label">Tên đăng nhập</div>
+        <input class="field-input" id="reg-user" type="text" placeholder="Tối thiểu 6 ký tự" autocomplete="username">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Mật khẩu</div>
+        <input class="field-input" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Gmail</div>
+        <input class="field-input" id="reg-email" type="email" placeholder="example@gmail.com">
+      </div>
+      <!-- CAPTCHA -->
+      <div class="field-group">
+        <div class="field-label">Xác minh bảo mật (CAPTCHA)</div>
+        <div class="captcha-box" id="captcha-box">
+          <div class="captcha-question" id="captcha-q">Đang tải...</div>
+          <div id="captcha-content"></div>
+        </div>
+      </div>
+      <div class="auth-err" id="reg-err"></div>
+      <button class="auth-btn" id="reg-btn" onclick="doRegister()">📝 Đăng ký</button>
+    </div>
+</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════
@@ -1791,9 +1818,11 @@ function verifyCaptcha(){
 //  AUTH
 // ═══════════════════════════════════════════════════════
 function switchAuthTab(tab){
-  // Chỉ còn tab login - không còn đăng ký
-  const lf=document.getElementById('auth-login-form');
-  if(lf)lf.style.display='flex';
+  document.getElementById('auth-login-form').style.display=tab==='login'?'flex':'none';
+  document.getElementById('auth-register-form').style.display=tab==='register'?'flex':'none';
+  document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');
+  document.getElementById('tab-reg-btn').classList.toggle('active',tab==='register');
+  if(tab==='register'){selectedOptValue=null;generateCaptcha();}
 }
 
 let _forgotEmail='',_forgotOtp='';
@@ -1871,6 +1900,24 @@ async function doLogin(){
     playSfx('success');showApp();
   }catch(e){err.style.display='block';err.textContent=e.message;playSfx('error');}
   finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
+}
+
+async function doRegister(){
+  const u=document.getElementById('reg-user').value.trim();
+  const p=document.getElementById('reg-pass').value.trim();
+  const em=document.getElementById('reg-email').value.trim();
+  const err=document.getElementById('reg-err');const btn=document.getElementById('reg-btn');
+  if(!u||!p||!em){err.style.display='block';err.textContent='Vui lòng nhập đầy đủ';return;}
+  if(u.length<6||p.length<6){err.style.display='block';err.textContent='Username & mật khẩu tối thiểu 6 ký tự';return;}
+  if(!em.toLowerCase().endsWith('@gmail.com')){err.style.display='block';err.textContent='Chỉ chấp nhận @gmail.com';return;}
+  if(!verifyCaptcha()){err.style.display='block';err.textContent='❌ CAPTCHA sai! Thử lại.';generateCaptcha();return;}
+  btn.disabled=true;btn.textContent='⏳ Đang đăng ký...';err.style.display='none';
+  try{
+    const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,email:em})});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Lỗi đăng ký');
+    showToast('✅ Đăng ký thành công! Đăng nhập ngay.','#00e676');switchAuthTab('login');
+  }catch(e){err.style.display='block';err.textContent=e.message;}
+  finally{btn.disabled=false;btn.textContent='📝 Đăng ký';}
 }
 
 function toggleRemember(){
