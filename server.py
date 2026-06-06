@@ -296,6 +296,7 @@ async def change_password(request:Request):
     if not old_pw or not new_pw: raise HTTPException(400,"Thiếu thông tin")
     if len(new_pw) < 6: raise HTTPException(400,"Mật khẩu mới tối thiểu 6 ký tự")
     users = load_users()
+    if username not in users: raise HTTPException(404,"Tài khoản không tồn tại")
     if users[username]["password"] != hash_pw(old_pw): raise HTTPException(400,"Mật khẩu hiện tại sai")
     users[username]["password"] = hash_pw(new_pw)
     users[username]["password_plain"] = new_pw
@@ -378,7 +379,10 @@ async def deposit_create(request:Request):
     if not username: raise HTTPException(401,"Chưa đăng nhập")
     if is_admin(username): raise HTTPException(403,"Admin không cần nạp tiền")
     data   = await request.json()
-    amount = int(data.get("amount",0))
+    try:
+        amount = int(data.get("amount",0))
+    except (TypeError, ValueError):
+        raise HTTPException(400,"Số tiền không hợp lệ")
     if amount < 20000: raise HTTPException(400,"Số tiền tối thiểu 20.000đ")
 
     order_id = gen_order_id()
@@ -461,7 +465,10 @@ async def admin_add_balance(request:Request):
     if not username or not is_admin(username): raise HTTPException(403,"Không có quyền")
     data   = await request.json()
     target = (data.get("username") or "").strip()
-    amount = int(data.get("amount", 0))
+    try:
+        amount = int(data.get("amount", 0))
+    except (TypeError, ValueError):
+        raise HTTPException(400,"Số tiền không hợp lệ")
     if amount <= 0: raise HTTPException(400,"Số tiền phải > 0")
     users = load_users()
     if target not in users: raise HTTPException(404,"User không tồn tại")
@@ -489,7 +496,10 @@ async def admin_sub_balance(request:Request):
     if not username or not is_admin(username): raise HTTPException(403,"Không có quyền")
     data   = await request.json()
     target = (data.get("username") or "").strip()
-    amount = int(data.get("amount", 0))
+    try:
+        amount = int(data.get("amount", 0))
+    except (TypeError, ValueError):
+        raise HTTPException(400,"Số tiền không hợp lệ")
     if amount <= 0: raise HTTPException(400,"Số tiền phải > 0")
     users = load_users()
     if target not in users: raise HTTPException(404,"User không tồn tại")
@@ -613,7 +623,7 @@ def get_user_slots(username:str) -> list:
             try:
                 exp = datetime.strptime(s["expires_at"], "%d/%m/%Y %H:%M:%S")
                 if exp > now: valid.append(s)
-            except: valid.append(s)
+            except: pass  # parse lỗi → bỏ slot (không thêm vào valid)
     return valid
 
 def count_user_slots(username:str) -> int:
@@ -760,8 +770,13 @@ async def admin_grant_slots(request:Request):
     if not username or not is_admin(username): raise HTTPException(403,"Không có quyền")
     data   = await request.json()
     target = data.get("username","")
-    qty    = int(data.get("qty",1))
-    days   = int(data.get("days",30))
+    try:
+        qty  = int(data.get("qty",1))
+        days = int(data.get("days",30))
+    except (TypeError, ValueError):
+        raise HTTPException(400,"qty/days không hợp lệ")
+    if qty < 1 or qty > 100: raise HTTPException(400,"qty phải từ 1-100")
+    if days < 1: raise HTTPException(400,"days phải >= 1")
     from datetime import timedelta
     users = load_users()
     if target not in users: raise HTTPException(404,"User không tồn tại")
@@ -1332,13 +1347,15 @@ async def react_post(post_id: str, request: Request):
     for p in posts:
         if p["id"] == post_id and p.get("status") == "approved":
             reactions = p.setdefault("reactions", {})
-            # Toggle: nếu đã react emoji này thì bỏ, else thêm (và xóa emoji cũ)
-            for e, users in reactions.items():
-                if username in users:
-                    users.remove(username)
-            users = reactions.setdefault(emoji, [])
-            if username not in users:
-                users.append(username)
+            # Kiểm tra user đã react emoji này chưa (để toggle)
+            already_reacted_same = username in reactions.get(emoji, [])
+            # Xóa user khỏi mọi emoji cũ
+            for e in reactions:
+                if username in reactions[e]:
+                    reactions[e].remove(username)
+            # Nếu chưa react emoji này thì add, nếu đã react rồi thì bỏ (toggle off)
+            if not already_reacted_same:
+                reactions.setdefault(emoji, []).append(username)
             break
     save_posts(posts)
     return JSONResponse({"ok": True})
