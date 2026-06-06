@@ -252,8 +252,81 @@ function toggleRemember(){
   el.textContent=rememberMe?'✓':'';
 }
 
-// showApp, closeWelcome, goHome, welcomeCreateServer, welcomeServerList, doLogout
-// đã được định nghĩa đầy đủ trong app.js — không duplicate ở đây
+function showApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('welcome-screen').style.display='block';
+  const badge=document.getElementById('user-badge-el');
+  if(badge)badge.innerHTML=(IS_ADMIN?'👑 ':'👤 ')+CURRENT_USER+' <span style="color:#1877f2;font-size:12px" title="Đã xác minh">✔</span>';
+  const mgmt=document.getElementById('mgmt-menu-item');
+  if(mgmt)mgmt.style.display=IS_ADMIN?'flex':'none';
+  // Hide deposit/vps items for admin
+  const depItem=document.getElementById('sb-deposit-item');
+  if(depItem)depItem.style.display=IS_ADMIN?'none':'flex';
+  const depHistItem=document.getElementById('sb-dep-hist-item');
+  if(depHistItem)depHistItem.style.display=IS_ADMIN?'none':'flex';
+  const purHistItem=document.getElementById('sb-pur-hist-item');
+  if(purHistItem)purHistItem.style.display=IS_ADMIN?'none':'flex';
+  const vpsShopItem=document.getElementById('sb-vps-shop-item');
+  if(vpsShopItem)vpsShopItem.style.display=IS_ADMIN?'none':'flex';
+  const myVpsItem=document.getElementById('sb-my-vps-item');
+  if(myVpsItem)myVpsItem.style.display=IS_ADMIN?'none':'flex';
+  // Sidebar user info
+  const sbName=document.getElementById('sb-name-el');
+  if(sbName)sbName.innerHTML=CURRENT_USER+' <span style="color:#1877f2;font-size:12px" title="Đã xác minh">✔</span>';
+  const sbRole=document.getElementById('sb-role-el');
+  if(sbRole)sbRole.textContent=IS_ADMIN?'👑 Admin':'Thành viên';
+  const sbAv=document.getElementById('sb-avatar-el');
+  if(sbAv){
+    const letter=(CURRENT_USER||'?')[0].toUpperCase();
+    sbAv.innerHTML=`<span style="font-size:15px;font-weight:800;color:#fff">${IS_ADMIN?'👑':letter}</span>`;
+  }
+  if(!IS_ADMIN)setTimeout(loadAvatar,100);
+  const sbBal=document.getElementById('sb-balance-el');
+  if(sbBal)sbBal.style.display=IS_ADMIN?'none':'block';
+  // Welcome greeting
+  const titleEl=document.querySelector('#welcome-screen .welcome-title');
+  if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
+  startClock();loadHistory();
+  if(!IS_ADMIN) refreshBalance();
+  // Poll unread chat count for admin badge
+  if(IS_ADMIN){
+    loadAdminChatThreads();
+    setInterval(loadAdminChatThreads, 15000);
+  }
+}
+
+function closeWelcome(){
+  document.getElementById('welcome-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+}
+function goHome(){
+  // Đóng tất cả modal nếu có
+  document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+  // Về welcome-screen (sảnh chính)
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('welcome-screen').style.display='block';
+  // Active state sidebar
+  document.getElementById('sb-home-item').classList.add('active');
+}
+function welcomeCreateServer(){
+  openCreateServerModal();
+}
+function welcomeServerList(){
+  openServerListModal();
+}
+
+function doLogout(){
+  const _tok=SESSION_TOKEN;
+  SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;
+  ['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});
+  document.cookie='session_token=;path=/;max-age=0';
+  stopDame();
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('welcome-screen').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+  if(_tok) fetch('/api/logout',{method:'POST',headers:{'Authorization':'Bearer '+_tok}}).catch(()=>{});
+}
 
 
 
