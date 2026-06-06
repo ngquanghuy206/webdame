@@ -57,11 +57,10 @@
       <div id="auth-sub-login" style="font-size:14px;color:rgba(255,255,255,.45);margin-top:4px">Đăng nhập vào tài khoản của bạn</div>
       <div id="auth-sub-register" style="font-size:14px;color:rgba(255,255,255,.45);margin-top:4px;display:none">Điền thông tin để đăng ký</div>
     </div>
-
-    <!-- ── TABS ── -->
-    <div class="auth-tabs-new">
-      <div class="auth-tab-new active" id="tab-login-btn" onclick="switchAuthTab('login')">Đăng nhập</div>
-      <div class="auth-tab-new" id="tab-reg-btn" onclick="switchAuthTab('register')">Đăng ký</div>
+    <!-- tabs ẩn, giữ để switchAuthTab không lỗi -->
+    <div style="display:none">
+      <div id="tab-login-btn"></div>
+      <div id="tab-reg-btn"></div>
     </div>
 
     <!-- ══ LOGIN FORM ══ -->
