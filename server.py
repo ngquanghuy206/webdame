@@ -16,6 +16,44 @@ TG_BOT_TOKEN   = "7818000635:AAGJ4troYL-SpYEfoTqxj_axm4B-YPt1hvU"
 TG_ADMIN_ID    = 7454964260
 RESEND_API_KEY = "re_Tj3Eyk2M_NgQf9E2sKdnmbSmdMsJefXpt"
 FROM_EMAIL     = "onboarding@resend.dev"
+LOGO_URL       = "https://i.imgur.com/1qYFul7.jpeg"
+
+def build_otp_email(title: str, subtitle: str, otp: str, username: str = "", note: str = "") -> str:
+    user_line = f"<div style='font-size:14px;color:rgba(255,255,255,.6);margin-bottom:20px'>Xin chào <b style=\"color:#4f9eff\">{username}</b> 👋</div>" if username else ""
+    note_line  = f"<div style='margin-top:16px;font-size:12px;color:rgba(255,255,255,.3);line-height:1.5'>{note}</div>" if note else ""
+    return f"""<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0a0e1a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e1a;padding:32px 16px">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:linear-gradient(145deg,#0d1428,#0f1830);border-radius:20px;overflow:hidden;border:1px solid rgba(79,158,255,.2);box-shadow:0 20px 60px rgba(0,0,0,.6)">
+<tr><td style="height:4px;background:linear-gradient(90deg,#4f9eff,#7c4dff,#ff50a0)"></td></tr>
+<tr><td align="center" style="padding:32px 32px 20px">
+  <img src="{LOGO_URL}" width="72" height="72" style="border-radius:16px;border:2px solid rgba(79,158,255,.4);display:block;margin:0 auto 16px" alt="FB Dame Tool">
+  <div style="font-size:20px;font-weight:900;color:#fff;letter-spacing:.5px">FB Dame Tool</div>
+  <div style="font-size:12px;color:rgba(79,158,255,.8);margin-top:4px;letter-spacing:1px;text-transform:uppercase">by Dzi Meo Meo</div>
+</td></tr>
+<tr><td style="padding:0 32px"><div style="height:1px;background:rgba(79,158,255,.15)"></div></td></tr>
+<tr><td style="padding:28px 32px">
+  {user_line}
+  <div style="font-size:13px;font-weight:700;color:rgba(79,158,255,.7);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">{title}</div>
+  <div style="font-size:14px;color:rgba(255,255,255,.7);margin-bottom:24px;line-height:1.6">{subtitle}</div>
+  <div style="background:rgba(79,158,255,.08);border:1px solid rgba(79,158,255,.25);border-radius:14px;padding:24px;text-align:center;margin-bottom:20px">
+    <div style="font-size:42px;font-weight:900;letter-spacing:12px;color:#4f9eff;font-variant-numeric:tabular-nums">{otp}</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:10px">⏱ Hiệu lực trong <b style="color:rgba(255,255,255,.7)">5 phút</b></div>
+  </div>
+  <div style="background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.2);border-radius:10px;padding:12px 16px">
+    <span style="font-size:13px;color:rgba(255,120,120,.9)">⚠️ Không chia sẻ mã này với bất kỳ ai, kể cả admin.</span>
+  </div>
+  {note_line}
+</td></tr>
+<tr><td style="padding:0 32px"><div style="height:1px;background:rgba(79,158,255,.1)"></div></td></tr>
+<tr><td align="center" style="padding:20px 32px">
+  <div style="font-size:11px;color:rgba(255,255,255,.25)">© 2026 FB Dame Tool · by Dzi Meo Meo</div>
+  <div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:4px">🔒 Bảo mật</div>
+</td></tr>
+</table></td></tr></table>
+</body></html>"""
 
 # Bank info - thực tế gửi API là VAN THI KIM LIEN, hiển thị web là NGUYEN HOANG KHANH NAM
 BANK_INFO = {
@@ -211,8 +249,8 @@ async def register_send_otp(request: Request):
         try:
             import resend; resend.api_key = RESEND_API_KEY
             resend.Emails.send({"from": FROM_EMAIL, "to": email,
-                "subject": "Xác minh OTP đăng ký — FB Dame Tool",
-                "html": f"<p>Chào <b>{username}</b>!</p><p>Mã OTP xác minh: <b style=\'font-size:24px;letter-spacing:4px\'>{otp}</b></p><p>Mã có hiệu lực trong 5 phút.</p>"})
+                "subject": "🔑 Xác minh OTP đăng ký — FB Dame Tool",
+                "html": build_otp_email("XÁC MINH ĐĂNG KÝ","Mã OTP để xác minh tài khoản của bạn:",otp,username,"Nếu bạn không yêu cầu đăng ký, hãy bỏ qua email này.")})
         except: pass
     threading.Thread(target=_send, daemon=True).start()
     return JSONResponse({"ok": True, "message": "Mã OTP đã gửi về Gmail của bạn"})
@@ -322,8 +360,8 @@ async def forgot_password(request:Request):
         try:
             import resend; resend.api_key = RESEND_API_KEY
             resend.Emails.send({"from":FROM_EMAIL,"to":email,
-                "subject":"OTP đặt lại mật khẩu — FB Dame Tool",
-                "html":f"<p>Mã OTP: <b>{otp}</b> (hết hạn 5 phút)</p>"})
+                "subject":"🔐 Đặt lại mật khẩu — FB Dame Tool",
+                "html":build_otp_email("ĐẶT LẠI MẬT KHẨU","Mã OTP để đặt lại mật khẩu của bạn:",otp,"","Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.")})
         except: pass
     threading.Thread(target=_send, daemon=True).start()
     return JSONResponse({"ok":True})
