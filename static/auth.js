@@ -15,6 +15,13 @@ function switchAuthTab(tab){
   if(sl)sl.style.display=tab==='login'?'':'none';
   if(sr)sr.style.display=tab==='register'?'':'none';
   if(tab==='register'){selectedOptValue=null;}
+  // Re-ensure hCaptcha widget sau khi tab được hiện lại
+  if(typeof hcaptcha!=='undefined'&&typeof ensureHCaptchaWidget==='function'){
+    setTimeout(function(){
+      if(tab==='login') ensureHCaptchaWidget('login-hcaptcha','_loginCaptchaWidgetId');
+      else ensureHCaptchaWidget('reg-hcaptcha','_regCaptchaWidgetId');
+    },100);
+  }
 }
 
 let _forgotEmail='',_forgotOtp='';
@@ -341,14 +348,27 @@ function doLogout(){
 // ── hCaptcha init ──────────────────────────────────────────
 window._loginCaptchaWidgetId = null;
 window._regCaptchaWidgetId   = null;
+const _HCAPTCHA_SITEKEY = '6e146f7c-115a-4e36-903a-e908c5d46064';
+
+// Helper: đảm bảo widget còn sống, nếu không thì render lại
+function ensureHCaptchaWidget(elId, widgetKey) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  // Kiểm tra widget còn tồn tại không (hcaptcha xóa iframe khi DOM bị ẩn/reset)
+  const hasFrame = el.querySelector('iframe');
+  if (window[widgetKey] !== null && hasFrame) return; // còn sống, không làm gì
+  // Widget bị mất → xóa sạch innerHTML rồi render lại
+  el.innerHTML = '';
+  window[widgetKey] = null;
+  try {
+    window[widgetKey] = hcaptcha.render(el, {sitekey: _HCAPTCHA_SITEKEY, theme: 'dark'});
+  } catch(e) {
+    console.warn('hCaptcha render error:', e);
+  }
+}
 
 // Được gọi bởi hCaptcha API sau khi load xong (onload=onHCaptchaLoad)
 window.onHCaptchaLoad = function() {
-  const SITEKEY = '6e146f7c-115a-4e36-903a-e908c5d46064';
-  const loginEl = document.getElementById('login-hcaptcha');
-  const regEl   = document.getElementById('reg-hcaptcha');
-  if(loginEl && window._loginCaptchaWidgetId === null)
-    window._loginCaptchaWidgetId = hcaptcha.render(loginEl, {sitekey: SITEKEY, theme:'dark'});
-  if(regEl && window._regCaptchaWidgetId === null)
-    window._regCaptchaWidgetId   = hcaptcha.render(regEl,   {sitekey: SITEKEY, theme:'dark'});
+  ensureHCaptchaWidget('login-hcaptcha', '_loginCaptchaWidgetId');
+  ensureHCaptchaWidget('reg-hcaptcha',   '_regCaptchaWidgetId');
 };
