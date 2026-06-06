@@ -92,13 +92,13 @@ function renderPostCard(p, inFeed=true){
     const vids = p.media.filter(m=>m.type==='video');
     const files = p.media.filter(m=>m.type==='file');
     if(imgs.length===1){
-      mediaHtml += `<img src="${imgs[0].data}" style="width:100%;max-height:360px;object-fit:cover;border-radius:12px;margin-top:10px;cursor:pointer" onclick="window.open(this.src)">`;
+      mediaHtml += `<img src="${imgs[0].data}" style="width:100%;max-height:360px;object-fit:cover;border-radius:12px;margin-top:10px;cursor:pointer" onclick="openLightbox(this.src)">`;
     } else if(imgs.length>1){
       const grid = imgs.length===2?'1fr 1fr':'1fr 1fr 1fr';
-      mediaHtml += `<div style="display:grid;grid-template-columns:${grid};gap:4px;margin-top:10px;border-radius:12px;overflow:hidden">${imgs.slice(0,6).map((m,i)=>`<img src="${m.data}" style="width:100%;height:120px;object-fit:cover;cursor:pointer${i===5&&imgs.length>6?';filter:brightness(.5)':''}" onclick="window.open(this.src)">`).join('')}</div>`;
+      mediaHtml += `<div style="display:grid;grid-template-columns:${grid};gap:4px;margin-top:10px;border-radius:12px;overflow:hidden">${imgs.slice(0,6).map((m,i)=>`<img src="${m.data}" style="width:100%;height:120px;object-fit:cover;cursor:pointer${i===5&&imgs.length>6?';filter:brightness(.5)':''}" onclick="openLightbox(this.src)">`).join('')}</div>`;
     }
-    vids.forEach(m=>{ mediaHtml += `<video controls style="width:100%;border-radius:12px;margin-top:8px;max-height:300px"><source src="${m.data}">Video không hỗ trợ</video>`; });
-    files.forEach(m=>{ mediaHtml += `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--glass2);border-radius:10px;margin-top:6px;cursor:pointer" onclick="downloadBase64('${m.data}','${m.name}')"><span style="font-size:20px">📎</span><span style="font-size:13px;color:var(--blue)">${m.name||'file'}</span></div>`; });
+    vids.forEach(m=>{ mediaHtml += `<div style="position:relative;margin-top:8px;cursor:pointer;border-radius:12px;overflow:hidden" onclick="openLightbox('${m.data}','video')"><video style="width:100%;max-height:300px;border-radius:12px;display:block;pointer-events:none"><source src="${m.data}">Video không hỗ trợ</video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25)"><div style="width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;font-size:26px">▶</div></div></div>`; });
+    files.forEach(m=>{ mediaHtml += `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--glass2);border-radius:10px;margin-top:6px;cursor:pointer" onclick="downloadBase64('${m.data}','${m.name}')"><span style="font-size:20px">📎</span><span style="font-size:13px;color:var(--blue);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name||'file'}</span><span style="font-size:11px;color:var(--muted);flex-shrink:0">💾 Tải về</span></div>`; });
   }
 
   const commentCount = (p.comments||[]).length;
@@ -305,7 +305,8 @@ async function submitCreatePost(){
       showToast('✅ Bài đăng đã được đăng!','#00c882');
       _postPage=0; _postsCache=[]; loadPostsFeed(true);
     } else {
-      showToast('⏳ Bài viết đang chờ Admin duyệt','#ffd740');
+      // Show pending approval notice modal
+      showPendingApprovalNotice();
     }
   }catch(e){
     if(err) err.textContent = 'Lỗi: '+e.message;
@@ -360,9 +361,9 @@ async function refreshViewPost(){
         const avatarContent = isAdminCmt ? '👑' : c.author[0].toUpperCase();
         let mediaHtml = '';
         if(c.media&&c.media.length) c.media.forEach(m=>{
-          if(m.type==='image') mediaHtml+=`<img src="${m.data}" style="max-width:180px;max-height:140px;border-radius:10px;margin-top:6px;cursor:pointer;display:block" onclick="window.open(this.src)">`;
-          else if(m.type==='video') mediaHtml+=`<video controls style="max-width:200px;border-radius:10px;margin-top:6px"><source src="${m.data}"></video>`;
-          else mediaHtml+=`<div style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;background:var(--glass2);border-radius:8px;margin-top:6px;cursor:pointer;font-size:12px" onclick="downloadBase64('${m.data}','${m.name}')">📎 ${m.name||'file'}</div>`;
+          if(m.type==='image') mediaHtml+=`<img src="${m.data}" style="max-width:200px;max-height:150px;border-radius:10px;margin-top:6px;cursor:pointer;display:block" onclick="openLightbox(this.src)">`;
+          else if(m.type==='video') mediaHtml+=`<div style="position:relative;margin-top:6px;cursor:pointer;border-radius:10px;overflow:hidden;display:inline-block" onclick="openLightbox('${m.data}','video')"><video style="max-width:200px;max-height:150px;display:block;pointer-events:none"><source src="${m.data}"></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3)"><div style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-size:18px">▶</div></div></div>`;
+          else mediaHtml+=`<div style="display:inline-flex;align-items:center;gap:5px;padding:8px 12px;background:var(--glass2);border-radius:8px;margin-top:6px;cursor:pointer;font-size:12px" onclick="downloadBase64('${m.data}','${m.name}')">📎 ${m.name||'file'} <span style="color:var(--muted)">💾</span></div>`;
         });
         const adminDel = IS_ADMIN ? `<button onclick="adminDeleteComment('${post.id}','${c.id}')" style="background:none;border:none;cursor:pointer;color:#ff5050;font-size:11px;margin-left:8px">🗑</button>` : '';
         const highlight = isAdminCmt ? 'border:1px solid rgba(255,215,64,.3);background:rgba(255,215,64,.05)' : 'border:1px solid var(--border)';
@@ -394,7 +395,7 @@ function handleCommentMedia(input){
     _commentMediaData = {type, data:e.target.result, name:file.name};
     const prev = document.getElementById('comment-media-preview');
     if(prev){
-      const thumb = type==='image'?`<img src="${e.target.result}" style="height:50px;border-radius:8px;cursor:pointer" onclick="window.open(this.src)">`:`<span style="font-size:12px;color:var(--blue)">📎 ${file.name}</span>`;
+      const thumb = type==='image'?`<img src="${e.target.result}" style="height:50px;border-radius:8px;cursor:pointer" onclick="openLightbox(this.src)">`:`<span style="font-size:12px;color:var(--blue)">📎 ${file.name}</span>`;
       prev.innerHTML=`<div style="display:flex;align-items:center;gap:6px">${thumb}<button onclick="_commentMediaData=null;this.parentElement.parentElement.innerHTML=''" style="background:none;border:none;color:#ff5050;cursor:pointer;font-size:16px">×</button></div>`;
     }
   };
@@ -457,3 +458,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const cpta = document.getElementById('create-post-text');
   if(cpta) cpta.addEventListener('input',function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,240)+'px'; });
 });
+
+function showPendingApprovalNotice(){
+  openModal('pending-approval-modal');
+}

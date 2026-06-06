@@ -11,6 +11,38 @@ const ADMIN_VIP_BADGE = '<span style="background:linear-gradient(135deg,#ffd740,
 
 function _userInitial(name){ return (name||'?')[0].toUpperCase(); }
 
+function _getAdminAvatarHtml(size){
+  size = size||32;
+  try{
+    // Try to get admin avatar from localStorage (stored as zct_avatar_ADMINUSERNAME)
+    // We don't know the exact admin username from client, check IS_ADMIN or stored key
+    const keys=Object.keys(localStorage);
+    for(const k of keys){
+      if(k.startsWith('zct_avatar_')){
+        const user=k.replace('zct_avatar_','');
+        // Check if this is admin by trying - just use first avatar found if IS_ADMIN
+        const src=localStorage.getItem(k);
+        if(src && IS_ADMIN){
+          return `<img src="${src}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,215,64,.4)" alt="">`;
+        }
+      }
+    }
+  }catch(e){}
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,#ffd740,#ff9800);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*.5)}px;flex-shrink:0">👑</div>`;
+}
+
+function _getUserAvatarHtml(username, size){
+  size = size||32;
+  try{
+    const src=localStorage.getItem('zct_avatar_'+username)||localStorage.getItem('zct_avatar_'+(CURRENT_USER||''));
+    if(src && username===(CURRENT_USER||'')){
+      return `<img src="${src}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(79,158,255,.3)" alt="">`;
+    }
+  }catch(e){}
+  const initial=_userInitial(username);
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(135deg,#4f9eff,#7c4dff);display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*.45)}px;font-weight:700;color:#fff;flex-shrink:0">${initial}</div>`;
+}
+
 // ══════════════════════════════════════════════════════
 // INBOX PAGE — giống chototmmo
 // ══════════════════════════════════════════════════════
@@ -134,15 +166,15 @@ function _renderChatMessages(){
     const avatarContent = isUser ? initial : ADMIN_AVATAR_EMOJI;
 
     let avatarHtml;
-    if(isUser && userAvatarSrc){
-      avatarHtml = `<img src="${userAvatarSrc}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(79,158,255,.3)" alt="">`;
+    if(isUser){
+      avatarHtml = _getUserAvatarHtml(m.sender||CURRENT_USER, 32);
     } else {
-      avatarHtml = `<div style="width:32px;height:32px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${avatarContent}</div>`;
+      avatarHtml = _getAdminAvatarHtml(32);
     }
 
     let bodyHtml = '';
     if(m.img && m.img.length > 10){
-      bodyHtml = `<img src="${m.img}" style="max-width:200px;max-height:180px;border-radius:10px;display:block;cursor:pointer;margin-bottom:${m.text?'4px':'0'}" onclick="window.open(this.src)">`;
+      bodyHtml = `<img src="${m.img}" style="max-width:200px;max-height:180px;border-radius:10px;display:block;cursor:pointer;margin-bottom:${m.text?'4px':'0'}" onclick="openLightbox(this.src)">`;
     }
     if(m.text) bodyHtml += `<span style="white-space:pre-wrap;word-break:break-all;overflow-wrap:anywhere">${m.text}</span>`;
 
@@ -289,7 +321,7 @@ async function _loadAdminThreadMessages(){
       const avatarBg = isUser ? 'linear-gradient(135deg,#4f9eff,#7c4dff)' : 'linear-gradient(135deg,#ffd740,#ff9800)';
       const avatarContent = isUser ? initial : ADMIN_AVATAR_EMOJI;
       let bodyHtml = '';
-      if(m.img && m.img.length > 10) bodyHtml += `<img src="${m.img}" style="max-width:180px;max-height:160px;border-radius:8px;display:block;cursor:pointer" onclick="window.open(this.src)">`;
+      if(m.img && m.img.length > 10) bodyHtml += `<img src="${m.img}" style="max-width:180px;max-height:160px;border-radius:8px;display:block;cursor:pointer" onclick="openLightbox(this.src)">`;
       if(m.text) bodyHtml += `<span style="white-space:pre-wrap;word-break:break-all;overflow-wrap:anywhere">${m.text}</span>`;
       const bubbleBg = isUser ? 'linear-gradient(135deg,#4f9eff,#7c4dff)' : 'rgba(255,215,64,.12)';
       const bubbleBorder = isUser ? 'none' : '1px solid rgba(255,215,64,.3)';
@@ -466,7 +498,7 @@ async function _loadAdminThreadMessagesNew(){
       const avatarBg = isUser ? 'linear-gradient(135deg,#4f9eff,#7c4dff)' : 'linear-gradient(135deg,#ffd740,#ff9800)';
       const avatarContent = isUser ? initial : ADMIN_AVATAR_EMOJI;
       let bodyHtml='';
-      if(m.img&&m.img.length>10) bodyHtml+=`<img src="${m.img}" style="max-width:200px;max-height:180px;border-radius:10px;display:block;cursor:pointer;margin-bottom:${m.text?'4px':'0'}" onclick="window.open(this.src)">`;
+      if(m.img&&m.img.length>10) bodyHtml+=`<img src="${m.img}" style="max-width:200px;max-height:180px;border-radius:10px;display:block;cursor:pointer;margin-bottom:${m.text?'4px':'0'}" onclick="openLightbox(this.src)">`;
       if(m.text) bodyHtml+=`<span style="white-space:pre-wrap;word-break:break-all;overflow-wrap:anywhere">${m.text}</span>`;
       const bubbleBg = isUser ? 'linear-gradient(135deg,#4f9eff,#7c4dff)' : 'var(--glass2)';
       const textColor = isUser ? '#fff' : 'var(--text)';
@@ -474,7 +506,7 @@ async function _loadAdminThreadMessagesNew(){
       const nameLabel = isUser
         ? `<div style="font-size:11px;color:var(--muted);text-align:right;margin-bottom:2px">${name}</div>`
         : `<div style="font-size:11px;color:#ffd740;font-weight:700;margin-bottom:2px">${name}${ADMIN_VIP_BADGE}</div>`;
-      const avatarEl = `<div style="width:32px;height:32px;border-radius:50%;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${avatarContent}</div>`;
+      const avatarEl = isUser ? _getUserAvatarHtml(m.sender||_adminChatTarget, 32) : _getAdminAvatarHtml(32);
       if(isUser){
         return `<div style="display:flex;justify-content:flex-end;gap:8px;align-items:flex-end">
           <div style="max-width:75%">
@@ -496,16 +528,32 @@ async function _loadAdminThreadMessagesNew(){
   }catch{}
 }
 
+let _adminImgData = null;
+function adminAttachImage(input){
+  if(!input.files||!input.files[0]) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    _adminImgData=e.target.result;
+    showToast('🖼 Ảnh đã đính kèm, bấm Gửi','#4f9eff');
+    document.getElementById('admin-reply-text2').placeholder='[Ảnh đính kèm] Thêm chú thích...';
+  };
+  reader.readAsDataURL(input.files[0]);
+  input.value='';
+}
 async function adminChatReplyNew(){
   const ta = document.getElementById('admin-reply-text2');
   const text = (ta.value||'').trim();
-  if(!text||!_adminChatTarget) return;
+  const imgData = _adminImgData;
+  if(!text && !imgData) return;
+  if(!_adminChatTarget) return;
   ta.value=''; ta.style.height='auto';
+  _adminImgData=null;
+  ta.placeholder='Nhập reply...';
   try{
     await fetch('/api/admin/chat/reply',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
-      body:JSON.stringify({to:_adminChatTarget,text})
+      body:JSON.stringify({to:_adminChatTarget, text, img: imgData||null})
     });
     await _loadAdminThreadMessagesNew();
   }catch{}
