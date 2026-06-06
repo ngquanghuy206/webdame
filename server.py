@@ -202,7 +202,7 @@ DAME_SLOT_PLANS = [
     {"id":"sl_s6",    "name":"Elite Plus · 10 Máy · 1 tháng","slots":10,"days":30,  "price":2999000, "popular":True},
     {"id":"sl_s7",    "name":"Ultimate · 20 Máy · 1 tháng", "slots":20, "days":30,  "price":4999000, "popular":True},
     {"id":"sl_s8",    "name":"Mega · 50 Máy · 1 tháng",     "slots":50, "days":30,  "price":10999000,"popular":False},
-    {"id":"sl_free",  "name":"🎁 Free · 1 Máy · 3 ngày",   "slots":1,  "days":3,   "price":0,       "popular":False,"trial":True},
+    {"id":"sl_free",  "name":"🎁 Free · 1 Máy · 30 phút",  "slots":1,  "days":0,   "price":0,       "popular":False,"trial":True,"minutes":30},
 ]
 
 # ────────────────────────────────────────────────────────
@@ -757,30 +757,31 @@ def get_user_slots(username:str) -> list:
     slots = users[username].get("slots", [])
     valid = []
     for s in slots:
-        if s.get("expires_at") is None:  # không giới hạn
+        exp_str = s.get("expires_at")
+        if exp_str is None:
+            # Chưa kích hoạt (có duration) hoặc không giới hạn → còn hợp lệ
             valid.append(s)
         else:
             try:
-                exp = datetime.strptime(s["expires_at"], "%d/%m/%Y %H:%M:%S")
+                exp = datetime.strptime(exp_str, "%d/%m/%Y %H:%M:%S")
                 if exp > now: valid.append(s)
-            except: pass  # parse lỗi → bỏ slot (không thêm vào valid)
+            except: pass
     return valid
 
 def count_user_slots(username:str) -> int:
     return len(get_user_slots(username))
 
 def _grant_free_slot(username:str):
-    """Cấp 1 slot miễn phí cho TK mới (3 ngày)"""
-    from datetime import timedelta
+    """Cấp 1 slot miễn phí cho TK mới (30 phút kể từ lúc chạy)"""
     users = load_users()
     if username not in users: return
-    exp = (datetime.now() + timedelta(days=3)).strftime("%d/%m/%Y %H:%M:%S")
     slot = {
         "id": "SL" + "".join(random.choices(string.digits+string.ascii_uppercase, k=8)),
         "plan": "free_trial",
-        "plan_name": "Free slot (TK mới · 3 ngày)",
+        "plan_name": "Free slot (TK mới · 30 phút)",
         "slots_in_pack": 1,
-        "expires_at": exp,
+        "expires_at": None,       # chưa kích hoạt, tính từ lúc Start
+        "duration_minutes": 30,
         "created": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
     }
     users[username].setdefault("slots", []).append(slot)
@@ -845,7 +846,11 @@ async def slots_buy(request:Request):
     from datetime import timedelta
     slots_count = plan.get("slots",1)
     days        = plan.get("days",30)
-    expires     = (datetime.now() + timedelta(days=days)).strftime("%d/%m/%Y %H:%M:%S")
+    minutes     = plan.get("minutes",0)
+    if minutes:
+        expires = (datetime.now() + timedelta(minutes=minutes)).strftime("%d/%m/%Y %H:%M:%S")
+    else:
+        expires = (datetime.now() + timedelta(days=days)).strftime("%d/%m/%Y %H:%M:%S")
     now         = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
     # Trừ tiền
@@ -863,7 +868,9 @@ async def slots_buy(request:Request):
             "plan_name": plan["name"],
             "slot_index": i+1,
             "slots_in_pack": slots_count,
-            "expires_at": expires,
+            "expires_at": None,          # chưa kích hoạt, tính từ lúc Start
+            "duration_days": days if not minutes else 0,
+            "duration_minutes": minutes,
             "created": now,
         }
         users[username].setdefault("slots", []).append(slot)
@@ -929,7 +936,9 @@ async def admin_grant_slots(request:Request):
             "plan_name": f"Admin tặng ({username})",
             "slot_index": i+1,
             "slots_in_pack": qty,
-            "expires_at": expires,
+            "expires_at": None,          # chưa kích hoạt, tính từ lúc Start
+            "duration_days": days,
+            "duration_minutes": 0,
             "created": now,
         }
         users[target].setdefault("slots", []).append(slot)
@@ -1048,6 +1057,30 @@ async def api_verify_target(request:Request):
     if not cookie or not target_url: raise HTTPException(400,"Thiếu thông tin")
     return JSONResponse(await get_target_name(cookie, target_url))
 
+
+def _activate_slot_if_needed(username: str, slot_id: str):
+    """Kích hoạt slot (set expires_at) kể từ lúc bấm Start lần đầu."""
+    from datetime import timedelta
+    users = load_users()
+    if username not in users: return
+    slots = users[username].get("slots", [])
+    changed = False
+    for s in slots:
+        if s.get("id") == slot_id and s.get("expires_at") is None:
+            dur_days    = s.get("duration_days", 0)
+            dur_minutes = s.get("duration_minutes", 0)
+            if dur_minutes:
+                s["expires_at"] = (datetime.now() + timedelta(minutes=dur_minutes)).strftime("%d/%m/%Y %H:%M:%S")
+            elif dur_days:
+                s["expires_at"] = (datetime.now() + timedelta(days=dur_days)).strftime("%d/%m/%Y %H:%M:%S")
+            else:
+                # fallback: không giới hạn
+                s["expires_at"] = None
+            changed = True
+            break
+    if changed:
+        save_users(users)
+
 @app.post("/api/dame/start")
 async def api_dame_start(request:Request):
     username = get_session_user(get_token(request))
@@ -1066,6 +1099,15 @@ async def api_dame_start(request:Request):
             raise HTTPException(403,"Bạn chưa có slot dame. Mua slot để chạy dame!")
         if used_slots >= total_slots:
             raise HTTPException(403,f"Hết slot! Đang dùng {used_slots}/{total_slots} slot. Mua thêm hoặc dừng dame đang chạy.")
+        # Kích hoạt slot: set expires_at kể từ lúc bấm Start (nếu chưa kích hoạt)
+        # Ưu tiên slot_id từ server object, fallback từ request
+        slot_id_used = (data.get("slot_id") or "").strip()
+        if server_id and not slot_id_used:
+            _srvs = load_servers()
+            _srv = next((s for s in _srvs if s.get("id")==server_id), None)
+            if _srv: slot_id_used = _srv.get("slot_id","")
+        if slot_id_used:
+            _activate_slot_if_needed(username, slot_id_used)
     await start_dame(cookie,target_url,speed,acc_name,acc_uid,target_name,server_id=server_id)
     if server_id:
         servers = load_servers()
