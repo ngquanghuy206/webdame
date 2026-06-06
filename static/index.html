@@ -36,6 +36,27 @@
   --border:rgba(0,0,0,0.1);--text:#1a1f35;--muted:rgba(26,31,53,0.5);--shadow:rgba(0,0,0,0.12);
 }
 body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;overflow-x:hidden}
+/* ── MGMT TABS ── */
+.mgmt-tab{flex:1;padding:9px 0;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);transition:.2s}
+.mgmt-tab.active{background:linear-gradient(135deg,var(--yellow),var(--orange));color:#000}
+/* ── DEPOSIT AMOUNT BTNS ── */
+.dep-amt-btn{padding:11px 6px;border-radius:10px;border:1.5px solid var(--border);background:var(--glass2);font-size:14px;font-weight:800;cursor:pointer;color:var(--text);transition:.15s}
+.dep-amt-btn:hover,.dep-amt-btn.selected{border-color:var(--blue);background:rgba(79,158,255,.15);color:var(--blue)}
+/* ── VPS SHOP ── */
+.vps-filter-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--glass2);font-size:11px;font-weight:700;cursor:pointer;color:var(--muted);transition:.15s}
+.vps-filter-btn.active,.vps-filter-btn:hover{border-color:var(--purple);background:rgba(124,77,255,.15);color:var(--purple)}
+.vps-plan-card{background:var(--glass2);border:1.5px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:.2s;position:relative}
+.vps-plan-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 8px 24px rgba(79,158,255,.2)}
+.vps-plan-card.popular{border-color:rgba(255,193,7,.5);background:rgba(255,193,7,.06)}
+.vps-popular-badge{position:absolute;top:-8px;right:10px;background:linear-gradient(135deg,var(--yellow),var(--orange));color:#000;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px}
+/* ── MY VPS CARD ── */
+.vps-my-card{background:var(--glass2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+/* ── ADMIN DEPOSIT ROW ── */
+.dep-admin-row{background:var(--glass2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:12px}
+.dep-status-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800}
+.dep-status-badge.pending{background:rgba(255,193,7,.15);color:var(--yellow)}
+.dep-status-badge.approved{background:rgba(0,230,118,.15);color:var(--green)}
+.dep-status-badge.rejected{background:rgba(255,82,82,.15);color:var(--red)}
 .bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.12;animation:float 8s ease-in-out infinite}
 .orb1{width:500px;height:500px;background:var(--blue2);top:-100px;left:-100px;animation-delay:0s}
@@ -443,9 +464,8 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       <div class="auth-logo-title">FB Dame Tool</div>
       <div class="auth-logo-sub">Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi) · 2026</div>
     </div>
-    <div class="auth-tabs">
-      <div class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">🔐 Đăng nhập</div>
-      <div class="auth-tab" id="tab-reg-btn" onclick="switchAuthTab('register')">📝 Đăng ký</div>
+    <div class="auth-tabs" style="justify-content:center">
+      <div class="auth-tab active" id="tab-login-btn" style="flex:none;padding:9px 32px;cursor:default">🔐 Đăng nhập</div>
     </div>
 
     <!-- LOGIN FORM -->
@@ -482,44 +502,6 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
       </div>
     </div>
 
-    <!-- REGISTER FORM -->
-    <div id="auth-register-form" class="auth-form" style="display:none">
-      <div class="field-group">
-        <div class="field-label">Tên đăng nhập</div>
-        <input class="field-input" id="reg-user" type="text" placeholder="Tối thiểu 6 ký tự" autocomplete="username">
-      </div>
-      <div class="field-group">
-        <div class="field-label">Mật khẩu</div>
-        <div style="position:relative">
-          <input class="field-input" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" style="padding-right:44px">
-          <button type="button" class="pw-eye-btn" onclick="togglePw('reg-pass',this)" title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
-            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-              <line x1="1" y1="1" x2="23" y2="23"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">Gmail</div>
-        <input class="field-input" id="reg-email" type="email" placeholder="example@gmail.com">
-      </div>
-      <!-- CAPTCHA -->
-      <div class="field-group">
-        <div class="field-label">Xác minh bảo mật (CAPTCHA)</div>
-        <div class="captcha-box" id="captcha-box">
-          <div class="captcha-question" id="captcha-q">Đang tải...</div>
-          <div id="captcha-content"></div>
-        </div>
-      </div>
-      <div class="auth-err" id="reg-err"></div>
-      <button class="auth-btn" id="reg-btn" onclick="doRegister()">📝 Đăng ký</button>
-    </div>
   </div>
 </div>
 
@@ -544,6 +526,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     <div>
       <div class="sb-user-name" id="sb-name-el">...</div>
       <div class="sb-user-role" id="sb-role-el">Thành viên</div>
+      <div style="font-size:11px;color:var(--green);font-weight:700;margin-top:2px" id="sb-balance-el">💰 0đ</div>
     </div>
   </div>
 
@@ -566,6 +549,26 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
     Lịch sử
     <span class="sb-badge" id="sb-hist-badge"></span>
   </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section-label">Tài khoản</div>
+  <div class="sb-item" id="sb-account-item" onclick="openAccountInfo();closeMenu()">
+    <span class="sb-item-icon ic-blue"><svg viewBox="0 0 24 24" fill="none" stroke="#4f9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+    Thông tin tài khoản
+  </div>
+  <div class="sb-item" id="sb-deposit-item" onclick="openDepositModal();closeMenu()">
+    <span class="sb-item-icon ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="#00c882" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+    Nạp tiền
+  </div>
+  <div class="sb-item" id="sb-vps-shop-item" onclick="openVpsShop();closeMenu()">
+    <span class="sb-item-icon ic-purple"><svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>
+    Mua máy chủ ảo
+  </div>
+  <div class="sb-item" id="sb-my-vps-item" onclick="openMyVps();closeMenu()">
+    <span class="sb-item-icon ic-cyan"><svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10" r="2"/></svg></span>
+    Máy ảo của tôi
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section-label">Khác</div>
   <div class="sb-item" onclick="openModal('admin-modal');closeMenu()">
     <span class="sb-item-icon ic-orange"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9632" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
     Thông tin Admin
@@ -576,7 +579,7 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
   </div>
   <div class="sb-item" id="mgmt-menu-item" style="display:none" onclick="openMgmt();closeMenu()">
     <span class="sb-item-icon ic-yellow"><svg viewBox="0 0 24 24" fill="none" stroke="#ffc800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-    Quản lý tài khoản
+    Admin Panel
   </div>
 
   <div class="sb-divider"></div>
@@ -1058,12 +1061,229 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 </div>
 
 <!-- ADMIN USER MANAGEMENT MODAL -->
+<!-- ═══ ADMIN PANEL MODAL ═══ -->
 <div class="modal-overlay" id="mgmt-modal" onclick="if(event.target===this)closeModal('mgmt-modal')">
-  <div class="modal-box" style="max-width:700px">
-    <div class="modal-title">👑 Quản lý tài khoản <span id="mgmt-count" style="font-size:13px;font-weight:400;color:var(--muted)"></span></div>
-    <div id="mgmt-list"></div>
-    <div class="page-nav" id="mgmt-pages"></div>
-    <button class="close-btn" onclick="closeModal('mgmt-modal')">Đóng</button>
+  <div class="modal-box" style="max-width:760px;padding:0;overflow:hidden">
+    <div style="padding:16px 20px 0;background:linear-gradient(135deg,rgba(255,193,7,.08),rgba(255,152,0,.08));border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:17px;font-weight:800">👑 Admin Panel</div>
+        <button onclick="closeModal('mgmt-modal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div style="display:flex;gap:0;border-radius:10px 10px 0 0;overflow:hidden;background:var(--glass2)">
+        <div class="mgmt-tab active" id="mtab-users" onclick="switchMgmtTab('users')">👥 Tài khoản</div>
+        <div class="mgmt-tab" id="mtab-balance" onclick="switchMgmtTab('balance')">💰 Tiền</div>
+        <div class="mgmt-tab" id="mtab-deposits" onclick="switchMgmtTab('deposits')">📋 Đơn nạp</div>
+      </div>
+    </div>
+    <div style="padding:16px 20px 20px;max-height:70vh;overflow-y:auto">
+
+      <!-- TAB: DANH SÁCH TK -->
+      <div id="mgmt-panel-users">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">
+          <div style="font-size:13px;color:var(--muted)" id="mgmt-count"></div>
+          <button class="btn btn-primary" style="padding:7px 14px;font-size:12px" onclick="openCreateUserModal()">➕ Tạo tài khoản</button>
+        </div>
+        <div id="mgmt-list"></div>
+        <div class="page-nav" id="mgmt-pages"></div>
+      </div>
+
+      <!-- TAB: CỘNG / TRỪ TIỀN -->
+      <div id="mgmt-panel-balance" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <!-- Cộng tiền -->
+          <div style="background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.25);border-radius:14px;padding:16px">
+            <div style="font-size:14px;font-weight:800;color:var(--green);margin-bottom:12px">➕ Cộng tiền</div>
+            <div class="field-label" style="margin-bottom:6px">Username</div>
+            <input class="field-input" id="bal-add-user" placeholder="Nhập username" style="margin-bottom:10px">
+            <div class="field-label" style="margin-bottom:6px">Số tiền (đ)</div>
+            <input class="field-input" id="bal-add-amt" type="number" placeholder="VD: 100000" style="margin-bottom:10px">
+            <button class="btn" style="width:100%;padding:10px;background:linear-gradient(135deg,#00c853,#00e676);color:#000;font-weight:800;border-radius:10px" onclick="adminAddBalance()">💚 Cộng tiền</button>
+            <div id="bal-add-msg" style="font-size:12px;margin-top:8px;min-height:18px;text-align:center"></div>
+          </div>
+          <!-- Trừ tiền -->
+          <div style="background:rgba(255,82,82,.07);border:1px solid rgba(255,82,82,.25);border-radius:14px;padding:16px">
+            <div style="font-size:14px;font-weight:800;color:var(--red);margin-bottom:12px">➖ Trừ tiền</div>
+            <div class="field-label" style="margin-bottom:6px">Username</div>
+            <input class="field-input" id="bal-sub-user" placeholder="Nhập username" style="margin-bottom:10px">
+            <div class="field-label" style="margin-bottom:6px">Số tiền (đ)</div>
+            <input class="field-input" id="bal-sub-amt" type="number" placeholder="VD: 50000" style="margin-bottom:10px">
+            <button class="btn" style="width:100%;padding:10px;background:linear-gradient(135deg,#c62828,#ff5252);color:#fff;font-weight:800;border-radius:10px" onclick="adminSubBalance()">❤️‍🔥 Trừ tiền</button>
+            <div id="bal-sub-msg" style="font-size:12px;margin-top:8px;min-height:18px;text-align:center"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: ĐƠN NẠP -->
+      <div id="mgmt-panel-deposits" style="display:none">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Danh sách yêu cầu nạp tiền từ user</div>
+        <div id="admin-deposit-list"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- CREATE USER MODAL -->
+<div class="modal-overlay" id="create-user-modal" onclick="if(event.target===this)closeModal('create-user-modal')">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-title">➕ Tạo tài khoản mới</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><div class="field-label">Username</div><input class="field-input" id="cu-user" placeholder="Tối thiểu 4 ký tự"></div>
+      <div><div class="field-label">Mật khẩu</div><input class="field-input" id="cu-pass" type="password" placeholder="Tối thiểu 6 ký tự"></div>
+      <div><div class="field-label">Email</div><input class="field-input" id="cu-email" type="email" placeholder="example@gmail.com"></div>
+      <div id="cu-err" style="color:var(--red);font-size:12px;min-height:16px"></div>
+      <button class="btn btn-primary" style="padding:12px" onclick="doCreateUser()">✅ Tạo tài khoản</button>
+    </div>
+    <button class="close-btn" style="margin-top:10px" onclick="closeModal('create-user-modal')">Đóng</button>
+  </div>
+</div>
+
+<!-- DEPOSIT MODAL (nạp tiền) -->
+<div class="modal-overlay" id="deposit-modal" onclick="if(event.target===this)closeModal('deposit-modal')">
+  <div class="modal-box" style="max-width:420px;padding:0;overflow:hidden">
+    <div style="padding:16px 20px;background:linear-gradient(135deg,rgba(0,230,118,.08),rgba(41,121,255,.08));border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:800">💰 Nạp tiền</div>
+      <button onclick="closeModal('deposit-modal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:18px 20px">
+      <!-- Bước 1: chọn số tiền -->
+      <div id="dep-step1">
+        <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:.5px">CHỌN SỐ TIỀN NẠP</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px" id="dep-amount-btns">
+          <button class="dep-amt-btn" onclick="selectDepAmt(this,20000)">20K</button>
+          <button class="dep-amt-btn" onclick="selectDepAmt(this,50000)">50K</button>
+          <button class="dep-amt-btn" onclick="selectDepAmt(this,100000)">100K</button>
+          <button class="dep-amt-btn" onclick="selectDepAmt(this,200000)">200K</button>
+          <button class="dep-amt-btn" onclick="selectDepAmt(this,500000)">500K</button>
+          <button class="dep-amt-btn" onclick="selectDepAmt(this,1000000)">1M</button>
+          <button class="dep-amt-btn" onclick="selectDepAmt(this,2000000)">2M</button>
+          <button class="dep-amt-btn" onclick="selectDepAmt(this,5000000)">5M</button>
+          <button class="dep-amt-btn" onclick="selectDepAmt(this,10000000)">10M</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">HOẶC NHẬP SỐ TIỀN KHÁC (tối thiểu 20.000đ)</div>
+        <input class="field-input" id="dep-custom-amt" type="number" placeholder="Ví dụ: 300000" oninput="onDepCustomInput(this.value)" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--glass2);border-radius:10px;margin-bottom:14px">
+          <span style="font-size:13px;color:var(--muted)">Số tiền đã chọn:</span>
+          <span style="font-size:16px;font-weight:800;color:var(--green)" id="dep-selected-display">—</span>
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:13px;font-size:14px" onclick="doCreateDeposit()">🏦 XEM THÔNG TIN CHUYỂN KHOẢN →</button>
+        <div id="dep-err1" style="color:var(--red);font-size:12px;margin-top:8px;min-height:16px;text-align:center"></div>
+      </div>
+      <!-- Bước 2: hiện QR + thông tin bank -->
+      <div id="dep-step2" style="display:none">
+        <div style="text-align:center;margin-bottom:14px">
+          <img id="dep-qr-img" src="" alt="QR" style="width:200px;height:200px;border-radius:16px;border:3px solid var(--green);box-shadow:0 0 20px rgba(0,230,118,.3)">
+        </div>
+        <div style="background:var(--glass2);border-radius:14px;padding:14px;margin-bottom:14px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--muted)">Ngân hàng</span><b id="dep-bank-name">BIDV</b></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--muted)">Số tài khoản</span><b id="dep-bank-num" style="letter-spacing:1px"></b></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--muted)">Chủ tài khoản</span><b id="dep-bank-owner"></b></div>
+          <div style="height:1px;background:var(--border);margin:8px 0"></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--muted)">Số tiền</span><b style="color:var(--green)" id="dep-bank-amount"></b></div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:var(--muted)">Nội dung CK</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <b id="dep-bank-content" style="font-family:monospace;font-size:12px;color:var(--yellow)"></b>
+              <button onclick="copyDepContent()" style="background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.3);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--yellow);cursor:pointer">Copy</button>
+            </div>
+          </div>
+        </div>
+        <div style="background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.25);border-radius:10px;padding:10px 12px;font-size:11.5px;color:var(--yellow);line-height:1.7;margin-bottom:14px">
+          ⚠️ Vui lòng chuyển khoản <b>đúng nội dung</b> và <b>đúng số tiền</b>. Admin sẽ duyệt trong vài phút.
+        </div>
+        <button class="btn btn-outline" style="width:100%;padding:11px" onclick="resetDepModal()">← Chọn số tiền khác</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VPS SHOP MODAL -->
+<div class="modal-overlay" id="vps-shop-modal" onclick="if(event.target===this)closeModal('vps-shop-modal')">
+  <div class="modal-box" style="max-width:680px;padding:0;overflow:hidden">
+    <div style="padding:16px 20px;background:linear-gradient(135deg,rgba(124,77,255,.1),rgba(41,121,255,.1));border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:16px;font-weight:800">🔢 Mua Slot Dame</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Số dư: <b style="color:var(--green)" id="vps-shop-balance">0đ</b> · Slot hiện có: <b style="color:var(--cyan)" id="vps-shop-slots">0</b></div>
+      </div>
+      <button onclick="closeModal('vps-shop-modal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:14px 16px 20px;max-height:72vh;overflow-y:auto">
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="vps-filter-btn active" onclick="filterVpsPlans('all',this)">Tất cả</button>
+        <button class="vps-filter-btn" onclick="filterVpsPlans('day',this)">📅 Theo ngày</button>
+        <button class="vps-filter-btn" onclick="filterVpsPlans('week',this)">📆 Theo tuần</button>
+        <button class="vps-filter-btn" onclick="filterVpsPlans('month',this)">🗓 Theo tháng</button>
+        <button class="vps-filter-btn" onclick="filterVpsPlans('year',this)">🗃 Theo năm</button>
+        <button class="vps-filter-btn" onclick="filterVpsPlans('bundle',this)">🎁 Combo</button>
+      </div>
+      <div id="vps-plans-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- VPS CONFIRM BUY -->
+<div class="modal-overlay" id="vps-confirm-modal" onclick="if(event.target===this)closeModal('vps-confirm-modal')">
+  <div class="modal-box" style="max-width:360px">
+    <div class="modal-title">🛒 Xác nhận mua</div>
+    <div id="vps-confirm-content" style="font-size:13px;line-height:1.8;margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="flex:1;padding:12px" onclick="doVpsBuy()">✅ Xác nhận mua</button>
+      <button class="btn btn-outline" style="flex:1;padding:12px" onclick="closeModal('vps-confirm-modal')">Hủy</button>
+    </div>
+    <div id="vps-confirm-err" style="color:var(--red);font-size:12px;margin-top:8px;text-align:center;min-height:16px"></div>
+  </div>
+</div>
+
+<!-- MY VPS MODAL -->
+<div class="modal-overlay" id="my-vps-modal" onclick="if(event.target===this)closeModal('my-vps-modal')">
+  <div class="modal-box" style="max-width:600px;padding:0;overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:800">📊 Slot Dame của tôi</div>
+      <button onclick="closeModal('my-vps-modal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px 20px 20px;max-height:70vh;overflow-y:auto" id="my-vps-list"></div>
+  </div>
+</div>
+
+<!-- ACCOUNT INFO MODAL -->
+<div class="modal-overlay" id="account-info-modal" onclick="if(event.target===this)closeModal('account-info-modal')">
+  <div class="modal-box" style="max-width:420px;padding:0;overflow:hidden">
+    <div style="padding:16px 20px;background:linear-gradient(135deg,rgba(79,158,255,.1),rgba(124,77,255,.1));border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:800">👤 Thông tin tài khoản</div>
+      <button onclick="closeModal('account-info-modal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:18px 20px 20px">
+      <!-- Profile card -->
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--blue2),var(--purple));display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 10px">👤</div>
+        <div style="font-size:16px;font-weight:800" id="ai-username">—</div>
+        <div style="font-size:12px;color:var(--muted)" id="ai-role">Thành viên</div>
+      </div>
+      <div style="background:var(--glass2);border-radius:14px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:var(--muted);font-size:13px">📧 Email</span><b id="ai-email" style="font-size:13px">—</b></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:var(--muted);font-size:13px">📅 Ngày tạo</span><b id="ai-created" style="font-size:13px">—</b></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:var(--muted);font-size:13px">💰 Số dư</span><b id="ai-balance" style="font-size:15px;color:var(--green)">0đ</b></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--muted);font-size:13px">🔢 Slot Dame</span><b id="ai-slots" style="font-size:15px;color:var(--cyan)">0 slot</b></div>
+      </div>
+      <!-- Đổi mật khẩu -->
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">🔐 Đổi mật khẩu</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input class="field-input" id="ai-oldpw" type="password" placeholder="Mật khẩu hiện tại">
+        <input class="field-input" id="ai-newpw" type="password" placeholder="Mật khẩu mới (≥6 ký tự)">
+        <input class="field-input" id="ai-newpw2" type="password" placeholder="Xác nhận mật khẩu mới">
+        <div id="ai-pw-err" style="color:var(--red);font-size:12px;min-height:16px"></div>
+        <button class="btn btn-primary" style="padding:11px" onclick="doChangePw()">Cập nhật mật khẩu</button>
+      </div>
+      <!-- Lịch sử nạp & mua -->
+      <div style="margin-top:18px">
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button class="vps-filter-btn active" id="hist-tab-dep" onclick="switchHistTab('deposit')">💰 Lịch sử nạp</button>
+          <button class="vps-filter-btn" id="hist-tab-pur" onclick="switchHistTab('purchase')">🛒 Lịch sử mua</button>
+        </div>
+        <div id="ai-hist-list" style="max-height:200px;overflow-y:auto"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1500,11 +1720,9 @@ function verifyCaptcha(){
 //  AUTH
 // ═══════════════════════════════════════════════════════
 function switchAuthTab(tab){
-  document.getElementById('auth-login-form').style.display=tab==='login'?'flex':'none';
-  document.getElementById('auth-register-form').style.display=tab==='register'?'flex':'none';
-  document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');
-  document.getElementById('tab-reg-btn').classList.toggle('active',tab==='register');
-  if(tab==='register'){selectedOptValue=null;generateCaptcha();}
+  // Chỉ còn tab login - không còn đăng ký
+  const lf=document.getElementById('auth-login-form');
+  if(lf)lf.style.display='flex';
 }
 
 let _forgotEmail='',_forgotOtp='';
@@ -1573,6 +1791,7 @@ async function doLogin(){
     clearTimeout(_loginTid);
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Sai thông tin');
     SESSION_TOKEN=d.token;CURRENT_USER=d.username;IS_ADMIN=d.is_admin||false;
+    if(d.balance!==undefined) updateBalanceDisplay(d.balance);
     const store=rememberMe?localStorage:sessionStorage;
     store.setItem('zct_token',SESSION_TOKEN);store.setItem('zct_user',CURRENT_USER);
     store.setItem('zct_admin',IS_ADMIN?'1':'0');
@@ -1581,24 +1800,6 @@ async function doLogin(){
     playSfx('success');showApp();
   }catch(e){err.style.display='block';err.textContent=e.message;playSfx('error');}
   finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
-}
-
-async function doRegister(){
-  const u=document.getElementById('reg-user').value.trim();
-  const p=document.getElementById('reg-pass').value.trim();
-  const em=document.getElementById('reg-email').value.trim();
-  const err=document.getElementById('reg-err');const btn=document.getElementById('reg-btn');
-  if(!u||!p||!em){err.style.display='block';err.textContent='Vui lòng nhập đầy đủ';return;}
-  if(u.length<6||p.length<6){err.style.display='block';err.textContent='Username & mật khẩu tối thiểu 6 ký tự';return;}
-  if(!em.toLowerCase().endsWith('@gmail.com')){err.style.display='block';err.textContent='Chỉ chấp nhận @gmail.com';return;}
-  if(!verifyCaptcha()){err.style.display='block';err.textContent='❌ CAPTCHA sai! Thử lại.';generateCaptcha();return;}
-  btn.disabled=true;btn.textContent='⏳ Đang đăng ký...';err.style.display='none';
-  try{
-    const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,email:em})});
-    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Lỗi đăng ký');
-    showToast('✅ Đăng ký thành công! Đăng nhập ngay.','#00e676');switchAuthTab('login');
-  }catch(e){err.style.display='block';err.textContent=e.message;}
-  finally{btn.disabled=false;btn.textContent='📝 Đăng ký';}
 }
 
 function toggleRemember(){
@@ -1616,6 +1817,13 @@ function showApp(){
   if(badge)badge.textContent=(IS_ADMIN?'👑 ':'👤 ')+CURRENT_USER;
   const mgmt=document.getElementById('mgmt-menu-item');
   if(mgmt)mgmt.style.display=IS_ADMIN?'flex':'none';
+  // Hide deposit/vps items for admin
+  const depItem=document.getElementById('sb-deposit-item');
+  if(depItem)depItem.style.display=IS_ADMIN?'none':'flex';
+  const vpsShopItem=document.getElementById('sb-vps-shop-item');
+  if(vpsShopItem)vpsShopItem.style.display=IS_ADMIN?'none':'flex';
+  const myVpsItem=document.getElementById('sb-my-vps-item');
+  if(myVpsItem)myVpsItem.style.display=IS_ADMIN?'none':'flex';
   // Sidebar user info
   const sbName=document.getElementById('sb-name-el');
   if(sbName)sbName.textContent=CURRENT_USER;
@@ -1623,10 +1831,13 @@ function showApp(){
   if(sbRole)sbRole.textContent=IS_ADMIN?'👑 Admin':'Thành viên';
   const sbAv=document.getElementById('sb-avatar-el');
   if(sbAv)sbAv.textContent=IS_ADMIN?'👑':'👤';
+  const sbBal=document.getElementById('sb-balance-el');
+  if(sbBal)sbBal.style.display=IS_ADMIN?'none':'block';
   // Welcome greeting
   const titleEl=document.querySelector('#welcome-screen .welcome-title');
   if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
   startClock();loadHistory();
+  if(!IS_ADMIN) refreshBalance();
 }
 
 function closeWelcome(){
@@ -2005,55 +2216,372 @@ function downloadHist(idx){
 }
 
 // ═══════════════════════════════════════════════════════
+//  BALANCE DISPLAY
+// ═══════════════════════════════════════════════════════
+let CURRENT_BALANCE = 0;
+function fmtMoney(n){
+  if(n>=1000000) return (n/1000000).toFixed(n%1000000===0?0:1)+'M đ';
+  if(n>=1000) return (n/1000).toFixed(n%1000===0?0:1)+'K đ';
+  return n.toLocaleString('vi-VN')+'đ';
+}
+function updateBalanceDisplay(bal){
+  CURRENT_BALANCE = bal||0;
+  const sb = document.getElementById('sb-balance-el');
+  if(sb) sb.textContent = '💰 '+fmtMoney(CURRENT_BALANCE);
+}
+async function refreshBalance(){
+  try{
+    const r = await fetch('/api/me',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(r.ok){ const d=await r.json(); updateBalanceDisplay(d.balance||0); }
+  }catch{}
+}
+
+// ═══════════════════════════════════════════════════════
 //  ADMIN MANAGEMENT
 // ═══════════════════════════════════════════════════════
 let mgmtData=[],mgmtPage=0;const MGMT_PER_PAGE=10;
+let _mgmtTab = 'users';
+
 async function openMgmt(){
+  openModal('mgmt-modal');
+  switchMgmtTab('users');
+}
+
+function switchMgmtTab(tab){
+  _mgmtTab = tab;
+  ['users','balance','deposits'].forEach(t=>{
+    const tabEl=document.getElementById('mtab-'+t);
+    const panEl=document.getElementById('mgmt-panel-'+t);
+    if(tabEl) tabEl.classList.toggle('active',t===tab);
+    if(panEl) panEl.style.display = t===tab?'block':'none';
+  });
+  if(tab==='users') loadMgmtUsers();
+  if(tab==='deposits') loadAdminDeposits();
+}
+
+async function loadMgmtUsers(){
   try{
     const r=await fetch('/api/admin/users',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-    if(r.ok)mgmtData=await r.json();
+    if(r.ok) mgmtData=await r.json();
   }catch{}
-  mgmtPage=0;renderMgmtList();openModal('mgmt-modal');
+  mgmtPage=0; renderMgmtList();
 }
+
 function renderMgmtList(){
   const count=document.getElementById('mgmt-count');
   const list=document.getElementById('mgmt-list');
   const pages=document.getElementById('mgmt-pages');
-  if(count)count.textContent=`(${mgmtData.length} tài khoản)`;
+  if(count) count.textContent='('+mgmtData.length+' tài khoản)';
   const start=mgmtPage*MGMT_PER_PAGE;
   const chunk=mgmtData.slice(start,start+MGMT_PER_PAGE);
-  if(list)list.innerHTML=`<table class="user-table"><thead><tr><th>#</th><th>Username</th><th>Email</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
-  ${chunk.map((u,i)=>`<tr>
-    <td>${start+i+1}</td>
-    <td><b>${u.username}</b>${u.is_admin?'&nbsp;<span style="color:var(--yellow);font-size:10px">ADMIN</span>':''}</td>
-    <td style="color:var(--muted);font-size:11px">${u.email||'—'}</td>
-    <td><span class="u-active ${u.active!==false?'yes':'no'}">${u.active!==false?'Hoạt động':'Khóa'}</span></td>
-    <td>
-      <button class="u-action" onclick="toggleUserActive('${u.username}',${u.active!==false})">${u.active!==false?'🔒 Khóa':'🔓 Mở'}</button>
-      <button class="u-action del" onclick="deleteUser('${u.username}')">🗑</button>
-    </td>
-  </tr>`).join('')}</tbody></table>`;
+  if(list) list.innerHTML='<table class="user-table"><thead><tr><th>#</th><th>Username</th><th>Email</th><th>Số dư</th><th>Slot</th><th>TT</th><th>Act</th></tr></thead><tbody>'+
+    chunk.map(function(u,i){return '<tr><td>'+(start+i+1)+'</td><td><b>'+u.username+'</b></td><td style="color:var(--muted);font-size:11px">'+(u.email||'—')+'</td><td style="color:var(--green);font-weight:700">'+fmtMoney(u.balance||0)+'</td><td><span class="u-active '+(u.active!==false?'yes':'no')+'">'+(u.active!==false?'OK':'🔒')+'</span></td><td><button class="u-action" onclick="toggleUserActive(''+u.username+'','+String(u.active!==false)+')">'+(u.active!==false?'🔒':'🔓')+'</button><button class="u-action del" onclick="deleteUser(''+u.username+'')">🗑</button></td></tr>';}).join('')+'</tbody></table>';
   const totalPages=Math.ceil(mgmtData.length/MGMT_PER_PAGE);
-  if(pages)pages.innerHTML=Array.from({length:totalPages},(_,i)=>`<button class="page-btn${i===mgmtPage?' active':''}" onclick="mgmtPage=${i};renderMgmtList()">${i+1}</button>`).join('');
+  if(pages) pages.innerHTML=Array.from({length:totalPages},function(_,i){return '<button class="page-btn'+(i===mgmtPage?' active':'')+'" onclick="mgmtPage='+i+';renderMgmtList()">'+(i+1)+'</button>';}).join('');
 }
+
 async function toggleUserActive(username,currentActive){
   await fetch('/api/admin/toggle-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username,active:!currentActive})});
-  openMgmt();
+  loadMgmtUsers();
 }
 async function deleteUser(username){
-  if(!confirm(`Xóa tài khoản "${username}"?`))return;
+  if(!confirm('Xóa tài khoản "'+username+'"?')) return;
   await fetch('/api/admin/delete-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username})});
-  openMgmt();
+  loadMgmtUsers();
 }
-function openUserDetail(username){
-  const d=mgmtData.find(u=>u.username===username);
-  if(!d)return;
-  document.getElementById('user-detail-content').innerHTML=`
-    <div class="info-row"><div class="info-label">Username</div><div class="info-value">${d.username}</div></div>
-    <div class="info-row"><div class="info-label">Email</div><div class="info-value">${d.email||'—'}</div></div>
-    <div class="info-row"><div class="info-label">Ngày tạo</div><div class="info-value">${d.created||'—'}</div></div>
-    <div class="info-row"><div class="info-label">Trạng thái</div><div class="info-value">${d.active!==false?'✅ Hoạt động':'🔒 Bị khóa'}</div></div>`;
-  openModal('user-detail-modal');
+
+function openCreateUserModal(){
+  ['cu-user','cu-pass','cu-email'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('cu-err').textContent='';
+  openModal('create-user-modal');
+}
+async function doCreateUser(){
+  const u=document.getElementById('cu-user').value.trim();
+  const p=document.getElementById('cu-pass').value.trim();
+  const e=document.getElementById('cu-email').value.trim();
+  const err=document.getElementById('cu-err');
+  if(!u||!p||!e){err.textContent='Điền đầy đủ thông tin';return;}
+  try{
+    const r=await fetch('/api/admin/create-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username:u,password:p,email:e})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Lỗi tạo tài khoản');
+    showToast('✅ Tạo tài khoản thành công! Đã cấp 1 máy ảo miễn phí.','#00e676');
+    closeModal('create-user-modal'); loadMgmtUsers();
+  }catch(ex){err.textContent=ex.message;}
+}
+
+async function adminAddBalance(){
+  const u=document.getElementById('bal-add-user').value.trim();
+  const a=parseInt(document.getElementById('bal-add-amt').value)||0;
+  const msg=document.getElementById('bal-add-msg');
+  if(!u||!a){msg.style.color='var(--red)';msg.textContent='Điền đầy đủ thông tin';return;}
+  try{
+    const r=await fetch('/api/admin/add-balance',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username:u,amount:a})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Lỗi');
+    msg.style.color='var(--green)';msg.textContent='✅ Cộng thành công! Số dư mới: '+fmtMoney(d.new_balance);
+    document.getElementById('bal-add-amt').value='';
+    loadMgmtUsers();
+  }catch(ex){msg.style.color='var(--red)';msg.textContent='❌ '+ex.message;}
+}
+async function adminSubBalance(){
+  const u=document.getElementById('bal-sub-user').value.trim();
+  const a=parseInt(document.getElementById('bal-sub-amt').value)||0;
+  const msg=document.getElementById('bal-sub-msg');
+  if(!u||!a){msg.style.color='var(--red)';msg.textContent='Điền đầy đủ thông tin';return;}
+  try{
+    const r=await fetch('/api/admin/sub-balance',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username:u,amount:a})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Lỗi');
+    msg.style.color='var(--green)';msg.textContent='✅ Trừ thành công! Số dư mới: '+fmtMoney(d.new_balance);
+    document.getElementById('bal-sub-amt').value='';
+    loadMgmtUsers();
+  }catch(ex){msg.style.color='var(--red)';msg.textContent='❌ '+ex.message;}
+}
+
+async function loadAdminDeposits(){
+  const list=document.getElementById('admin-deposit-list');
+  if(!list) return;
+  list.innerHTML='<div style="color:var(--muted);font-size:13px">Đang tải...</div>';
+  try{
+    const r=await fetch('/api/admin/deposits',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const deps=await r.json();
+    if(!deps.length){list.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px">Chưa có đơn nào</div>';return;}
+    list.innerHTML=deps.slice(0,50).map(function(d){
+      const statusLabel=d.status==='pending'?'⏳ Chờ duyệt':d.status==='approved'?'✅ Đã duyệt':'❌ Từ chối';
+      const btns=d.status==='pending'?'<div style="display:flex;gap:6px"><button onclick="adminApproveDeposit(''+d.order_id+'')" style="padding:4px 10px;border-radius:6px;background:rgba(0,230,118,.2);border:1px solid rgba(0,230,118,.4);color:var(--green);font-size:11px;font-weight:700;cursor:pointer">✅ Duyệt</button><button onclick="adminRejectDeposit(''+d.order_id+'')" style="padding:4px 10px;border-radius:6px;background:rgba(255,82,82,.15);border:1px solid rgba(255,82,82,.3);color:var(--red);font-size:11px;font-weight:700;cursor:pointer">❌ Từ chối</button></div>':'';
+      return '<div class="dep-admin-row"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><b>'+d.username+'</b> <span class="dep-status-badge '+d.status+'">'+statusLabel+'</span></div><div style="color:var(--green);font-weight:800">'+fmtMoney(d.amount)+'</div></div><div style="color:var(--muted);margin-bottom:6px">📝 <span style="font-family:monospace">'+(d.content||'')+'</span></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="color:var(--muted)">'+(d.created||'')+'</div>'+btns+'</div></div>';
+    }).join('');
+  }catch{list.innerHTML='<div style="color:var(--red)">Lỗi tải dữ liệu</div>';}
+}
+async function adminApproveDeposit(order_id){
+  if(!confirm('Duyệt đơn này?')) return;
+  await fetch('/api/admin/approve-deposit',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({order_id})});
+  showToast('✅ Đã duyệt và cộng tiền','#00e676');
+  loadAdminDeposits();
+}
+async function adminRejectDeposit(order_id){
+  if(!confirm('Từ chối đơn này?')) return;
+  await fetch('/api/admin/reject-deposit',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({order_id})});
+  showToast('❌ Đã từ chối đơn','#ff5252');
+  loadAdminDeposits();
+}
+
+// ═══════════════════════════════════════════════════════
+//  DEPOSIT (NẠP TIỀN)
+// ═══════════════════════════════════════════════════════
+let _depSelectedAmt = 0;
+function openDepositModal(){
+  _depSelectedAmt=0;
+  document.querySelectorAll('.dep-amt-btn').forEach(function(b){b.classList.remove('selected');});
+  document.getElementById('dep-custom-amt').value='';
+  document.getElementById('dep-selected-display').textContent='—';
+  document.getElementById('dep-err1').textContent='';
+  document.getElementById('dep-step1').style.display='block';
+  document.getElementById('dep-step2').style.display='none';
+  openModal('deposit-modal');
+}
+function selectDepAmt(btn,amt){
+  document.querySelectorAll('.dep-amt-btn').forEach(function(b){b.classList.remove('selected');});
+  btn.classList.add('selected');
+  _depSelectedAmt=amt;
+  document.getElementById('dep-custom-amt').value='';
+  document.getElementById('dep-selected-display').textContent=fmtMoney(amt);
+  document.getElementById('dep-err1').textContent='';
+}
+function onDepCustomInput(val){
+  document.querySelectorAll('.dep-amt-btn').forEach(function(b){b.classList.remove('selected');});
+  const n=parseInt(val)||0;
+  _depSelectedAmt=n;
+  document.getElementById('dep-selected-display').textContent=n>0?fmtMoney(n):'—';
+}
+async function doCreateDeposit(){
+  const err=document.getElementById('dep-err1');
+  if(!_depSelectedAmt||_depSelectedAmt<20000){err.textContent='Chọn hoặc nhập số tiền tối thiểu 20.000đ';return;}
+  try{
+    const r=await fetch('/api/deposit/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({amount:_depSelectedAmt})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Lỗi tạo đơn');
+    document.getElementById('dep-qr-img').src=d.qr_url;
+    document.getElementById('dep-bank-name').textContent=d.bank_name;
+    document.getElementById('dep-bank-num').textContent=d.bank_number;
+    document.getElementById('dep-bank-owner').textContent=d.account_name;
+    document.getElementById('dep-bank-amount').textContent=fmtMoney(d.amount);
+    document.getElementById('dep-bank-content').textContent=d.content;
+    document.getElementById('dep-step1').style.display='none';
+    document.getElementById('dep-step2').style.display='block';
+  }catch(ex){err.textContent='❌ '+ex.message;}
+}
+function copyDepContent(){
+  const c=document.getElementById('dep-bank-content').textContent;
+  navigator.clipboard.writeText(c).then(function(){showToast('✅ Đã copy nội dung CK','#00e676');}).catch(function(){});
+}
+function resetDepModal(){
+  document.getElementById('dep-step1').style.display='block';
+  document.getElementById('dep-step2').style.display='none';
+  _depSelectedAmt=0;
+  document.getElementById('dep-selected-display').textContent='—';
+  document.querySelectorAll('.dep-amt-btn').forEach(function(b){b.classList.remove('selected');});
+}
+
+// ═══════════════════════════════════════════════════════
+//  VPS SHOP
+// ═══════════════════════════════════════════════════════
+let _vpsPlans=[], _vpsPendingPlan=null;
+async function openVpsShop(){
+  const balEl=document.getElementById('vps-shop-balance');
+  if(balEl) balEl.textContent=fmtMoney(CURRENT_BALANCE);
+  // Load slot count
+  try{
+    const sr=await fetch('/api/slots/count',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(sr.ok){const sd=await sr.json();const slEl=document.getElementById('vps-shop-slots');if(slEl)slEl.textContent=sd.total_slots+' slot';}
+  }catch{}
+  if(!_vpsPlans.length){
+    try{const r=await fetch('/api/vps-plans');if(r.ok)_vpsPlans=await r.json();}catch{}
+  }
+  const firstBtn=document.querySelector('.vps-filter-btn');
+  filterVpsPlans('all',firstBtn);
+  openModal('vps-shop-modal');
+}
+function filterVpsPlans(filter,btn){
+  document.querySelectorAll('.vps-filter-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  let plans=_vpsPlans.slice();
+  if(filter==='day')   plans=plans.filter(function(p){return p.days<=6&&!p.id.startsWith('sl_s');});
+  else if(filter==='week')  plans=plans.filter(function(p){return p.days>=7&&p.days<=21&&!p.id.startsWith('sl_s');});
+  else if(filter==='month') plans=plans.filter(function(p){return p.days>=30&&p.days<=180&&!p.id.startsWith('sl_s');});
+  else if(filter==='year')  plans=plans.filter(function(p){return p.days>=365;});
+  else if(filter==='bundle')plans=plans.filter(function(p){return p.id.startsWith('sl_s')||p.id==='sl_free';});
+  renderVpsPlans(plans);
+}
+function renderVpsPlans(plans){
+  const grid=document.getElementById('vps-plans-grid');
+  if(!plans.length){grid.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;grid-column:1/-1">Không có gói nào</div>';return;}
+  grid.innerHTML=plans.map(function(p){
+    const dayLabel=p.days<30?p.days+' ngày':p.days<365?Math.round(p.days/30)+' tháng':Math.round(p.days/365)+' năm';
+    const priceColor=p.price===0?'var(--green)':p.popular?'var(--yellow)':'var(--blue)';
+    const priceText=p.price===0?'MIỄN PHÍ':fmtMoney(p.price);
+    const badge=p.popular?'<div class="vps-popular-badge">⭐ HOT</div>':p.trial?'<div class="vps-popular-badge" style="background:linear-gradient(135deg,#00e676,#00c853);left:10px;right:auto">FREE</div>':'';
+    const slots=p.slots||p.qty||1;
+    return '<div class="vps-plan-card'+(p.popular?' popular':'')+'" onclick="confirmVpsBuy(''+p.id+'')">'+badge+'<div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px;line-height:1.4">'+p.name+'</div><div style="font-size:11px;color:var(--muted);margin-bottom:8px">🔢 '+slots+' slot dame · 📅 '+dayLabel+'</div><div style="font-size:18px;font-weight:900;color:'+priceColor+'">'+priceText+'</div></div>';
+  }).join('');
+}
+function confirmVpsBuy(planId){
+  const plan=_vpsPlans.find(function(p){return p.id===planId;});
+  if(!plan) return;
+  _vpsPendingPlan=plan;
+  const canAfford=CURRENT_BALANCE>=plan.price||plan.price===0;
+  const dayLabel=plan.days<30?plan.days+' ngày':plan.days<365?Math.round(plan.days/30)+' tháng':Math.round(plan.days/365)+' năm';
+  const slots=plan.slots||plan.qty||1;
+  const noFundMsg=canAfford?''+'':'<div style="background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.3);border-radius:10px;padding:10px;text-align:center;color:var(--red);font-size:12px">❌ Số dư không đủ. <span onclick="closeModal(\'vps-confirm-modal\');openDepositModal()" style="text-decoration:underline;cursor:pointer">Nạp tiền ngay</span></div>';
+  document.getElementById('vps-confirm-content').innerHTML='<div style="background:var(--glass2);border-radius:12px;padding:14px;margin-bottom:12px"><div style="font-size:15px;font-weight:800;margin-bottom:8px">'+plan.name+'</div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Số slot dame</span><b style="color:var(--cyan)">'+slots+' slot</b></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Mỗi slot</span><b>= 1 luồng dame độc lập</b></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Thời hạn</span><b>'+dayLabel+'</b></div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Giá</span><b style="color:var(--green)">'+(plan.price===0?'MIỄN PHÍ':fmtMoney(plan.price))+'</b></div><div style="height:1px;background:var(--border);margin:8px 0"></div><div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Số dư</span><b style="color:'+(canAfford?'var(--green)':'var(--red)')+'">'+fmtMoney(CURRENT_BALANCE)+'</b></div></div>'+(canAfford?'':noFundMsg);
+  document.getElementById('vps-confirm-err').textContent='';
+  openModal('vps-confirm-modal');
+}
+async function doVpsBuy(){
+  if(!_vpsPendingPlan) return;
+  const btn=document.querySelector('#vps-confirm-modal .btn.btn-primary');
+  const err=document.getElementById('vps-confirm-err');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Đang xử lý...';}
+  try{
+    const r=await fetch('/api/slots/buy',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({plan_id:_vpsPendingPlan.id})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Lỗi mua');
+    updateBalanceDisplay(d.new_balance);
+    const balEl=document.getElementById('vps-shop-balance');
+    if(balEl) balEl.textContent=fmtMoney(d.new_balance);
+    closeModal('vps-confirm-modal');
+    closeModal('vps-shop-modal');
+    const boughtSlots=_vpsPendingPlan.slots||_vpsPendingPlan.qty||1;
+    showToast('✅ Mua thành công '+boughtSlots+' slot dame! Tổng slot: '+d.total_slots,'#00e676');
+    _vpsPendingPlan=null;
+  }catch(ex){if(err) err.textContent='❌ '+ex.message;}
+  finally{if(btn){btn.disabled=false;btn.textContent='✅ Xác nhận mua';}}
+}
+
+// ═══════════════════════════════════════════════════════
+//  MY VPS
+// ═══════════════════════════════════════════════════════
+async function openMyVps(){
+  openModal('my-vps-modal');
+  const list=document.getElementById('my-vps-list');
+  list.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px">Đang tải...</div>';
+  try{
+    const r=await fetch('/api/slots/my',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const vps=await r.json();
+    if(!vps.length){list.innerHTML='<div style="text-align:center;padding:30px"><div style="font-size:40px;margin-bottom:10px">🖥</div><div style="color:var(--muted)">Bạn chưa có máy ảo nào</div><button class="btn btn-primary" style="margin-top:12px;padding:10px 20px" onclick="closeModal('my-vps-modal');openVpsShop()">🛒 Mua ngay</button></div>';return;}
+    list.innerHTML=vps.map(function(v){
+      const exp=v.expires_at?'<div style="font-size:11px;color:var(--muted);margin-top:8px">⏰ Hết hạn: '+v.expires_at+'</div>':'<div style="font-size:11px;color:var(--green);margin-top:8px">⏰ Không giới hạn</div>';
+      return '<div class="vps-my-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:13px;font-weight:800">'+v.plan_name+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">🆔 '+v.id+'</div></div><span style="padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800;background:rgba(0,230,118,.15);color:var(--green)">✅ '+v.status+'</span></div><div style="background:var(--glass);border-radius:10px;padding:10px;font-family:monospace;font-size:12px;line-height:1.8"><div>🌐 IP: <b style="color:var(--cyan)">'+(v.info&&v.info.ip?v.info.ip:'—')+':'+(v.info&&v.info.port?v.info.port:22)+'</b></div><div>🔑 Pass: <b style="color:var(--yellow)">'+(v.info&&v.info.password?v.info.password:'—')+'</b></div><div>📍 Region: <b>'+(v.info&&v.info.region?v.info.region:'—')+'</b></div></div>'+exp+'<div style="font-size:11px;color:var(--muted)">📅 Tạo: '+v.created+'</div></div>';
+    }).join('');
+  }catch{list.innerHTML='<div style="color:var(--red);text-align:center">Lỗi tải dữ liệu</div>';}
+}
+
+// ═══════════════════════════════════════════════════════
+//  ACCOUNT INFO
+// ═══════════════════════════════════════════════════════
+async function openAccountInfo(){
+  openModal('account-info-modal');
+  try{
+    const r=await fetch('/api/me',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const d=await r.json();
+    document.getElementById('ai-username').textContent=d.username;
+    document.getElementById('ai-role').textContent=d.is_admin?'👑 Quản trị viên':'👤 Thành viên';
+    document.getElementById('ai-email').textContent=d.email||'—';
+    document.getElementById('ai-created').textContent=d.created||'—';
+    document.getElementById('ai-balance').textContent=fmtMoney(d.balance||0);
+    updateBalanceDisplay(d.balance||0);
+  }catch{}
+  // Load slot count
+  try{
+    const sr=await fetch('/api/slots/count',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    if(sr.ok){const sd=await sr.json();const el=document.getElementById('ai-slots');if(el)el.textContent=sd.total_slots+' slot';}
+  }catch{}
+  document.getElementById('ai-oldpw').value='';document.getElementById('ai-newpw').value='';document.getElementById('ai-newpw2').value='';
+  document.getElementById('ai-pw-err').textContent='';
+  switchHistTab('deposit');
+}
+function switchHistTab(tab){
+  document.getElementById('hist-tab-dep').classList.toggle('active',tab==='deposit');
+  document.getElementById('hist-tab-pur').classList.toggle('active',tab==='purchase');
+  loadHistTab(tab);
+}
+async function loadHistTab(tab){
+  const list=document.getElementById('ai-hist-list');
+  list.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px">Đang tải...</div>';
+  try{
+    const url=tab==='deposit'?'/api/deposit/history':'/api/purchase/history';
+    const r=await fetch(url,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const data=await r.json();
+    if(!data.length){list.innerHTML='<div style="color:var(--muted);text-align:center;padding:16px;font-size:12px">Chưa có dữ liệu</div>';return;}
+    if(tab==='deposit'){
+      list.innerHTML=data.slice(0,20).map(function(d){
+        const label=d.status==='pending'?'⏳ Chờ':d.status==='approved'?'✅ OK':'❌ Từ chối';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;background:var(--glass2);margin-bottom:6px;font-size:12px"><div><div style="font-weight:700">'+fmtMoney(d.amount)+'</div><div style="color:var(--muted);font-size:10px">'+(d.created||'')+'</div></div><span class="dep-status-badge '+d.status+'">'+label+'</span></div>';
+      }).join('');
+    } else {
+      list.innerHTML=data.slice(0,20).map(function(p){
+        return '<div style="padding:8px 10px;border-radius:8px;background:var(--glass2);margin-bottom:6px;font-size:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><b>'+p.plan_name+'</b><span style="color:var(--green);font-weight:800">'+fmtMoney(p.price)+'</span></div><div style="color:var(--muted);font-size:11px">'+p.qty+' máy · Hết hạn: '+(p.expires_at||'Không giới hạn')+' · '+(p.created||'')+'</div></div>';
+      }).join('');
+    }
+  }catch{list.innerHTML='<div style="color:var(--red);font-size:12px">Lỗi tải dữ liệu</div>';}
+}
+async function doChangePw(){
+  const old=document.getElementById('ai-oldpw').value.trim();
+  const nw=document.getElementById('ai-newpw').value.trim();
+  const nw2=document.getElementById('ai-newpw2').value.trim();
+  const err=document.getElementById('ai-pw-err');
+  if(!old||!nw||!nw2){err.textContent='Điền đầy đủ các ô';return;}
+  if(nw.length<6){err.textContent='Mật khẩu mới tối thiểu 6 ký tự';return;}
+  if(nw!==nw2){err.textContent='Mật khẩu mới không khớp';return;}
+  try{
+    const r=await fetch('/api/change-password',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({old_password:old,new_password:nw})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Lỗi đổi mật khẩu');
+    err.style.color='var(--green)';err.textContent='✅ Đổi mật khẩu thành công!';
+    document.getElementById('ai-oldpw').value='';document.getElementById('ai-newpw').value='';document.getElementById('ai-newpw2').value='';
+    setTimeout(function(){err.textContent='';err.style.color='var(--red)';},3000);
+  }catch(ex){err.style.color='var(--red)';err.textContent='❌ '+ex.message;}
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2888,10 +3416,8 @@ document.addEventListener('keydown', e=>{
     if(m && m.classList.contains('open')) closeScreenshotModal();
   }
   if(e.key==='Enter'){
-    const loginTab=document.getElementById('tab-login-btn');
-    const regTab=document.getElementById('tab-reg-btn');
-    if(loginTab&&loginTab.classList.contains('active')) doLogin();
-    else if(regTab&&regTab.classList.contains('active')) doRegister();
+    const authScr=document.getElementById('auth-screen');
+    if(authScr&&authScr.style.display!=='none') doLogin();
   }
 });
 
