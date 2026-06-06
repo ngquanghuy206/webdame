@@ -2345,12 +2345,52 @@ function renderMgmtList(){
   if(count) count.textContent='('+mgmtData.length+' tài khoản)';
   const start=mgmtPage*MGMT_PER_PAGE;
   const chunk=mgmtData.slice(start,start+MGMT_PER_PAGE);
-  if(list) list.innerHTML='<table class="user-table"><thead><tr><th>#</th><th>Username</th><th>Email</th><th>Số dư</th><th>Slot</th><th>TT</th><th>Act</th></tr></thead><tbody>'+
-    chunk.map(function(u,i){return '<tr><td>'+(start+i+1)+'</td><td><b>'+u.username+'</b></td><td style="color:var(--muted);font-size:11px">'+(u.email||'—')+'</td><td style="color:var(--green);font-weight:700">'+fmtMoney(u.balance||0)+'</td><td><span class="u-active '+(u.active!==false?'yes':'no')+'">'+(u.active!==false?'OK':'🔒')+'</span></td><td><button class="u-action" onclick="toggleUserActive(''+u.username+'','+String(u.active!==false)+')">'+(u.active!==false?'🔒':'🔓')+'</button><button class="u-action del" onclick="deleteUser(''+u.username+'')">🗑</button></td></tr>';}).join('')+'</tbody></table>';
+  if(list){
+    var rows=chunk.map(function(u,i){
+      var now=new Date();
+      var slotCount=(u.slots||[]).filter(function(s){
+        if(!s.expires_at) return true;
+        try{
+          var p=s.expires_at.split(' ');var dp=p[0].split('/');var tp=(p[1]||'0:0:0').split(':');
+          return new Date(+dp[2],+dp[1]-1,+dp[0],+tp[0],+tp[1],+tp[2])>now;
+        }catch(e){return true;}
+      }).length;
+      var ac=u.active!==false;
+      return '<tr>'
+        +'<td>'+(start+i+1)+'</td>'
+        +'<td><b>'+u.username+'</b></td>'
+        +'<td style="color:var(--muted);font-size:11px">'+(u.email||'—')+'</td>'
+        +'<td style="color:var(--green);font-weight:700">'+fmtMoney(u.balance||0)+'</td>'
+        +'<td style="color:var(--cyan);font-weight:700">'+slotCount+'</td>'
+        +'<td><span class="u-active '+(ac?'yes':'no')+'">'+(ac?'OK':'🔒')+'</span></td>'
+        +'<td>'
+          +'<button class="u-action mgmt-toggle-btn">'+(ac?'🔒':'🔓')+'</button>'
+          +'<button class="u-action del mgmt-del-btn">🗑</button>'
+        +'</td>'
+        +'</tr>';
+    }).join('');
+    list.innerHTML='<table class="user-table"><thead><tr><th>#</th><th>Username</th><th>Email</th><th>Số dư</th><th>Slot</th><th>TT</th><th>Act</th></tr></thead><tbody>'+rows+'</tbody></table>';
+    list.querySelectorAll('tr').forEach(function(tr,i){
+      if(i===0||!chunk[i-1]) return;
+      var u=chunk[i-1];
+      var toggleBtn=tr.querySelector('.mgmt-toggle-btn');
+      var delBtn=tr.querySelector('.mgmt-del-btn');
+      if(toggleBtn) toggleBtn.onclick=function(){ doToggleUser(u.username, u.active!==false); };
+      if(delBtn) delBtn.onclick=function(){ doDeleteUser(u.username); };
+    });
+  }
   const totalPages=Math.ceil(mgmtData.length/MGMT_PER_PAGE);
-  if(pages) pages.innerHTML=Array.from({length:totalPages},function(_,i){return '<button class="page-btn'+(i===mgmtPage?' active':'')+'" onclick="mgmtPage='+i+';renderMgmtList()">'+(i+1)+'</button>';}).join('');
+  if(pages) pages.innerHTML=Array.from({length:totalPages},function(_,i){
+    return '<button class="page-btn'+(i===mgmtPage?' active':'')+'" onclick="mgmtPage='+i+';renderMgmtList()">'+(i+1)+'</button>';
+  }).join('');
 }
-
+function doToggleUser(username, currentActive){
+  fetch('/api/admin/toggle-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username:username,active:!currentActive})}).then(function(){loadMgmtUsers();});
+}
+function doDeleteUser(username){
+  if(!confirm('Xóa tài khoản "'+username+'"?')) return;
+  fetch('/api/admin/delete-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username:username})}).then(function(){loadMgmtUsers();});
+}
 async function toggleUserActive(username,currentActive){
   await fetch('/api/admin/toggle-user',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({username,active:!currentActive})});
   loadMgmtUsers();
@@ -2418,12 +2458,32 @@ async function loadAdminDeposits(){
     const r=await fetch('/api/admin/deposits',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
     const deps=await r.json();
     if(!deps.length){list.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px">Chưa có đơn nào</div>';return;}
-    list.innerHTML=deps.slice(0,50).map(function(d){
-      const statusLabel=d.status==='pending'?'⏳ Chờ duyệt':d.status==='approved'?'✅ Đã duyệt':'❌ Từ chối';
-      const btns=d.status==='pending'?'<div style="display:flex;gap:6px"><button onclick="adminApproveDeposit(''+d.order_id+'')" style="padding:4px 10px;border-radius:6px;background:rgba(0,230,118,.2);border:1px solid rgba(0,230,118,.4);color:var(--green);font-size:11px;font-weight:700;cursor:pointer">✅ Duyệt</button><button onclick="adminRejectDeposit(''+d.order_id+'')" style="padding:4px 10px;border-radius:6px;background:rgba(255,82,82,.15);border:1px solid rgba(255,82,82,.3);color:var(--red);font-size:11px;font-weight:700;cursor:pointer">❌ Từ chối</button></div>':'';
-      return '<div class="dep-admin-row"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><b>'+d.username+'</b> <span class="dep-status-badge '+d.status+'">'+statusLabel+'</span></div><div style="color:var(--green);font-weight:800">'+fmtMoney(d.amount)+'</div></div><div style="color:var(--muted);margin-bottom:6px">📝 <span style="font-family:monospace">'+(d.content||'')+'</span></div><div style="display:flex;justify-content:space-between;align-items:center"><div style="color:var(--muted)">'+(d.created||'')+'</div>'+btns+'</div></div>';
-    }).join('');
-  }catch{list.innerHTML='<div style="color:var(--red)">Lỗi tải dữ liệu</div>';}
+    list.innerHTML='';
+    deps.slice(0,50).forEach(function(dep){
+      var statusLabel=dep.status==='pending'?'⏳ Chờ duyệt':dep.status==='approved'?'✅ Đã duyệt':'❌ Từ chối';
+      var row=document.createElement('div');
+      row.className='dep-admin-row';
+      row.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+        +'<div><b>'+dep.username+'</b> <span class="dep-status-badge '+dep.status+'">'+statusLabel+'</span></div>'
+        +'<div style="color:var(--green);font-weight:800">'+fmtMoney(dep.amount)+'</div></div>'
+        +'<div style="color:var(--muted);margin-bottom:6px">📝 <span style="font-family:monospace">'+(dep.content||'')+'</span></div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+          +'<div style="color:var(--muted)">'+(dep.created||'')+'</div>'
+          +(dep.status==='pending'
+            ?'<div style="display:flex;gap:6px">'
+              +'<button class="dep-approve-btn" style="padding:4px 10px;border-radius:6px;background:rgba(0,230,118,.2);border:1px solid rgba(0,230,118,.4);color:var(--green);font-size:11px;font-weight:700;cursor:pointer">✅ Duyệt</button>'
+              +'<button class="dep-reject-btn" style="padding:4px 10px;border-radius:6px;background:rgba(255,82,82,.15);border:1px solid rgba(255,82,82,.3);color:var(--red);font-size:11px;font-weight:700;cursor:pointer">❌ Từ chối</button>'
+              +'</div>'
+            :'')
+        +'</div>';
+      if(dep.status==='pending'){
+        var orderId=dep.order_id;
+        row.querySelector('.dep-approve-btn').onclick=function(){adminApproveDeposit(orderId);};
+        row.querySelector('.dep-reject-btn').onclick=function(){adminRejectDeposit(orderId);};
+      }
+      list.appendChild(row);
+    });
+  }catch(e){list.innerHTML='<div style="color:var(--red)">Lỗi tải dữ liệu</div>';}
 }
 async function adminApproveDeposit(order_id){
   if(!confirm('Duyệt đơn này?')) return;
@@ -2606,44 +2666,56 @@ function switchVpsTab(period, btn){
 function renderVpsPlans(plans){
   const grid = document.getElementById('vps-plans-grid');
   if(!plans.length){ grid.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px;grid-column:1/-1;font-size:13px">Không có gói nào</div>'; return; }
-  grid.innerHTML = plans.map(function(p){
-    const dayLabel = p.days<7?p.days+' ngày':p.days<30?(p.days/7)+' tuần':p.days<365?Math.round(p.days/30)+' tháng':Math.round(p.days/365)+' năm';
-    const priceColor = p.price===0?'var(--green)':p.popular?'var(--yellow)':'var(--blue)';
-    const priceText = p.price===0?'MIỄN PHÍ':fmtMoney(p.price);
-    const badge = p.popular?'<div class="vps-popular-badge">⭐ HOT</div>':p.trial?'<div class="vps-popular-badge" style="background:linear-gradient(135deg,#00e676,#00c853);left:10px;right:auto">FREE</div>':'';
-    const slots = p.slots||p.qty||1;
-    const perMachine = p.price>0?'<div style="font-size:9px;color:var(--muted);margin-top:2px">'+fmtMoney(Math.round(p.price/slots))+'/máy</div>':'';
-    return '<div class="vps-plan-card'+(p.popular?' popular':'')+'" onclick="confirmVpsBuy(''+p.id+'')">'+badge+
-      '<div style="font-size:11px;font-weight:800;color:var(--text);margin-bottom:4px;line-height:1.4">'+p.name+'</div>'+
-      '<div style="font-size:10px;color:var(--muted);margin-bottom:6px">📱 '+slots+' máy ảo · ⏱ '+dayLabel+'</div>'+
-      '<div style="font-size:17px;font-weight:900;color:'+priceColor+'">'+priceText+'</div>'+
-      perMachine+'</div>';
-  }).join('');
+  grid.innerHTML = '';
+  plans.forEach(function(p){
+    var dayLabel = p.days<7?p.days+' ngày':p.days<30?(p.days/7)+' tuần':p.days<365?Math.round(p.days/30)+' tháng':Math.round(p.days/365)+' năm';
+    var priceColor = p.price===0?'var(--green)':p.popular?'var(--yellow)':'var(--blue)';
+    var priceText = p.price===0?'MIỄN PHÍ':fmtMoney(p.price);
+    var slots = p.slots||p.qty||1;
+    var card = document.createElement('div');
+    card.className = 'vps-plan-card'+(p.popular?' popular':'');
+    if(p.popular){
+      var badge=document.createElement('div'); badge.className='vps-popular-badge'; badge.textContent='⭐ HOT'; card.appendChild(badge);
+    } else if(p.trial){
+      var badge=document.createElement('div'); badge.className='vps-popular-badge'; badge.style.cssText='background:linear-gradient(135deg,#00e676,#00c853);left:10px;right:auto'; badge.textContent='FREE'; card.appendChild(badge);
+    }
+    var perMachine = p.price>0?'<div style="font-size:9px;color:var(--muted);margin-top:2px">'+fmtMoney(Math.round(p.price/slots))+'/máy</div>':'';
+    card.innerHTML += '<div style="font-size:11px;font-weight:800;color:var(--text);margin-bottom:4px;line-height:1.4">'+p.name+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-bottom:6px">📱 '+slots+' máy ảo · ⏱ '+dayLabel+'</div>'
+      +'<div style="font-size:17px;font-weight:900;color:'+priceColor+'">'+priceText+'</div>'
+      +perMachine;
+    card.onclick = (function(pid){ return function(){ confirmVpsBuy(pid); }; })(p.id);
+    grid.appendChild(card);
+  });
 }
-
 function renderComboPlans(){
-  const combos = (_vpsPlans||[]).filter(function(p){ return p.id.startsWith('sl_s') || p.trial; });
-  const list = document.getElementById('vps-combo-list');
+  var combos = (_vpsPlans||[]).filter(function(p){ return p.id.startsWith('sl_s') || p.trial; });
+  var list = document.getElementById('vps-combo-list');
   if(!list) return;
-  if(!combos.length){ list.innerHTML=''; return; }
-  list.innerHTML = combos.map(function(p){
-    const slots = p.slots||p.qty||1;
-    const dayLabel = p.days<7?p.days+' ngày':p.days<30?(p.days/7)+' tuần':p.days<365?Math.round(p.days/30)+' tháng':Math.round(p.days/365)+' năm';
-    const priceText = p.price===0?'MIỄN PHÍ':fmtMoney(p.price);
-    const priceColor = p.price===0?'var(--green)':p.popular?'var(--yellow)':'var(--blue)';
-    const hotBadge = p.popular?'<span style="background:linear-gradient(135deg,var(--yellow),var(--orange));color:#000;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:6px">⭐ HOT</span>':'';
-    const freeBadge = p.trial?'<span style="background:linear-gradient(135deg,#00e676,#00c853);color:#000;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:6px">FREE</span>':'';
-    const perM = p.price>0?'<span style="color:var(--muted);font-size:10px"> · '+fmtMoney(Math.round(p.price/slots))+'/máy</span>':'';
-    return '<div onclick="confirmVpsBuy(''+p.id+'')" style="background:var(--glass2);border:1.5px solid '+(p.popular?'rgba(255,193,7,.4)':p.trial?'rgba(0,230,118,.3)':'var(--border)')+';border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:.2s" onmouseover="this.style.borderColor='rgba(79,158,255,.5)'" onmouseout="this.style.borderColor=''+(p.popular?'rgba(255,193,7,.4)':p.trial?'rgba(0,230,118,.3)':'var(--border)')+''">'+
-      '<div style="flex:1;min-width:0">'+
-        '<div style="font-size:13px;font-weight:800;display:flex;align-items:center;flex-wrap:wrap;gap:2px">'+p.name+hotBadge+freeBadge+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);margin-top:3px">📱 '+slots+' máy ảo · ⏱ '+dayLabel+perM+'</div>'+
-      '</div>'+
-      '<div style="font-size:17px;font-weight:900;color:'+priceColor+';white-space:nowrap">'+priceText+'</div>'+
-    '</div>';
-  }).join('');
+  list.innerHTML = '';
+  if(!combos.length) return;
+  combos.forEach(function(p){
+    var slots = p.slots||p.qty||1;
+    var dayLabel = p.days<7?p.days+' ngày':p.days<30?(p.days/7)+' tuần':p.days<365?Math.round(p.days/30)+' tháng':Math.round(p.days/365)+' năm';
+    var priceText = p.price===0?'MIỄN PHÍ':fmtMoney(p.price);
+    var priceColor = p.price===0?'var(--green)':p.popular?'var(--yellow)':'var(--blue)';
+    var perM = p.price>0?' · '+fmtMoney(Math.round(p.price/slots))+'/máy':'';
+    var borderColor = p.popular?'rgba(255,193,7,.4)':p.trial?'rgba(0,230,118,.3)':'var(--border)';
+    var row = document.createElement('div');
+    row.style.cssText = 'background:var(--glass2);border:1.5px solid '+borderColor+';border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:.2s';
+    var hotBadge = p.popular?'<span style="background:linear-gradient(135deg,var(--yellow),var(--orange));color:#000;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:6px">⭐ HOT</span>':'';
+    var freeBadge = p.trial?'<span style="background:linear-gradient(135deg,#00e676,#00c853);color:#000;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;margin-left:6px">FREE</span>':'';
+    row.innerHTML = '<div style="flex:1;min-width:0">'
+      +'<div style="font-size:13px;font-weight:800;display:flex;align-items:center;flex-wrap:wrap;gap:2px">'+p.name+hotBadge+freeBadge+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:3px">📱 '+slots+' máy ảo · ⏱ '+dayLabel+perM+'</div>'
+      +'</div>'
+      +'<div style="font-size:17px;font-weight:900;color:'+priceColor+';white-space:nowrap">'+priceText+'</div>';
+    row.onmouseover = function(){ this.style.borderColor='rgba(79,158,255,.5)'; };
+    row.onmouseout  = function(){ this.style.borderColor=borderColor; };
+    row.onclick = (function(pid){ return function(){ confirmVpsBuy(pid); }; })(p.id);
+    list.appendChild(row);
+  });
 }
-
 function filterVpsPlans(filter,btn){
   // legacy - redirect to switchVpsTab
   if(filter==='bundle') { renderComboPlans(); return; }
@@ -2670,7 +2742,10 @@ async function doVpsBuy(){
   const err=document.getElementById('vps-confirm-err');
   if(btn){btn.disabled=true;btn.textContent='⏳ Đang xử lý...';}
   try{
-    const r=await fetch('/api/slots/buy',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify({plan_id:_vpsPendingPlan.id})});
+    const payload=_vpsPendingPlan.custom
+      ?{plan_id:_vpsPendingPlan.id,custom:true,slots:_vpsPendingPlan.slots,days:_vpsPendingPlan.days,price:_vpsPendingPlan.price,name:_vpsPendingPlan.name}
+      :{plan_id:_vpsPendingPlan.id};
+    const r=await fetch('/api/slots/buy',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},body:JSON.stringify(payload)});
     const d=await r.json();
     if(!r.ok) throw new Error(d.detail||'Lỗi mua');
     updateBalanceDisplay(d.new_balance);
@@ -2690,35 +2765,51 @@ async function doVpsBuy(){
 // ═══════════════════════════════════════════════════════
 async function openMyVps(){
   openModal('my-vps-modal');
-  const list=document.getElementById('my-vps-list');
+  var list=document.getElementById('my-vps-list');
   list.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px">Đang tải...</div>';
   try{
-    const r=await fetch('/api/slots/my',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-    const vps=await r.json();
-    if(!vps.length){list.innerHTML='<div style="text-align:center;padding:30px"><div style="font-size:40px;margin-bottom:10px">🖥</div><div style="color:var(--muted)">Bạn chưa có máy ảo nào</div><button class="btn btn-primary" style="margin-top:12px;padding:10px 20px" onclick="closeModal('my-vps-modal');openVpsShop()">🛒 Mua ngay</button></div>';return;}
-    list.innerHTML=vps.map(function(v){
-      // Countdown expire for my-vps card
-      let expHtml='<div style="font-size:11px;color:var(--green);margin-top:8px">⏰ Không giới hạn · Tái sử dụng được</div>';
+    var r=await fetch('/api/slots/my',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    var resp=await r.json();
+    var vps=resp.slots||[];
+    if(!vps.length){
+      list.innerHTML='<div style="text-align:center;padding:30px"><div style="font-size:40px;margin-bottom:10px">🖥</div><div style="color:var(--muted)">Bạn chưa có máy ảo nào</div></div>';
+      var buyBtn=document.createElement('button');
+      buyBtn.className='btn btn-primary';
+      buyBtn.style.cssText='margin-top:12px;padding:10px 20px';
+      buyBtn.textContent='🛒 Mua ngay';
+      buyBtn.onclick=function(){closeModal('my-vps-modal');openVpsShop();};
+      list.querySelector('div').appendChild(buyBtn);
+      return;
+    }
+    list.innerHTML='';
+    var now=new Date();
+    vps.forEach(function(v){
+      var expHtml='<div style="font-size:11px;color:var(--green);margin-top:8px">⏰ Không giới hạn</div>';
       if(v.expires_at){
         try{
-          const parts=v.expires_at.split(' ');const dp=parts[0].split('/');const tp=parts[1].split(':');
-          const expMs=new Date(parseInt(dp[2]),parseInt(dp[1])-1,parseInt(dp[0]),parseInt(tp[0]),parseInt(tp[1]),parseInt(tp[2])).getTime();
-          const diffMs=expMs-Date.now();
-          const d=Math.floor(diffMs/86400000);const h=Math.floor((diffMs%86400000)/3600000);const m=Math.floor((diffMs%3600000)/60000);
+          var p2=v.expires_at.split(' ');var dp=p2[0].split('/');var tp=p2[1].split(':');
+          var expMs=new Date(+dp[2],+dp[1]-1,+dp[0],+tp[0],+tp[1],+tp[2]).getTime();
+          var diffMs=expMs-Date.now();
+          var d=Math.floor(diffMs/86400000),h=Math.floor((diffMs%86400000)/3600000),m=Math.floor((diffMs%3600000)/60000);
           if(diffMs<=0){
-            expHtml='<div style="font-size:11px;color:var(--red);margin-top:8px;display:flex;align-items:center;justify-content:space-between">❌ Đã hết hạn - máy ảo bị khóa<button onclick="closeModal('my-vps-modal');openVpsShop()" style="background:linear-gradient(135deg,#2979ff,#7c4dff);border:none;border-radius:8px;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">🔄 Mua lại</button></div>';
+            expHtml='<div style="font-size:11px;color:var(--red);margin-top:8px">❌ Đã hết hạn</div>';
           } else if(diffMs<3*86400000){
-            expHtml='<div style="font-size:11px;color:var(--yellow);margin-top:8px;display:flex;align-items:center;justify-content:space-between">⚠️ Còn lại: '+(d>0?d+'n ':'')+h+'g '+m+'p<button onclick="closeModal('my-vps-modal');openVpsShop()" style="background:linear-gradient(135deg,#ffc800,#ff9100);border:none;border-radius:8px;color:#000;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer">🔄 Gia hạn</button></div>';
+            expHtml='<div style="font-size:11px;color:var(--yellow);margin-top:8px">⚠️ Còn lại: '+(d>0?d+'n ':'')+h+'g '+m+'p</div>';
           } else {
-            expHtml='<div style="font-size:11px;color:var(--muted);margin-top:8px">⏰ Còn lại: '+(d>0?d+' ngày ':'')+h+'g '+m+'p · <span style="color:var(--green)">✅ Đang hoạt động</span></div>';
+            expHtml='<div style="font-size:11px;color:var(--muted);margin-top:8px">⏰ Còn lại: '+(d>0?d+' ngày ':'')+h+'g '+m+'p · <span style="color:var(--green)">✅ Hoạt động</span></div>';
           }
-        }catch(e){ expHtml='<div style="font-size:11px;color:var(--muted);margin-top:8px">⏰ Hết hạn: '+v.expires_at+'</div>'; }
+        }catch(e2){ expHtml='<div style="font-size:11px;color:var(--muted);margin-top:8px">⏰ Hết hạn: '+v.expires_at+'</div>'; }
       }
-      const stColor = v.status==='active'?'rgba(0,230,118,.15)':'rgba(255,82,82,.1)';
-      const stTextColor = v.status==='active'?'var(--green)':'var(--red)';
-      return '<div class="vps-my-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:13px;font-weight:800">'+v.plan_name+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">📱 Máy ảo · 🆔 '+v.id+'</div></div><span style="padding:3px 8px;border-radius:20px;font-size:10px;font-weight:800;background:'+stColor+';color:'+stTextColor+'">'+v.status+'</span></div>'+expHtml+'<div style="font-size:11px;color:var(--muted);margin-top:4px">📅 Mua: '+v.created+' · <span style="color:var(--cyan)">✅ Tái sử dụng khi mua lại</span></div></div>';
-    }).join('');
-  }catch{list.innerHTML='<div style="color:var(--red);text-align:center">Lỗi tải dữ liệu</div>';}
+      var card=document.createElement('div');
+      card.className='vps-my-card';
+      card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
+        +'<div><div style="font-size:13px;font-weight:800">'+v.plan_name+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);margin-top:2px">📱 Máy ảo · 🆔 '+v.id+'</div></div></div>'
+        +expHtml
+        +'<div style="font-size:11px;color:var(--muted);margin-top:4px">📅 Mua: '+v.created+'</div>';
+      list.appendChild(card);
+    });
+  }catch(e3){list.innerHTML='<div style="color:var(--red);text-align:center">Lỗi tải dữ liệu</div>';}
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3438,6 +3529,15 @@ async function openDetailModal(svId){
   document.getElementById('sv-detail-modal').style.display='flex';
 }
 
+async function reStartServerFromDetail(svId){
+  try{
+    const r=await fetch('/api/servers',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    const list=await r.json();
+    const sv=list.find(function(s){return s.id===svId||s.id===parseInt(svId);});
+    if(!sv){showToast('Không tìm thấy thông tin máy chủ','var(--red)');return;}
+    await serverAction('start',svId,sv.cookie||'',sv.target_url||'',sv.speed||'normal',sv.acc_name||'',sv.acc_uid||'',sv.target_name||'');
+  }catch(e){showToast('Lỗi: '+e.message,'var(--red)');}
+}
 function _syncDetailModal(svId, sd, _unused, fullReset){
   if(window._detailOpenId !== svId) return;
   const sLabel={ready:'Sẵn sàng',running:'Đang chạy',stopped:'Đã dừng',paused:'Tạm dừng'};
@@ -3453,7 +3553,7 @@ function _syncDetailModal(svId, sd, _unused, fullReset){
   if(actDiv){
     actDiv.innerHTML=`
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${!sd.running&&!sd.paused?`<button class="sv2-btn play" style="flex:1" onclick="serverAction('start','${svId}','','','${sd.speed||'normal'}','','','')">▶ Chạy ngay</button>`:''}
+        ${!sd.running&&!sd.paused?`<button class="sv2-btn play" style="flex:1" onclick="reStartServerFromDetail('${svId}')">▶ Chạy ngay</button>`:''}
         ${sd.running?`<button class="sv2-btn pause" style="flex:1" onclick="serverAction('pause','${svId}')">⏸ Tạm dừng</button>`:''}
         ${sd.paused?`<button class="sv2-btn resume" style="flex:1" onclick="serverAction('resume','${svId}')">▶ Tiếp tục</button>`:''}
         ${sd.running||sd.paused?`<button class="sv2-btn stop" style="flex:1" onclick="serverAction('stop','${svId}')">⏹ Dừng hẳn</button>`:''}
