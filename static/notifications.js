@@ -83,13 +83,50 @@ function escHtml(str) {
 }
 
 // ── MAIN NOTIFICATION MODAL ───────────────────────────────
+function parseNotifColors(text) {
+  // Convert [color]text[/color] tags to styled spans
+  // Supported: [red] [blue] [green] [yellow] [orange] [purple] [cyan] [bold] [big]
+  const COLOR_MAP = {
+    red:'#e53935', blue:'#1e88e5', green:'#43a047', yellow:'#f9a825',
+    orange:'#fb8c00', purple:'#8e24aa', cyan:'#00acc1', pink:'#e91e63',
+    gold:'#ffc107', white:'#ffffff'
+  };
+  let html = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/
+/g,'<br>');
+  // Color tags
+  Object.entries(COLOR_MAP).forEach(([tag, color]) => {
+    const re = new RegExp('\\['+tag+'\\]([\\s\\S]*?)\\[/'+tag+'\\]','gi');
+    html = html.replace(re, `<span style="color:${color};font-weight:700">$1</span>`);
+  });
+  // Special tags
+  html = html.replace(/\[bold\]([\s\S]*?)\[\/bold\]/gi, '<b>$1</b>');
+  html = html.replace(/\[big\]([\s\S]*?)\[\/big\]/gi, '<span style="font-size:20px;font-weight:900">$1</span>');
+  html = html.replace(/\[small\]([\s\S]*?)\[\/small\]/gi, '<span style="font-size:13px;color:rgba(0,0,0,.5)">$1</span>');
+  return html;
+}
+
+// Đóng modal thông báo + snooze 6h nếu user tích "Không nhắc lại"
+function dismissMainNotif() {
+  const cb = document.getElementById('notif-no-remind');
+  if(cb && cb.checked) {
+    const until = Date.now() + 6 * 60 * 60 * 1000; // 6 tiếng
+    localStorage.setItem('notif_snooze_until', String(until));
+  }
+  closeModal('main-notif-modal');
+}
+
 function openMainNotifModal() {
+  const cb = document.getElementById('notif-no-remind');
+  if(cb) cb.checked = false; // reset mỗi lần mở
   const m = _notifData.main || {};
   const textEl = document.getElementById('main-notif-text');
   const imgEl  = document.getElementById('main-notif-img');
-  if(textEl) { textEl.textContent = m.text||''; }
+  if(textEl) { textEl.innerHTML = parseNotifColors(m.text||''); }
   if(imgEl){ imgEl.src = m.image||''; imgEl.style.display = m.image ? '' : 'none'; }
   openModal('main-notif-modal');
+
 }
 
 // ── ADMIN: NOTIFICATIONS ──────────────────────────────────
@@ -104,7 +141,7 @@ function openAdminNotifModal() {
 
 async function adminSaveMainNotif() {
   const text = document.getElementById('anotif-main-text').value;
-  const image= document.getElementById('anotif-main-img').value.trim();
+  const image = _notifImgBase64 || document.getElementById('anotif-main-img').value.trim();
   const btn  = document.getElementById('anotif-save-btn');
   btn.disabled=true; btn.textContent='Đang lưu...';
   try {
@@ -226,4 +263,33 @@ async function adminResetTopNap() {
   await fetch('/api/admin/top-nap/reset',{method:'POST',headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
   showToast('✅ Đã reset bảng xếp hạng','#00c882');
   openTopNapModal();
+}
+
+// ── ADMIN: IMAGE UPLOAD FOR NOTIF ────────────────────────
+let _notifImgBase64 = '';
+
+function handleNotifImg(input) {
+  if(!input.files||!input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    _notifImgBase64 = e.target.result;
+    const preview = document.getElementById('anotif-img-preview');
+    const thumb = document.getElementById('anotif-img-thumb');
+    const drop = document.getElementById('anotif-img-drop');
+    if(thumb) thumb.src = e.target.result;
+    if(preview) preview.style.display = 'block';
+    if(drop) drop.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearNotifImg() {
+  _notifImgBase64 = '';
+  const input = document.getElementById('anotif-img-file');
+  if(input) input.value = '';
+  const preview = document.getElementById('anotif-img-preview');
+  const drop = document.getElementById('anotif-img-drop');
+  if(preview) preview.style.display = 'none';
+  if(drop) drop.style.display = 'block';
 }

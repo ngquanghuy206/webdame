@@ -413,14 +413,17 @@ function showApp(){
   setTimeout(()=>{
     if(typeof loadHotDeals === 'function') loadHotDeals();
     if(typeof loadNotifications === 'function') loadNotifications();
-    // Show main notification popup if content exists
+    // Show main notification popup nếu chưa đọc (và chưa bị snooze 6h)
     setTimeout(async ()=>{
       try {
+        const snoozeUntil = parseInt(localStorage.getItem('notif_snooze_until')||'0',10);
+        if(Date.now() < snoozeUntil) return; // đang trong vòng 6h snooze
         const rn = await fetch('/api/notifications',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
         const nd = await rn.json();
-        if(nd.main && nd.main.text && nd.main.text.trim()) openMainNotifModal();
+        const txt = (nd.main && nd.main.text||'').trim();
+        if(txt) openMainNotifModal();
       } catch(e){}
-    }, 800);
+    }, 600);
   }, 300);
   // Poll unread chat count for admin badge
   if(IS_ADMIN){
@@ -1358,6 +1361,10 @@ async function openAccountInfo(){
     const crEl=document.getElementById('ai-created');if(crEl)crEl.textContent=cr;
     document.getElementById('ai-balance').textContent=fmtMoney(d.balance||0);
     updateBalanceDisplay(d.balance||0);
+    const depEl=document.getElementById('ai-total-deposited');
+    if(depEl) depEl.textContent=fmtMoney(d.total_deposited||0);
+    const spentEl=document.getElementById('ai-total-spent');
+    if(spentEl) spentEl.textContent=fmtMoney(d.total_spent||0);
   }catch{}
   // Load slot count
   try{

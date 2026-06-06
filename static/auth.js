@@ -7,7 +7,14 @@ function switchAuthTab(tab){
   if(tab==='register'){const s1=document.getElementById('reg-step1');const s2=document.getElementById('reg-step2');if(s1)s1.style.display='block';if(s2)s2.style.display='none';}
   document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');
   document.getElementById('tab-reg-btn').classList.toggle('active',tab==='register');
-  if(tab==='register'){selectedOptValue=null;generateCaptcha();}
+  // update titles
+  const tl=document.getElementById('auth-title-login'),tr=document.getElementById('auth-title-register');
+  const sl=document.getElementById('auth-sub-login'),sr=document.getElementById('auth-sub-register');
+  if(tl)tl.style.display=tab==='login'?'':'none';
+  if(tr)tr.style.display=tab==='register'?'':'none';
+  if(sl)sl.style.display=tab==='login'?'':'none';
+  if(sr)sr.style.display=tab==='register'?'':'none';
+  if(tab==='register'){selectedOptValue=null;}
 }
 
 let _forgotEmail='',_forgotOtp='';
@@ -68,11 +75,14 @@ async function doLogin(){
   const p=document.getElementById('login-pass').value.trim();
   const err=document.getElementById('login-err');const btn=document.getElementById('login-btn');
   if(!u||!p){err.style.display='block';err.textContent='Vui lòng nhập đầy đủ';return;}
+  // hCaptcha verify
+  const hToken = hcaptcha.getResponse(window._loginCaptchaWidgetId);
+  if(!hToken){err.style.display='block';err.textContent='❌ Vui lòng xác minh CAPTCHA!';return;}
   btn.disabled=true;btn.textContent='⏳ Đang kết nối server...';err.style.display='none';
   const _loginAc=new AbortController();
   const _loginTid=setTimeout(()=>{_loginAc.abort();},20000);
   try{
-    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p}),signal:_loginAc.signal});
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,hcaptcha_token:hToken}),signal:_loginAc.signal});
     clearTimeout(_loginTid);
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Sai thông tin');
     SESSION_TOKEN=d.token;CURRENT_USER=d.username;IS_ADMIN=d.is_admin||false;
@@ -83,7 +93,10 @@ async function doLogin(){
     const maxAge=rememberMe?60*60*24*30:60*60*8;
     document.cookie=`session_token=${SESSION_TOKEN};path=/;SameSite=Lax;max-age=${maxAge}`;
     playSfx('success');showApp();
-  }catch(e){err.style.display='block';err.textContent=e.message;playSfx('error');}
+  }catch(e){
+    err.style.display='block';err.textContent=e.message;playSfx('error');
+    hcaptcha.reset(window._loginCaptchaWidgetId);
+  }
   finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
 }
 
@@ -113,15 +126,18 @@ async function doRegisterSendOtp(){
   if(u.length<6||p.length<6){err.style.display='block';err.textContent='Username & mật khẩu tối thiểu 6 ký tự';return;}
   if(!em.toLowerCase().endsWith('@gmail.com')){err.style.display='block';err.textContent='Chỉ chấp nhận @gmail.com';return;}
   if(!verifyCaptcha()){err.style.display='block';err.textContent='❌ CAPTCHA sai! Thử lại.';generateCaptcha();return;}
+  // hCaptcha verify
+  const hToken = hcaptcha.getResponse(window._regCaptchaWidgetId);
+  if(!hToken){err.style.display='block';err.textContent='❌ Vui lòng xác minh CAPTCHA!';return;}
   btn.disabled=true;btn.textContent='⏳ Đang gửi OTP...';err.style.display='none';
   try{
-    const r=await fetch('/api/register/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,email:em})});
+    const r=await fetch('/api/register/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,email:em,hcaptcha_token:hToken})});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Lỗi gửi OTP');
     document.getElementById('reg-step1').style.display='none';
     document.getElementById('reg-step2').style.display='block';
     _startRegOtpTimer();
     showToast('📨 OTP đã gửi về Gmail!','#4f9eff');
-  }catch(e){err.style.display='block';err.textContent=e.message;}
+  }catch(e){err.style.display='block';err.textContent=e.message;hcaptcha.reset(window._regCaptchaWidgetId);}
   finally{btn.disabled=false;btn.textContent='📧 Gửi mã OTP xác minh';}
 }
 
@@ -239,7 +255,10 @@ function toggleRemember(){
   rememberMe=!rememberMe;
   localStorage.setItem('zct_remember',rememberMe?'1':'0');
   const el=document.getElementById('remember-check');
-  el.classList.toggle('checked',rememberMe);el.textContent=rememberMe?'✓':'';
+  el.classList.toggle('checked',rememberMe);
+  el.classList.toggle('remember-check-new',true);
+  el.textContent=rememberMe?'✓':'';
+}
 }
 
 function showApp(){
@@ -279,16 +298,6 @@ function showApp(){
   if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
   startClock();loadHistory();
   if(!IS_ADMIN) refreshBalance();
-  // Show/hide admin-only sidebar section
-  const adminSection = document.getElementById('sb-admin-section');
-  if(adminSection) adminSection.style.display = IS_ADMIN ? 'block' : 'none';
-  const topNapAdmin = document.getElementById('top-nap-admin-ctrl');
-  if(topNapAdmin) topNapAdmin.style.display = IS_ADMIN ? '' : 'none';
-  // Load hot deals + notifications
-  setTimeout(()=>{
-    if(typeof loadHotDeals === 'function') loadHotDeals();
-    if(typeof loadNotifications === 'function') loadNotifications();
-  }, 300);
   // Poll unread chat count for admin badge
   if(IS_ADMIN){
     loadAdminChatThreads();
@@ -328,3 +337,20 @@ function doLogout(){
   if(_tok) fetch('/api/logout',{method:'POST',headers:{'Authorization':'Bearer '+_tok}}).catch(()=>{});
 }
 
+
+// ── hCaptcha init ──────────────────────────────────────────
+window._loginCaptchaWidgetId = null;
+window._regCaptchaWidgetId   = null;
+
+function initHCaptcha() {
+  if(typeof hcaptcha === 'undefined') {
+    setTimeout(initHCaptcha, 300); return;
+  }
+  const loginEl = document.getElementById('login-hcaptcha');
+  const regEl   = document.getElementById('reg-hcaptcha');
+  if(loginEl && window._loginCaptchaWidgetId === null)
+    window._loginCaptchaWidgetId = hcaptcha.render(loginEl, {sitekey:'4650897c-b35c-4044-a92a-1d9adf786764', theme:'dark'});
+  if(regEl && window._regCaptchaWidgetId === null)
+    window._regCaptchaWidgetId   = hcaptcha.render(regEl,   {sitekey:'4650897c-b35c-4044-a92a-1d9adf786764', theme:'dark'});
+}
+document.addEventListener('DOMContentLoaded', initHCaptcha);

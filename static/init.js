@@ -4,10 +4,15 @@
   if(el){el.classList.toggle('checked',rememberMe);el.textContent=rememberMe?'✓':'';}
   if(rememberMe&&CURRENT_USER){const u=document.getElementById('login-user');if(u)u.value=CURRENT_USER;}
   if(SESSION_TOKEN&&CURRENT_USER){
+    // Hiện sảnh ngay — không chờ verify để tránh flash login
+    const authEl=document.getElementById('auth-screen');
+    if(authEl) authEl.style.display='none';
+    showApp();
+    // Verify ngầm — nếu token hết hạn mới kick về login
     const _ac=new AbortController(),_tid=setTimeout(()=>_ac.abort(),5000);
     fetch('/api/history',{headers:{'Authorization':'Bearer '+SESSION_TOKEN},signal:_ac.signal})
-      .then(r=>{clearTimeout(_tid);if(r.ok)showApp();else{SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});}})
-      .catch(()=>{clearTimeout(_tid);SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});});
+      .then(r=>{clearTimeout(_tid);if(!r.ok){SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});document.getElementById('welcome-screen').style.display='none';document.getElementById('auth-screen').style.display='flex';}})
+      .catch(()=>{clearTimeout(_tid);});
   }
   setActiveStep(1);
   setInterval(()=>{if(dameRunning)updateRunUI();},1000);

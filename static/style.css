@@ -447,3 +447,19 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
   0%{transform:scale(.75) translateY(30px);opacity:0}
   100%{transform:scale(1) translateY(0);opacity:1}
 }
+
+/* ═══ AUTH REDESIGN (v20) ═══════════════════════════════ */
+#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;position:relative;z-index:10;background:#111}
+.auth-card-new{width:100%;max-width:400px;background:#1a1a1a;border-radius:28px;padding:32px 28px;box-shadow:0 32px 80px rgba(0,0,0,.6)}
+.auth-tabs-new{display:flex;background:rgba(255,255,255,.06);border-radius:14px;padding:4px;margin-bottom:24px;gap:4px}
+.auth-tab-new{flex:1;padding:10px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;text-align:center;color:rgba(255,255,255,.4);transition:all .2s}
+.auth-tab-new.active{background:#fff;color:#111;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.auth-field-label-new{font-size:13px;font-weight:700;color:#fff;margin-bottom:8px}
+.auth-input-new{width:100%;padding:15px 16px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;font-size:15px;color:#fff;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s}
+.auth-input-new:focus{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.1)}
+.auth-input-new::placeholder{color:rgba(255,255,255,.25)}
+.auth-btn-new{width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;background:#fff;color:#111;box-shadow:0 4px 20px rgba(255,255,255,.15);transition:opacity .15s,transform .15s;letter-spacing:.2px}
+.auth-btn-new:hover{opacity:.92;transform:translateY(-1px)}
+.auth-btn-new:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.remember-check-new{width:20px;height:20px;border-radius:6px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:12px}
+.remember-check-new.checked{background:#fff;border-color:#fff;color:#111}

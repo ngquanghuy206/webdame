@@ -21,6 +21,19 @@
 <meta name="author" content="Nguyễn Hoàng Khánh Nam (Dzi Meo Meo)">
 <link rel="icon" href="https://i.imgur.com/1qYFul7.jpeg" type="image/jpeg">
 <link rel="stylesheet" href="/static/style.css?v=18">
+<script>
+// Anti-flash: ẩn auth ngay nếu có token
+(function(){
+  var rm = localStorage.getItem('zct_remember')==='1';
+  var tok = rm ? localStorage.getItem('zct_token') : sessionStorage.getItem('zct_token');
+  if(tok){
+    document.addEventListener('DOMContentLoaded',function(){
+      var a=document.getElementById('auth-screen');
+      if(a) a.style.display='none';
+    });
+  }
+})();
+</script>
 </head>
 <body>
 <audio id="bg-music" loop>
@@ -32,42 +45,39 @@
      AUTH SCREEN
 ════════════════════════════════════════════════════════ -->
 <div id="auth-screen">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <div class="auth-logo-icon">
-        <div class="rainbow-logo-wrap">
-          <img src="https://i.imgur.com/vIkYA9e.jpeg" class="rainbow-logo-img" alt="FB Dame Tool">
-        </div>
+  <div class="auth-card-new">
+
+    <!-- ── LOGO ── -->
+    <div style="text-align:center;margin-bottom:28px">
+      <div class="rainbow-logo-wrap" style="display:inline-block;margin-bottom:14px">
+        <img src="https://i.imgur.com/vIkYA9e.jpeg" class="rainbow-logo-img" alt="FB Dame Tool" style="width:72px;height:72px;border-radius:18px;object-fit:cover">
       </div>
-      <div class="auth-logo-title">FB Dame Tool</div>
-      <div class="auth-logo-sub">Phát triển bởi Nguyễn Hoàng Khánh Nam (Dzi) · 2026</div>
-    </div>
-    <div class="auth-tabs">
-      <div class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">🔐 Đăng nhập</div>
-      <div class="auth-tab" id="tab-reg-btn" onclick="switchAuthTab('register')">📝 Đăng ký</div>
+      <div id="auth-title-login" style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px">Chào mừng trở lại</div>
+      <div id="auth-title-register" style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px;display:none">Tạo tài khoản</div>
+      <div id="auth-sub-login" style="font-size:14px;color:rgba(255,255,255,.45);margin-top:4px">Đăng nhập vào tài khoản của bạn</div>
+      <div id="auth-sub-register" style="font-size:14px;color:rgba(255,255,255,.45);margin-top:4px;display:none">Điền thông tin để đăng ký</div>
     </div>
 
-    <!-- LOGIN FORM (redesigned) -->
-    <div id="auth-login-form" class="auth-form" style="position:relative;z-index:5">
+    <!-- ── TABS ── -->
+    <div class="auth-tabs-new">
+      <div class="auth-tab-new active" id="tab-login-btn" onclick="switchAuthTab('login')">Đăng nhập</div>
+      <div class="auth-tab-new" id="tab-reg-btn" onclick="switchAuthTab('register')">Đăng ký</div>
+    </div>
+
+    <!-- ══ LOGIN FORM ══ -->
+    <div id="auth-login-form" style="display:flex;flex-direction:column;gap:14px">
       <!-- Username -->
-      <div class="field-group">
-        <div class="field-label" style="display:flex;align-items:center;gap:6px">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Tên đăng nhập
-        </div>
-        <input class="field-input" id="login-user" type="text" placeholder="Nhập tên đăng nhập" autocomplete="username"
-          onkeydown="if(event.key==='Enter'){document.getElementById('login-pass').focus()}"
-          style="box-sizing:border-box">
+      <div>
+        <div class="auth-field-label-new">Tên đăng nhập</div>
+        <input class="auth-input-new" id="login-user" type="text" placeholder="Nhập tên đăng nhập" autocomplete="username"
+          onkeydown="if(event.key==='Enter'){document.getElementById('login-pass').focus()}">
       </div>
       <!-- Password -->
-      <div class="field-group">
-        <div class="field-label" style="display:flex;align-items:center;gap:6px">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Mật khẩu
-        </div>
+      <div>
+        <div class="auth-field-label-new">Mật khẩu</div>
         <div style="position:relative">
-          <input class="field-input" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password"
-            style="padding-right:44px;box-sizing:border-box"
+          <input class="auth-input-new" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password"
+            style="padding-right:48px"
             onkeydown="if(event.key==='Enter')doLogin()">
           <button type="button" class="pw-eye-btn" onclick="togglePw('login-pass',this)" title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
             <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -75,67 +85,85 @@
           </button>
         </div>
       </div>
-      <!-- Remember me -->
-      <div class="remember-row" id="remember-row" onclick="toggleRemember()" style="user-select:none">
-        <div class="remember-check" id="remember-check"></div>
-        <span>Ghi nhớ đăng nhập</span>
+      <!-- Remember + Forgot -->
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="remember-row" id="remember-row" onclick="toggleRemember()" style="user-select:none;margin:0">
+          <div class="remember-check-new" id="remember-check"></div>
+          <span style="font-size:13px;color:rgba(255,255,255,.55)">Ghi nhớ đăng nhập</span>
+        </div>
+        <span onclick="openForgotModal()" style="font-size:13px;font-weight:700;color:rgba(255,255,255,.55);cursor:pointer">Quên mật khẩu?</span>
       </div>
       <!-- Error -->
       <div class="auth-err" id="login-err"></div>
+      <!-- hCaptcha -->
+      <div style="display:flex;justify-content:center">
+        <div class="h-captcha" id="login-hcaptcha" data-sitekey="4650897c-b35c-4044-a92a-1d9adf786764" data-theme="dark"></div>
+      </div>
       <!-- Login button -->
-      <button class="auth-btn" id="login-btn" type="button"
-        onclick="doLogin()"
-        style="width:100%;padding:14px;border:none;border-radius:13px;font-size:15px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#2979ff,#7c4dff);color:#fff;box-shadow:0 4px 20px rgba(41,121,255,.35);position:relative;z-index:5;letter-spacing:.5px">
-        🔐 Đăng nhập
-      </button>
-      <div style="text-align:center;margin-top:10px">
-        <span onclick="openForgotModal()" style="color:var(--blue);font-size:13px;cursor:pointer;text-decoration:underline">Quên mật khẩu?</span>
+      <button class="auth-btn-new" id="login-btn" type="button" onclick="doLogin()">Đăng nhập</button>
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:10px;margin:2px 0">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
+        <div style="font-size:12px;color:rgba(255,255,255,.3)">hoặc</div>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
+      </div>
+      <!-- Switch to register -->
+      <div style="text-align:center;font-size:14px;color:rgba(255,255,255,.45)">
+        Chưa có tài khoản? <span onclick="switchAuthTab('register')" style="color:#fff;font-weight:700;cursor:pointer">Tạo ngay</span>
       </div>
     </div>
 
-  
-    <!-- REGISTER FORM -->
-    <div id="auth-register-form" class="auth-form" style="display:none">
-      <div class="field-group">
-        <div class="field-label">Tên đăng nhập</div>
-        <input class="field-input" id="reg-user" type="text" placeholder="Tối thiểu 6 ký tự" autocomplete="username">
+    <!-- ══ REGISTER FORM ══ -->
+    <div id="auth-register-form" style="display:none;flex-direction:column;gap:14px">
+      <div>
+        <div class="auth-field-label-new">Tên đăng nhập</div>
+        <input class="auth-input-new" id="reg-user" type="text" placeholder="Tối thiểu 6 ký tự" autocomplete="username">
       </div>
-      <div class="field-group">
-        <div class="field-label">Mật khẩu</div>
-        <input class="field-input" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+      <div>
+        <div class="auth-field-label-new">Mật khẩu</div>
+        <input class="auth-input-new" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
       </div>
-      <div class="field-group">
-        <div class="field-label">Gmail</div>
-        <input class="field-input" id="reg-email" type="email" placeholder="example@gmail.com" onkeydown="if(event.key==='Enter')doRegisterSendOtp()">
+      <div>
+        <div class="auth-field-label-new">Gmail</div>
+        <input class="auth-input-new" id="reg-email" type="email" placeholder="example@gmail.com" onkeydown="if(event.key==='Enter')doRegisterSendOtp()">
       </div>
       <!-- CAPTCHA -->
-      <div class="field-group">
-        <div class="field-label">Xác minh bảo mật (CAPTCHA)</div>
-        <div class="captcha-box" id="captcha-box">
-          <div class="captcha-question" id="captcha-q">Đang tải...</div>
-          <div id="captcha-content"></div>
+      <div>
+        <div class="auth-field-label-new">Xác minh bảo mật</div>
+        <div style="display:flex;justify-content:center;margin-top:6px">
+          <div class="h-captcha" id="reg-hcaptcha" data-sitekey="4650897c-b35c-4044-a92a-1d9adf786764" data-theme="dark"></div>
         </div>
       </div>
       <div class="auth-err" id="reg-err"></div>
-      <!-- Step 1: Đăng ký -->
+      <!-- Step 1 -->
       <div id="reg-step1">
-        <button class="auth-btn" id="reg-btn" onclick="doRegisterSendOtp()">📧 Gửi mã OTP xác minh</button>
+        <button class="auth-btn-new" id="reg-btn" onclick="doRegisterSendOtp()">Gửi mã OTP xác minh</button>
       </div>
-      <!-- Step 2: Xác minh OTP -->
-      <div id="reg-step2" style="display:none">
-        <p style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px">📨 Mã OTP đã gửi về Gmail của bạn</p>
+      <!-- Step 2: OTP -->
+      <div id="reg-step2" style="display:none;flex-direction:column;gap:10px">
+        <p style="font-size:12px;color:rgba(255,255,255,.45);text-align:center;margin:0">📨 Mã OTP đã gửi về Gmail của bạn</p>
         <div class="otp-timer" id="reg-otp-timer-wrap">
           ⏱ Còn lại: <span class="otp-timer-val" id="reg-otp-timer-val">5:00</span>
           <span class="otp-timer-bar"><span class="otp-timer-fill" id="reg-otp-bar-fill" style="width:100%"></span></span>
         </div>
-        <input class="field-input" id="reg-otp" type="text" maxlength="6" placeholder="Nhập OTP 6 số" style="letter-spacing:6px;font-size:20px;text-align:center;margin:8px 0">
-        <button class="auth-btn" id="reg-otp-btn" onclick="doRegisterVerify()">✅ Xác minh & Đăng ký</button>
-        <div style="text-align:center;margin-top:6px">
-          <span onclick="doRegisterSendOtp()" style="color:var(--blue);font-size:12px;cursor:pointer">🔄 Gửi lại OTP</span>
+        <input class="auth-input-new" id="reg-otp" type="text" maxlength="6" placeholder="Nhập OTP 6 số" style="letter-spacing:8px;font-size:20px;text-align:center">
+        <button class="auth-btn-new" id="reg-otp-btn" onclick="doRegisterVerify()">✅ Xác minh & Đăng ký</button>
+        <div style="text-align:center">
+          <span onclick="doRegisterSendOtp()" style="color:rgba(255,255,255,.5);font-size:12px;cursor:pointer">🔄 Gửi lại OTP</span>
         </div>
       </div>
+      <!-- Switch to login -->
+      <div style="display:flex;align-items:center;gap:10px;margin:2px 0">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
+        <div style="font-size:12px;color:rgba(255,255,255,.3)">hoặc</div>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
+      </div>
+      <div style="text-align:center;font-size:14px;color:rgba(255,255,255,.45)">
+        Đã có tài khoản? <span onclick="switchAuthTab('login')" style="color:#fff;font-weight:700;cursor:pointer">Đăng nhập</span>
+      </div>
     </div>
-</div>
+
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════
@@ -1042,12 +1070,29 @@
         <div style="font-size:12px;color:var(--muted);margin-top:6px">@ <span id="ai-username-at">—</span> · Tham gia: <span id="ai-created">—</span></div>
       </div>
       <!-- Wallet card -->
-      <div style="background:linear-gradient(135deg,rgba(79,158,255,.12),rgba(124,77,255,.12));border:1px solid rgba(79,158,255,.2);border-radius:16px;padding:16px;margin-bottom:14px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">💰 Ví của tôi</div>
-        <div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:-1px" id="ai-balance">0đ</div>
+      <div style="background:linear-gradient(135deg,rgba(79,158,255,.12),rgba(124,77,255,.12));border:1px solid rgba(79,158,255,.2);border-radius:16px;padding:16px;margin-bottom:12px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;font-weight:700">💰 Số dư hiện tại</div>
+        <div style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px" id="ai-balance">0đ</div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button class="btn btn-primary" style="flex:1;padding:9px;font-size:13px;border-radius:12px" onclick="closeModal('account-info-modal');openDepositModal()">🏦 Nạp tiền</button>
           <button class="btn" style="flex:1;padding:9px;font-size:13px;background:var(--glass2);color:var(--text);border-radius:12px" onclick="closeModal('account-info-modal');openVpsShop()">📱 Mua máy ảo</button>
+        </div>
+      </div>
+      <!-- 2 card tổng nạp / đã dùng -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div style="background:linear-gradient(135deg,rgba(255,193,7,.08),rgba(255,152,0,.06));border:1px solid rgba(255,193,7,.25);border-left:3px solid #ffc107;border-radius:14px;padding:12px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <span style="font-size:16px">🪙</span>
+            <span style="font-size:10px;font-weight:800;color:#ffc107;text-transform:uppercase;letter-spacing:.5px">Tổng nạp</span>
+          </div>
+          <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-.5px" id="ai-total-deposited">0đ</div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(0,200,130,.08),rgba(0,150,100,.06));border:1px solid rgba(0,200,130,.25);border-left:3px solid #00c882;border-radius:14px;padding:12px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <span style="font-size:16px">✅</span>
+            <span style="font-size:10px;font-weight:800;color:#00c882;text-transform:uppercase;letter-spacing:.5px">Đã dùng</span>
+          </div>
+          <div style="font-size:18px;font-weight:900;color:#fff;letter-spacing:-.5px" id="ai-total-spent">0đ</div>
         </div>
       </div>
       <!-- Info row -->
@@ -1392,6 +1437,7 @@
 
 <script src="/static/globals.js?v=18"></script>
 <script src="/static/captcha.js?v=18"></script>
+<script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 <script src="/static/auth.js?v=18"></script>
 <script src="/static/dame.js?v=18"></script>
 <script src="/static/history.js?v=18"></script>
@@ -1645,7 +1691,7 @@
 
 <!-- ═══ MAIN NOTIFICATION MODAL ═══ -->
 <div class="modal-overlay" id="main-notif-modal" onclick="if(event.target===this)closeModal('main-notif-modal')" style="backdrop-filter:blur(6px)">
-  <div style="background:#fff;border-radius:24px;max-width:370px;width:calc(100% - 32px);overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.22);animation:notifPopIn .3s cubic-bezier(.34,1.56,.64,1)">
+  <div style="background:#fff;border-radius:24px;max-width:370px;width:calc(100% - 32px);overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.22);transition:transform .2s,opacity .2s">
     <!-- Header tím nhạt -->
     <div style="background:linear-gradient(135deg,#e8e3ff 0%,#ede8ff 100%);padding:20px 20px 16px;display:flex;align-items:center;justify-content:space-between">
       <div style="display:flex;align-items:center;gap:10px">
@@ -1657,11 +1703,15 @@
     <!-- Content -->
     <div style="background:#fff;padding:20px 22px 8px">
       <img id="main-notif-img" src="" style="width:100%;border-radius:14px;margin-bottom:14px;display:none">
-      <div id="main-notif-text" style="font-size:16px;line-height:1.75;color:#222;font-weight:500;white-space:pre-line"></div>
+      <div id="main-notif-text" style="font-size:17px;line-height:1.8;color:#1a1a2e;font-weight:600;white-space:pre-wrap;word-break:break-word"></div>
     </div>
     <!-- Footer nút -->
     <div style="background:#fff;padding:18px 22px 22px">
-      <button onclick="closeModal('main-notif-modal')" style="width:100%;padding:15px;border:none;border-radius:50px;background:linear-gradient(135deg,#7c4dff,#5c6bc0);color:#fff;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.3px;box-shadow:0 6px 20px rgba(124,77,255,.35);transition:opacity .15s" onmouseenter="this.style.opacity='.88'" onmouseleave="this.style.opacity='1'">Đã hiểu</button>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;user-select:none">
+        <input type="checkbox" id="notif-no-remind" style="width:16px;height:16px;accent-color:#7c4dff;cursor:pointer">
+        <span style="font-size:13px;color:#666;font-weight:600">Không nhắc lại trong 6 giờ</span>
+      </label>
+      <button onclick="dismissMainNotif()" style="width:100%;padding:15px;border:none;border-radius:50px;background:linear-gradient(135deg,#7c4dff,#5c6bc0);color:#fff;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.3px;box-shadow:0 6px 20px rgba(124,77,255,.35);transition:opacity .15s" onmouseenter="this.style.opacity='.88'" onmouseleave="this.style.opacity='1'">Đã hiểu</button>
     </div>
   </div>
 </div>
@@ -1746,11 +1796,17 @@
       <div style="font-size:12px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">📌 Thông báo chính (popup khi mở web)</div>
       <div style="margin-bottom:8px">
         <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">Nội dung (xuống dòng tự động)</div>
-        <textarea id="anotif-main-text" style="width:100%;min-height:120px;padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:13px;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box" placeholder="Nhập nội dung thông báo...&#10;Xuống dòng bình thường sẽ được giữ nguyên"></textarea>
+        <textarea id="anotif-main-text" style="width:100%;min-height:120px;padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--glass2);color:var(--text);font-size:13px;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box" placeholder="Nhập nội dung thông báo...&#10;Xuống dòng tự giữ nguyên&#10;Dùng [red]chữ đỏ[/red] [blue]chữ xanh[/blue] [green]xanh lá[/green] [yellow]vàng[/yellow] [bold]đậm[/bold] để tô màu"></textarea>
       </div>
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">URL ảnh (tùy chọn)</div>
-        <input id="anotif-main-img" class="field-input" placeholder="https://... (để trống nếu không có ảnh)">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase">Ảnh đính kèm (tùy chọn)</div>
+        <input type="file" id="anotif-img-file" accept="image/*" onchange="handleNotifImg(this)" style="display:none">
+        <div onclick="document.getElementById('anotif-img-file').click()" style="border:1.5px dashed var(--border);border-radius:12px;padding:12px;text-align:center;cursor:pointer;color:var(--muted);font-size:12px;font-weight:700" id="anotif-img-drop">📷 Nhấn để chọn ảnh</div>
+        <div id="anotif-img-preview" style="display:none;margin-top:8px;position:relative">
+          <img id="anotif-img-thumb" style="width:100%;border-radius:10px;max-height:160px;object-fit:cover">
+          <button onclick="clearNotifImg()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);border:none;border-radius:50%;width:24px;height:24px;color:#fff;font-size:12px;cursor:pointer">✕</button>
+        </div>
+        <input type="hidden" id="anotif-main-img" value="">
       </div>
       <button id="anotif-save-btn" onclick="adminSaveMainNotif()" style="width:100%;padding:11px;border:none;border-radius:12px;background:linear-gradient(135deg,#2979ff,#7c4dff);color:#fff;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:18px">💾 Lưu thông báo</button>
 
