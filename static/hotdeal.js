@@ -61,29 +61,35 @@ function renderHotDealCarousel() {
   const now = Math.floor(Date.now()/1000);
   const active = _hotDeals.filter(d => d.expires_at > now && d.qty_left > 0);
 
-  if(!active.length) {
-    wrap.innerHTML = '';
-    wrap.style.display = 'none';
-    return;
-  }
+  if(!active.length) { wrap.innerHTML=''; wrap.style.display='none'; return; }
 
   wrap.style.display = '';
+  // margin âm để track tràn cạnh màn hình, padding để card đầu/cuối thụt vào
   wrap.innerHTML = `
-    <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">🔥 DEAL HOT HÔM NAY</div>
-    <div style="position:relative">
-      <div id="hd-carousel-track" style="display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:none">
-        ${active.map(d => renderDealCard(d)).join('')}
-      </div>
+    <div style="font-size:13px;font-weight:800;color:#ff8c00;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px">🔥 DEAL HOT HÔM NAY</div>
+    <div id="hd-carousel-track" style="
+      display:flex;
+      gap:12px;
+      overflow-x:auto;
+      scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+      margin-left:-14px;
+      margin-right:-14px;
+      padding-left:14px;
+      padding-right:14px;
+      padding-bottom:10px;
+    ">
+      ${active.map(d => renderDealCard(d)).join('')}
     </div>
   `;
 
-  // Start countdowns
   active.forEach(deal => {
     const el = document.getElementById('hd-cd-' + deal.id);
     if(!el) return;
     const tid = setInterval(() => {
       const left = deal.expires_at - Math.floor(Date.now()/1000);
-      if(left <= 0) { el.textContent = 'Hết hạn'; clearInterval(tid); loadHotDeals(); return; }
+      if(left <= 0) { el.textContent='Hết hạn'; clearInterval(tid); loadHotDeals(); return; }
       el.textContent = formatCountdown(left);
     }, 1000);
     _hotDealCountdownTimers[deal.id] = tid;
@@ -94,23 +100,38 @@ function renderHotDealCarousel() {
 function renderDealCard(deal) {
   const pct = deal.orig_price > 0 ? Math.round((1 - deal.price/deal.orig_price)*100) : 0;
   const imgHtml = deal.image_url
-    ? `<img src="${deal.image_url}" style="width:100%;height:140px;object-fit:cover;border-radius:12px;margin-bottom:10px">`
-    : `<div style="width:100%;height:80px;background:linear-gradient(135deg,rgba(255,100,0,.15),rgba(255,50,0,.1));border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;font-size:36px">🔥</div>`;
+    ? `<img src="${deal.image_url}" style="width:100%;height:160px;object-fit:cover;border-radius:14px;display:block">`
+    : `<div style="width:100%;height:110px;background:linear-gradient(135deg,rgba(255,100,0,.18),rgba(180,40,0,.12));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:48px">🔥</div>`;
   return `
-    <div style="flex-shrink:0;width:220px;scroll-snap-align:start;background:linear-gradient(135deg,rgba(255,80,0,.08),rgba(255,160,0,.05));border:1.5px solid rgba(255,120,0,.3);border-radius:16px;padding:12px;position:relative">
-      ${pct>0?`<div style="position:absolute;top:8px;right:8px;background:#ff3d00;color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:20px">-${pct}%</div>`:''}
-      ${imgHtml}
-      <div style="font-size:12px;font-weight:800;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${deal.title}</div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">📱 ${deal.slots} máy ảo · ⏱ ${durToLabel(deal.duration)}</div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-        ${deal.orig_price>0?`<span style="font-size:10px;color:var(--muted);text-decoration:line-through">${fmtVND(deal.orig_price)}</span>`:''}
-        <span style="font-size:15px;font-weight:900;color:#ff8c00">${fmtVND(deal.price)}</span>
+    <div style="
+      flex-shrink:0;
+      width:72vw;
+      max-width:280px;
+      scroll-snap-align:start;
+      background:linear-gradient(145deg,#1e1208,#160e05);
+      border:1.5px solid rgba(255,120,0,.4);
+      border-radius:18px;
+      overflow:hidden;
+    ">
+      <div style="background:linear-gradient(90deg,#c0392b,#e74c3c);padding:9px 14px;display:flex;align-items:center;gap:8px">
+        <span style="font-size:13px">⏰</span>
+        <span style="color:#fff;font-size:12px;font-weight:700">Kết thúc sau:</span>
+        <span id="hd-cd-${deal.id}" style="margin-left:auto;background:rgba(0,0,0,.3);color:#fff;font-family:monospace;font-size:13px;font-weight:900;padding:2px 8px;border-radius:6px;letter-spacing:1px">--:--:--</span>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:10px;color:var(--muted)">Còn <b style="color:#ff8c00">${deal.qty_left}</b>/${deal.qty_total} lượt</div>
-        <div style="font-size:10px;background:rgba(0,0,0,.3);padding:2px 6px;border-radius:6px;font-family:monospace" id="hd-cd-${deal.id}">--:--:--</div>
+      <div style="padding:10px 10px 0;position:relative">
+        ${imgHtml}
+        ${pct>0?`<div style="position:absolute;top:18px;right:18px;background:#ff3d00;color:#fff;font-size:11px;font-weight:900;padding:3px 8px;border-radius:20px">-${pct}%</div>`:''}
       </div>
-      <button onclick="buyHotDeal('${deal.id}')" style="width:100%;padding:8px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff6d00,#ff3d00);color:#fff;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(255,80,0,.4)">Xem ngay →</button>
+      <div style="padding:12px 14px">
+        <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${deal.title}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.45);margin-bottom:8px">📱 ${deal.slots} máy · ⏱ ${durToLabel(deal.duration)}</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:3px">
+          ${deal.orig_price>0?`<span style="font-size:11px;color:rgba(255,255,255,.3);text-decoration:line-through">${fmtVND(deal.orig_price)}</span>`:''}
+          <span style="font-size:18px;font-weight:900;color:#ff8c00">${fmtVND(deal.price)}</span>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:12px">Còn <b style="color:#ff8c00">${deal.qty_left}</b>/${deal.qty_total} lượt</div>
+        <button onclick="buyHotDeal('${deal.id}')" style="width:100%;padding:10px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff8c00,#ff5500);color:#fff;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(255,100,0,.4)">Xem ngay →</button>
+      </div>
     </div>
   `;
 }
@@ -202,7 +223,7 @@ async function adminCreateHotDeal() {
   const price   = parseInt((document.getElementById('ahd-price').value||'0').replace(/[^0-9]/g,''));
   const orig    = parseInt((document.getElementById('ahd-orig').value||'0').replace(/[^0-9]/g,''));
   const expires = document.getElementById('ahd-expires').value.trim()||'24h';
-  const img_url = document.getElementById('ahd-imgurl').value.trim();
+  const img_url = window._ahdImgBase64 || '';
   const btn     = document.getElementById('ahd-create-btn');
   const err     = document.getElementById('ahd-err');
 
@@ -220,10 +241,11 @@ async function adminCreateHotDeal() {
     const d = await r.json();
     if(!r.ok){ err.textContent = d.detail||'Lỗi tạo deal'; return; }
     showToast('✅ Đã tạo Hot Deal!','#00c882');
-    ['ahd-title','ahd-slots','ahd-qty','ahd-price','ahd-orig','ahd-duration','ahd-expires','ahd-imgurl'].forEach(id=>{
+    ['ahd-title','ahd-slots','ahd-qty','ahd-price','ahd-orig','ahd-duration','ahd-expires'].forEach(id=>{
       const el = document.getElementById(id);
       if(el) el.value = '';
     });
+    clearHotDealImg();
     loadAdminHotDealList();
     loadHotDeals();
   } catch(e){ err.textContent='Lỗi kết nối'; }
@@ -256,4 +278,33 @@ async function adminDeleteHotDeal(id) {
   await fetch(`/api/admin/hot-deals/${id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
   showToast('✅ Đã xóa deal','#00c882');
   loadAdminHotDealList(); loadHotDeals();
+}
+
+let _ahdImgBase64 = '';
+window._ahdImgBase64 = '';
+
+function handleHotDealImg(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    window._ahdImgBase64 = e.target.result;
+    const label = document.getElementById('ahd-img-label');
+    const preview = document.getElementById('ahd-img-preview');
+    const thumb = document.getElementById('ahd-img-thumb');
+    if (label) label.textContent = file.name;
+    if (thumb) thumb.src = e.target.result;
+    if (preview) preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearHotDealImg() {
+  window._ahdImgBase64 = '';
+  const input = document.getElementById('ahd-img-file');
+  if (input) input.value = '';
+  const label = document.getElementById('ahd-img-label');
+  const preview = document.getElementById('ahd-img-preview');
+  if (label) label.textContent = 'Chọn ảnh để tải lên';
+  if (preview) preview.style.display = 'none';
 }

@@ -87,7 +87,7 @@ function openMainNotifModal() {
   const m = _notifData.main || {};
   const textEl = document.getElementById('main-notif-text');
   const imgEl  = document.getElementById('main-notif-img');
-  if(textEl) textEl.innerHTML = (m.text||'').replace(/\n/g,'<br>');
+  if(textEl) { textEl.textContent = m.text||''; }
   if(imgEl){ imgEl.src = m.image||''; imgEl.style.display = m.image ? '' : 'none'; }
   openModal('main-notif-modal');
 }
