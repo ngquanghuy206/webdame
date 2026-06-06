@@ -4592,11 +4592,11 @@ function renderPostCard(p, inFeed=true){
     <!-- Action buttons -->
     <div style="display:flex;gap:0;margin-top:6px">
       <div style="flex:1;position:relative">
-        <button onclick="toggleReactPicker('${p.id}')" style="width:100%;padding:7px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:700;color:${myReact?'#ff50a0':'var(--muted)'};border-radius:10px;display:flex;align-items:center;justify-content:center;gap:5px">
+        <button onclick="toggleReactPicker('${p.id}',event)" style="width:100%;padding:7px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:700;color:${myReact?'#ff50a0':'var(--muted)'};border-radius:10px;display:flex;align-items:center;justify-content:center;gap:5px">
           ${myReact||'👍'} ${myReact?'Đã thích':'Thích'}
         </button>
-        <div id="react-picker-${p.id}" style="display:none;position:absolute;bottom:110%;left:0;background:var(--glass);border:1px solid var(--border);border-radius:40px;padding:6px 10px;display:none;gap:6px;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:100;white-space:nowrap">
-          ${EMOJI_LIST.map(e=>`<span onclick="reactPost('${p.id}','${e}')" style="font-size:22px;cursor:pointer;transition:.15s;display:inline-block" onmouseover="this.style.transform='scale(1.35)'" onmouseout="this.style.transform='scale(1)'">${e}</span>`).join('')}
+        <div id="react-picker-${p.id}" style="display:none;position:absolute;bottom:110%;left:0;background:var(--glass);border:1px solid var(--border);border-radius:40px;padding:6px 10px;gap:6px;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:100;white-space:nowrap">
+          ${EMOJI_LIST.map(e=>`<span onclick="event.stopPropagation();reactPost('${p.id}','${e}')" style="font-size:22px;cursor:pointer;transition:.15s;display:inline-block" onmouseover="this.style.transform='scale(1.35)'" onmouseout="this.style.transform='scale(1)'">${e}</span>`).join('')}
         </div>
       </div>
       <button onclick="openViewPost('${p.id}')" style="flex:1;padding:7px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:5px">
@@ -4606,15 +4606,18 @@ function renderPostCard(p, inFeed=true){
   </div>`;
 }
 
-function toggleReactPicker(postId){
+function toggleReactPicker(postId, event){
+  if(event) event.stopPropagation(); // Chặn bubble lên document → tránh tự đóng ngay
   const picker = document.getElementById('react-picker-'+postId);
   if(!picker) return;
   const showing = picker.style.display === 'flex';
-  // close all
   document.querySelectorAll('[id^="react-picker-"]').forEach(el=>el.style.display='none');
   if(!showing) picker.style.display = 'flex';
 }
-document.addEventListener('click', ()=>{ document.querySelectorAll('[id^="react-picker-"]').forEach(el=>el.style.display='none'); });
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('[id^="react-picker-"]')) // Chỉ đóng khi click ra ngoài
+    document.querySelectorAll('[id^="react-picker-"]').forEach(el=>el.style.display='none');
+});
 
 async function reactPost(postId, emoji){
   document.querySelectorAll('[id^="react-picker-"]').forEach(el=>el.style.display='none');
@@ -4787,10 +4790,16 @@ async function refreshViewPost(){
   let post = _postsCache.find(p=>p.id===_activePostId);
   if(!post){
     try{
-      const r = await fetch(`/api/posts?page=0`,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-      const d = await r.json();
-      _postsCache = d.posts;
-      post = _postsCache.find(p=>p.id===_activePostId);
+      // Tìm qua từng page thay vì ghi đè cache
+      let found = false;
+      for(let pg=0; pg<=5; pg++){
+        const r = await fetch(`/api/posts?page=${pg}`,{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+        const d = await r.json();
+        // Merge vào cache, không ghi đè
+        d.posts.forEach(p=>{ if(!_postsCache.find(x=>x.id===p.id)) _postsCache.push(p); });
+        post = _postsCache.find(p=>p.id===_activePostId);
+        if(post || !d.has_more){ found=true; break; }
+      }
     }catch{}
   }
   if(!post){ el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">Không tìm thấy bài viết</div>'; return; }
@@ -4860,14 +4869,19 @@ async function submitComment(){
   const prev = document.getElementById('comment-media-preview');
   if(prev) prev.innerHTML='';
   try{
-    await fetch(`/api/posts/${_activePostId}/comment`,{
+    const res = await fetch(`/api/posts/${_activePostId}/comment`,{
       method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SESSION_TOKEN},
       body:JSON.stringify({text, media})
     });
-    // Update cache
-    const r2 = await fetch('/api/posts?page=0',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-    const d2 = await r2.json();
-    _postsCache = d2.posts;
+    const rd = await res.json();
+    // Chỉ update bài đang xem trong cache, không fetch lại → không ghi đè page khác
+    if(rd.ok && rd.comment){
+      const idx = _postsCache.findIndex(p=>p.id===_activePostId);
+      if(idx !== -1){
+        _postsCache[idx].comments = _postsCache[idx].comments || [];
+        _postsCache[idx].comments.push(rd.comment);
+      }
+    }
     await refreshViewPost();
   }catch{}
 }
@@ -4875,12 +4889,14 @@ async function submitComment(){
 async function adminDeleteComment(postId, commentId){
   try{
     await fetch(`/api/admin/posts/${postId}/comments/${commentId}`,{method:'DELETE',headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    // Xóa khỏi DOM ngay
     const cmt = document.getElementById('cmt-'+commentId);
     if(cmt) cmt.remove();
-    // Update cache
-    const r2 = await fetch('/api/posts?page=0',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
-    const d2 = await r2.json();
-    _postsCache = d2.posts;
+    // Chỉ update cache bài đang xem, không ghi đè toàn bộ
+    const idx = _postsCache.findIndex(p=>p.id===postId);
+    if(idx !== -1){
+      _postsCache[idx].comments = (_postsCache[idx].comments||[]).filter(c=>c.id!==commentId);
+    }
   }catch{}
 }
 
