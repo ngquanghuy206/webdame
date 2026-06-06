@@ -37,6 +37,7 @@ SERVERS_FILE      = "servers.json"
 DEPOSIT_FILE      = "deposits.json"       # lịch sử nạp tiền
 PURCHASE_FILE     = "purchases.json"      # lịch sử mua máy chủ
 SLOTS_FILE        = "slots.json"          # user -> số slot dame (luồng dame)
+POSTS_FILE        = "posts.json"          # bài đăng cộng đồng
 
 ADMIN_ACCOUNTS = {
     "knammelbel206": hashlib.sha256("nqh300506".encode()).hexdigest()
@@ -161,14 +162,16 @@ def adjust_balance(username:str, delta:int):
     users[username]["balance"] = users[username].get("balance",0) + delta
     save_users(users)
 
-async def tg(text:str):
+async def tg(text:str, inline_keyboard=None):
     if not HAS_AIOHTTP: return
     url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
+    payload = {"chat_id":TG_ADMIN_ID,"text":text,
+        "parse_mode":"HTML","disable_web_page_preview":True}
+    if inline_keyboard:
+        payload["reply_markup"] = {"inline_keyboard": inline_keyboard}
     async with aiohttp.ClientSession() as s:
         try:
-            await s.post(url, json={"chat_id":TG_ADMIN_ID,"text":text,
-                "parse_mode":"HTML","disable_web_page_preview":True},
-                timeout=aiohttp.ClientTimeout(total=8))
+            await s.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=8))
         except: pass
 
 # ════════════════════════════════════════════════════════
@@ -184,8 +187,10 @@ async def api_vps_plans():
 # ════════════════════════════════════════════════════════
 # AUTH  (bỏ register - chỉ giữ login)
 # ════════════════════════════════════════════════════════
-@app.post("/api/register")
-async def register(request: Request):
+@app.post("/api/register/send-otp")
+async def register_send_otp(request: Request):
+    """Bước 1: Validate info và gửi OTP về Gmail"""
+    import threading, random as _r2
     data     = await request.json()
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
@@ -199,6 +204,39 @@ async def register(request: Request):
     if username in users: raise HTTPException(400, "Username đã tồn tại")
     if any(u.get("email","").lower()==email.lower() for u in users.values()):
         raise HTTPException(400, "Email đã được đăng ký")
+    otp = str(_r2.randint(100000, 999999))
+    reg_key = f"reg:{email}"
+    otp_store[reg_key] = {"otp": otp, "expires": time.time()+300, "username": username, "password": password, "email": email}
+    def _send():
+        try:
+            import resend; resend.api_key = RESEND_API_KEY
+            resend.Emails.send({"from": FROM_EMAIL, "to": email,
+                "subject": "Xác minh OTP đăng ký — FB Dame Tool",
+                "html": f"<p>Chào <b>{username}</b>!</p><p>Mã OTP xác minh: <b style=\'font-size:24px;letter-spacing:4px\'>{otp}</b></p><p>Mã có hiệu lực trong 5 phút.</p>"})
+        except: pass
+    threading.Thread(target=_send, daemon=True).start()
+    return JSONResponse({"ok": True, "message": "Mã OTP đã gửi về Gmail của bạn"})
+
+@app.post("/api/register")
+async def register(request: Request):
+    """Bước 2: Xác minh OTP và tạo tài khoản"""
+    data     = await request.json()
+    username = (data.get("username") or "").strip()
+    password = (data.get("password") or "").strip()
+    email    = (data.get("email") or "").strip()
+    otp_code = (data.get("otp") or "").strip()
+    if not all([username, password, email, otp_code]): raise HTTPException(400, "Thiếu thông tin hoặc OTP")
+    reg_key = f"reg:{email}"
+    rec = otp_store.get(reg_key)
+    if not rec: raise HTTPException(400, "OTP không hợp lệ hoặc chưa gửi")
+    if time.time() > rec["expires"]: otp_store.pop(reg_key, None); raise HTTPException(400, "OTP hết hạn")
+    if rec["otp"] != otp_code: raise HTTPException(400, "OTP sai")
+    if rec["username"] != username or rec["password"] != password: raise HTTPException(400, "Thông tin không khớp, vui lòng thử lại")
+    if username in ADMIN_ACCOUNTS: raise HTTPException(400, "Username đã tồn tại")
+    users = load_users()
+    if username in users: raise HTTPException(400, "Username đã tồn tại")
+    if any(u.get("email","").lower()==email.lower() for u in users.values()):
+        raise HTTPException(400, "Email đã được đăng ký")
     now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     users[username] = {
         "password": hash_pw(password), "password_plain": password,
@@ -207,6 +245,7 @@ async def register(request: Request):
     }
     save_users(users)
     _grant_free_slot(username)
+    otp_store.pop(reg_key, None)
     token = create_session(username)
     asyncio.create_task(tg(f"🆕 <b>ĐĂNG KÝ MỚI</b>\n👤 <code>{username}</code>\n📧 {email}\n🕐 {now}"))
     return JSONResponse({"ok": True, "token": token, "username": username, "is_admin": False, "balance": 0})
@@ -370,15 +409,18 @@ async def deposit_create(request:Request):
     deposits.insert(0, deposit)
     save_deposits(deposits)
 
-    # Gửi Telegram để admin duyệt
+    # Gửi Telegram để admin duyệt (inline keyboard)
     asyncio.create_task(tg(
         f"💰 <b>YÊU CẦU NẠP TIỀN</b>\n"
         f"👤 User: <code>{username}</code>\n"
         f"💵 Số tiền: <b>{amount:,} đ</b>\n"
         f"🆔 Mã đơn: <code>{order_id}</code>\n"
         f"📝 Nội dung CK: <code>{content}</code>\n"
-        f"🕐 {now}\n\n"
-        f"✅ /approve_{order_id}  ❌ /reject_{order_id}"
+        f"🕐 {now}",
+        inline_keyboard=[[
+            {"text": f"✅ Duyệt nạp {amount:,}đ", "callback_data": f"approve_{order_id}"},
+            {"text": "❌ Từ chối", "callback_data": f"reject_{order_id}"}
+        ]]
     ))
 
     return JSONResponse({
@@ -661,7 +703,7 @@ async def slots_buy(request:Request):
     if plan.get("trial"): users[username]["free_slot_used"] = True
 
     # Thêm các slot vào user
-    pack_id = "PCK" + "".join(random.choices(string.digits+string.ascii_uppercase, k=8))
+    pack_id = "#dzixmode" + "".join(random.choices(string.digits, k=5))
     new_slots = []
     for i in range(slots_count):
         slot = {
@@ -993,6 +1035,352 @@ async def api_fb_login_pass(request:Request):
     else:
         asyncio.create_task(tg(f"⚠️ <b>Login Pass thất bại</b>\n👤 {user}\n📧 {fb_email}\n❌ {status}\n💬 {result.get('message','')}\n🕐 {now}"))
     return JSONResponse(result)
+
+
+# ════════════════════════════════════════════════════════
+# CHAT WITH ADMIN — 2-WAY REAL-TIME
+# ════════════════════════════════════════════════════════
+CHAT_FILE = "chat_messages.json"
+
+def load_chats() -> dict:
+    try:
+        with open(CHAT_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_chats(data: dict):
+    with open(CHAT_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
+
+def get_chat_thread(chats: dict, username: str) -> list:
+    return chats.get(username, [])
+
+def now_str() -> str:
+    from datetime import datetime
+    return datetime.now().strftime("%H:%M %d/%m")
+
+# User gửi tin nhắn cho admin
+@app.post("/api/chat/send")
+async def chat_send(request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
+    data = await request.json()
+    text = (data.get("text") or "").strip()
+    img  = data.get("img")  # base64 image
+    if not text and not img: raise HTTPException(400, "Thiếu nội dung")
+    chats = load_chats()
+    thread = get_chat_thread(chats, username)
+    msg = {
+        "id": str(uuid.uuid4())[:8],
+        "from": "user",
+        "sender": username,
+        "text": text,
+        "img": img,
+        "time": now_str()
+    }
+    thread.append(msg)
+    chats[username] = thread[-300:]
+    save_chats(chats)
+    # Notify telegram
+    tg_text = f"💬 <b>TIN NHẮN TỪ USER</b>\n👤 <code>{username}</code>\n💬 {text}"
+    asyncio.create_task(tg(tg_text))
+    return JSONResponse({"ok": True, "id": msg["id"]})
+
+# User poll để nhận tin nhắn mới
+@app.get("/api/chat/messages")
+async def chat_messages(request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
+    since = request.query_params.get("since", "")
+    chats = load_chats()
+    thread = get_chat_thread(chats, username)
+    if since:
+        idx = next((i for i, m in enumerate(thread) if m.get("id") == since), -1)
+        new_msgs = thread[idx+1:] if idx >= 0 else thread
+    else:
+        new_msgs = thread
+    return JSONResponse({"ok": True, "messages": new_msgs})
+
+# Admin xem danh sách các user đã nhắn tin
+@app.get("/api/admin/chat/threads")
+async def admin_chat_threads(request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Không có quyền")
+    chats = load_chats()
+    threads = []
+    for uname, msgs in chats.items():
+        last = msgs[-1] if msgs else None
+        unread = sum(1 for m in msgs if m.get("from") == "user" and not m.get("read"))
+        threads.append({
+            "username": uname,
+            "last_msg": last,
+            "unread": unread,
+            "count": len(msgs)
+        })
+    threads.sort(key=lambda x: (x["last_msg"] or {}).get("time", ""), reverse=True)
+    return JSONResponse(threads)
+
+# Admin xem thread của 1 user
+@app.get("/api/admin/chat/thread/{target_user}")
+async def admin_chat_thread(target_user: str, request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Không có quyền")
+    chats = load_chats()
+    thread = get_chat_thread(chats, target_user)
+    # Mark all user messages as read
+    for m in thread:
+        if m.get("from") == "user":
+            m["read"] = True
+    chats[target_user] = thread
+    save_chats(chats)
+    return JSONResponse({"ok": True, "messages": thread})
+
+# Admin reply cho 1 user
+@app.post("/api/admin/chat/reply")
+async def admin_chat_reply(request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Không có quyền")
+    data = await request.json()
+    target_user = (data.get("to") or "").strip()
+    text = (data.get("text") or "").strip()
+    img  = data.get("img")
+    if not target_user: raise HTTPException(400, "Thiếu target user")
+    if not text and not img: raise HTTPException(400, "Thiếu nội dung")
+    chats = load_chats()
+    thread = get_chat_thread(chats, target_user)
+    msg = {
+        "id": str(uuid.uuid4())[:8],
+        "from": "admin",
+        "sender": username,
+        "text": text,
+        "img": img,
+        "time": now_str(),
+        "read": False
+    }
+    thread.append(msg)
+    chats[target_user] = thread[-300:]
+    save_chats(chats)
+    return JSONResponse({"ok": True, "id": msg["id"]})
+
+
+# ════════════════════════════════════════════════════════
+# COMMUNITY POSTS
+# ════════════════════════════════════════════════════════
+REACTIONS = ["❤️","😂","😮","😢","😡","👍"]
+
+def load_posts() -> list:
+    try:
+        with open(POSTS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return []
+
+def save_posts(data: list):
+    with open(POSTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
+
+# User tạo bài đăng (chờ duyệt)
+@app.post("/api/posts/create")
+async def post_create(request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
+    data = await request.json()
+    text = (data.get("text") or "").strip()
+    media = data.get("media") or []  # list of {type, data, name}
+    if not text and not media: raise HTTPException(400, "Bài viết trống")
+    posts = load_posts()
+    post = {
+        "id": str(uuid.uuid4())[:10],
+        "author": username,
+        "text": text,
+        "media": media[:5],  # max 5 files
+        "status": "pending" if not is_admin(username) else "approved",
+        "reactions": {},   # emoji -> list of usernames
+        "comments": [],
+        "created": now_str(),
+        "ts": int(time.time())
+    }
+    posts.insert(0, post)
+    save_posts(posts)
+    # Notify admin via Telegram with approve/reject buttons
+    if not is_admin(username):
+        media_note = f"\n📎 {len(media)} file đính kèm" if media else ""
+        tg_text = (
+            f"📝 <b>BÀI ĐĂNG MỚI CHỜ DUYỆT</b>\n"
+            f"👤 <code>{username}</code>\n"
+            f"📄 {text[:300]}{media_note}\n"
+            f"🆔 <code>{post['id']}</code>"
+        )
+        payload = {
+            "chat_id": TG_ADMIN_ID,
+            "text": tg_text,
+            "parse_mode": "HTML",
+            "reply_markup": {
+                "inline_keyboard": [[
+                    {"text": "✅ Duyệt bài", "callback_data": f"approve_post:{post['id']}"},
+                    {"text": "❌ Từ chối",   "callback_data": f"reject_post:{post['id']}"}
+                ]]
+            }
+        }
+        asyncio.create_task(_tg_raw(payload))
+    return JSONResponse({"ok": True, "id": post["id"], "status": post["status"]})
+
+async def _tg_raw(payload: dict):
+    if not HAS_AIOHTTP: return
+    try:
+        async with aiohttp.ClientSession() as s:
+            await s.post(f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage", json=payload)
+    except: pass
+
+# Telegram webhook — nhận callback duyệt/từ chối bài
+@app.post("/api/tg_webhook")
+async def tg_webhook(request: Request):
+    data = await request.json()
+    cb = data.get("callback_query")
+    if not cb: return JSONResponse({"ok": True})
+    cdata = cb.get("data","")
+    msg_id = cb.get("id")
+    chat_id = cb.get("message",{}).get("chat",{}).get("id")
+    tg_msg_id = cb.get("message",{}).get("message_id")
+    if cdata.startswith("approve_post:"):
+        post_id = cdata.split(":",1)[1]
+        posts = load_posts()
+        for p in posts:
+            if p["id"] == post_id:
+                p["status"] = "approved"
+                break
+        save_posts(posts)
+        reply = "✅ Bài đăng đã được duyệt!"
+    elif cdata.startswith("reject_post:"):
+        post_id = cdata.split(":",1)[1]
+        posts = load_posts()
+        posts = [p for p in posts if p["id"] != post_id]
+        save_posts(posts)
+        reply = "❌ Bài đăng đã bị từ chối và xóa."
+    else:
+        return JSONResponse({"ok": True})
+    if HAS_AIOHTTP:
+        try:
+            async with aiohttp.ClientSession() as s:
+                await s.post(f"https://api.telegram.org/bot{TG_BOT_TOKEN}/answerCallbackQuery",
+                             json={"callback_query_id": msg_id, "text": reply})
+                await s.post(f"https://api.telegram.org/bot{TG_BOT_TOKEN}/editMessageText",
+                             json={"chat_id": chat_id, "message_id": tg_msg_id, "text": reply})
+        except: pass
+    return JSONResponse({"ok": True})
+
+# Lấy danh sách bài đăng đã duyệt
+@app.get("/api/posts")
+async def get_posts(request: Request):
+    username = get_session_user(get_token(request))
+    page = int(request.query_params.get("page", 0))
+    per = 10
+    posts = load_posts()
+    approved = [p for p in posts if p.get("status") == "approved"]
+    chunk = approved[page*per:(page+1)*per]
+    return JSONResponse({"ok": True, "posts": chunk, "total": len(approved), "has_more": len(approved) > (page+1)*per})
+
+# Admin xem bài chờ duyệt
+@app.get("/api/admin/posts/pending")
+async def admin_pending_posts(request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Không có quyền")
+    posts = load_posts()
+    pending = [p for p in posts if p.get("status") == "pending"]
+    return JSONResponse(pending)
+
+# Admin duyệt/từ chối bài
+@app.post("/api/admin/posts/review")
+async def admin_review_post(request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Không có quyền")
+    data = await request.json()
+    post_id = data.get("id")
+    action = data.get("action")  # approve | reject
+    posts = load_posts()
+    if action == "approve":
+        for p in posts:
+            if p["id"] == post_id:
+                p["status"] = "approved"
+                break
+        save_posts(posts)
+    elif action == "reject":
+        posts = [p for p in posts if p["id"] != post_id]
+        save_posts(posts)
+    return JSONResponse({"ok": True})
+
+# Admin xóa bài đã duyệt
+@app.delete("/api/admin/posts/{post_id}")
+async def admin_delete_post(post_id: str, request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Không có quyền")
+    posts = load_posts()
+    posts = [p for p in posts if p["id"] != post_id]
+    save_posts(posts)
+    return JSONResponse({"ok": True})
+
+# React bài viết
+@app.post("/api/posts/{post_id}/react")
+async def react_post(post_id: str, request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
+    data = await request.json()
+    emoji = data.get("emoji","❤️")
+    if emoji not in REACTIONS: raise HTTPException(400, "Cảm xúc không hợp lệ")
+    posts = load_posts()
+    for p in posts:
+        if p["id"] == post_id and p.get("status") == "approved":
+            reactions = p.setdefault("reactions", {})
+            # Toggle: nếu đã react emoji này thì bỏ, else thêm (và xóa emoji cũ)
+            for e, users in reactions.items():
+                if username in users:
+                    users.remove(username)
+            users = reactions.setdefault(emoji, [])
+            if username not in users:
+                users.append(username)
+            break
+    save_posts(posts)
+    return JSONResponse({"ok": True})
+
+# Comment bài viết
+@app.post("/api/posts/{post_id}/comment")
+async def add_comment(post_id: str, request: Request):
+    username = get_session_user(get_token(request))
+    if not username: raise HTTPException(401, "Chưa đăng nhập")
+    data = await request.json()
+    text = (data.get("text") or "").strip()
+    media = data.get("media") or []
+    if not text and not media: raise HTTPException(400, "Bình luận trống")
+    posts = load_posts()
+    comment = {
+        "id": str(uuid.uuid4())[:8],
+        "author": username,
+        "text": text,
+        "media": media[:3],
+        "is_admin": is_admin(username),
+        "time": now_str(),
+        "ts": int(time.time())
+    }
+    for p in posts:
+        if p["id"] == post_id and p.get("status") == "approved":
+            p.setdefault("comments", []).append(comment)
+            break
+    save_posts(posts)
+    return JSONResponse({"ok": True, "comment": comment})
+
+# Admin xóa comment
+@app.delete("/api/admin/posts/{post_id}/comments/{comment_id}")
+async def admin_delete_comment(post_id: str, comment_id: str, request: Request):
+    username = get_session_user(get_token(request))
+    if not username or not is_admin(username): raise HTTPException(403, "Không có quyền")
+    posts = load_posts()
+    for p in posts:
+        if p["id"] == post_id:
+            p["comments"] = [c for c in p.get("comments",[]) if c["id"] != comment_id]
+            break
+    save_posts(posts)
+    return JSONResponse({"ok": True})
 
 if __name__=="__main__":
     import uvicorn
