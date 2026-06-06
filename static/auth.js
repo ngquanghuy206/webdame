@@ -7,15 +7,9 @@ function switchAuthTab(tab){
   if(tab==='register'){const s1=document.getElementById('reg-step1');const s2=document.getElementById('reg-step2');if(s1)s1.style.display='block';if(s2)s2.style.display='none';}
   document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');
   document.getElementById('tab-reg-btn').classList.toggle('active',tab==='register');
-  // update titles
-  const tl=document.getElementById('auth-title-login'),tr=document.getElementById('auth-title-register');
-  const sl=document.getElementById('auth-sub-login'),sr=document.getElementById('auth-sub-register');
-  if(tl)tl.style.display=tab==='login'?'':'none';
-  if(tr)tr.style.display=tab==='register'?'':'none';
-  if(sl)sl.style.display=tab==='login'?'':'none';
-  if(sr)sr.style.display=tab==='register'?'':'none';
-  if(tab==='register'){selectedOptValue=null;}
+  if(tab==='register'){selectedOptValue=null;generateCaptcha();}
 }
+
 let _forgotEmail='',_forgotOtp='';
 function openForgotModal(){
   _forgotEmail='';_forgotOtp='';
@@ -89,9 +83,7 @@ async function doLogin(){
     const maxAge=rememberMe?60*60*24*30:60*60*8;
     document.cookie=`session_token=${SESSION_TOKEN};path=/;SameSite=Lax;max-age=${maxAge}`;
     playSfx('success');showApp();
-  }catch(e){
-    err.style.display='block';err.textContent=e.message;playSfx('error');
-  }
+  }catch(e){err.style.display='block';err.textContent=e.message;playSfx('error');}
   finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
 }
 
@@ -247,87 +239,9 @@ function toggleRemember(){
   rememberMe=!rememberMe;
   localStorage.setItem('zct_remember',rememberMe?'1':'0');
   const el=document.getElementById('remember-check');
-  el.classList.toggle('checked',rememberMe);
-  el.classList.toggle('remember-check-new',true);
-  el.textContent=rememberMe?'✓':'';
+  el.classList.toggle('checked',rememberMe);el.textContent=rememberMe?'✓':'';
 }
 
-function showApp(){
-  document.getElementById('auth-screen').style.display='none';
-  document.getElementById('app-screen').style.display='none';
-  document.getElementById('welcome-screen').style.display='block';
-  const badge=document.getElementById('user-badge-el');
-  if(badge)badge.innerHTML=(IS_ADMIN?'👑 ':'👤 ')+CURRENT_USER+' <span style="color:#1877f2;font-size:12px" title="Đã xác minh">✔</span>';
-  const mgmt=document.getElementById('mgmt-menu-item');
-  if(mgmt)mgmt.style.display=IS_ADMIN?'flex':'none';
-  // Hide deposit/vps items for admin
-  const depItem=document.getElementById('sb-deposit-item');
-  if(depItem)depItem.style.display=IS_ADMIN?'none':'flex';
-  const depHistItem=document.getElementById('sb-dep-hist-item');
-  if(depHistItem)depHistItem.style.display=IS_ADMIN?'none':'flex';
-  const purHistItem=document.getElementById('sb-pur-hist-item');
-  if(purHistItem)purHistItem.style.display=IS_ADMIN?'none':'flex';
-  const vpsShopItem=document.getElementById('sb-vps-shop-item');
-  if(vpsShopItem)vpsShopItem.style.display=IS_ADMIN?'none':'flex';
-  const myVpsItem=document.getElementById('sb-my-vps-item');
-  if(myVpsItem)myVpsItem.style.display=IS_ADMIN?'none':'flex';
-  // Sidebar user info
-  const sbName=document.getElementById('sb-name-el');
-  if(sbName)sbName.innerHTML=CURRENT_USER+' <span style="color:#1877f2;font-size:12px" title="Đã xác minh">✔</span>';
-  const sbRole=document.getElementById('sb-role-el');
-  if(sbRole)sbRole.textContent=IS_ADMIN?'👑 Admin':'Thành viên';
-  const sbAv=document.getElementById('sb-avatar-el');
-  if(sbAv){
-    const letter=(CURRENT_USER||'?')[0].toUpperCase();
-    sbAv.innerHTML=`<span style="font-size:15px;font-weight:800;color:#fff">${IS_ADMIN?'👑':letter}</span>`;
-  }
-  if(!IS_ADMIN)setTimeout(loadAvatar,100);
-  const sbBal=document.getElementById('sb-balance-el');
-  if(sbBal)sbBal.style.display=IS_ADMIN?'none':'block';
-  // Welcome greeting
-  const titleEl=document.querySelector('#welcome-screen .welcome-title');
-  if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
-  startClock();loadHistory();
-  if(!IS_ADMIN) refreshBalance();
-  // Poll unread chat count for admin badge
-  if(IS_ADMIN){
-    loadAdminChatThreads();
-    setInterval(loadAdminChatThreads, 15000);
-  }
-}
-
-function closeWelcome(){
-  document.getElementById('welcome-screen').style.display='none';
-  document.getElementById('app-screen').style.display='block';
-}
-function goHome(){
-  // Đóng tất cả modal nếu có
-  document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
-  // Về welcome-screen (sảnh chính)
-  document.getElementById('app-screen').style.display='none';
-  document.getElementById('welcome-screen').style.display='block';
-  // Active state sidebar
-  document.getElementById('sb-home-item').classList.add('active');
-}
-function welcomeCreateServer(){
-  openCreateServerModal();
-}
-function welcomeServerList(){
-  openServerListModal();
-}
-
-function doLogout(){
-  const _tok=SESSION_TOKEN;
-  SESSION_TOKEN='';CURRENT_USER='';IS_ADMIN=false;
-  ['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});
-  document.cookie='session_token=;path=/;max-age=0';
-  stopDame();
-  document.getElementById('app-screen').style.display='none';
-  document.getElementById('welcome-screen').style.display='none';
-  document.getElementById('auth-screen').style.display='flex';
-  if(_tok) fetch('/api/logout',{method:'POST',headers:{'Authorization':'Bearer '+_tok}}).catch(()=>{});
-}
-
-
-
+// showApp, closeWelcome, goHome, welcomeCreateServer, welcomeServerList, doLogout
+// defined in app.js — removed duplicate here
 
