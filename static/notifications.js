@@ -18,30 +18,46 @@ function updateBellBadge() {
   const badge = document.getElementById('bell-badge');
   const cnt = (_notifData.sub||[]).length;
   if(badge) {
-    badge.style.display = cnt > 0 ? 'flex' : 'none';
-    badge.textContent = cnt > 9 ? '9+' : cnt;
+    if(cnt > 0) {
+      badge.style.cssText += ';display:flex!important;align-items:center;justify-content:center';
+      badge.textContent = cnt > 9 ? '9+' : cnt;
+    } else {
+      badge.style.display = 'none';
+    }
   }
 }
 
 // ── BELL DROPDOWN ─────────────────────────────────────────
-function toggleBellDrop() {
+let _bellLoading = false;
+async function toggleBellDrop() {
   const drop = document.getElementById('bell-dropdown');
   if(!drop) return;
-  _bellDropOpen = !_bellDropOpen;
-  if(_bellDropOpen) {
-    renderBellDrop();
-    drop.style.display = '';
-    requestAnimationFrame(()=>{ drop.style.opacity='1'; drop.style.transform='translateY(0)'; });
-    setTimeout(()=>{ document.addEventListener('click', closeBellOnOutside, {once:true}); }, 0);
-  } else {
-    closeBellDrop();
-  }
+  // Nếu đang mở → đóng ngay
+  if(_bellDropOpen) { closeBellDrop(); return; }
+  // Tránh double-tap trong lúc đang load
+  if(_bellLoading) return;
+  _bellLoading = true;
+  _bellDropOpen = true;
+  // Show loading trước
+  drop.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">⏳ Đang tải...</div>';
+  drop.style.display = '';
+  requestAnimationFrame(()=>{ drop.style.opacity='1'; drop.style.transform='translateY(0)'; });
+  // Load fresh data
+  try {
+    const r = await fetch('/api/notifications',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    _notifData = await r.json();
+    updateBellBadge();
+  } catch(e){}
+  renderBellDrop();
+  _bellLoading = false;
+  setTimeout(()=>{ document.addEventListener('click', closeBellOnOutside, {once:true}); }, 0);
 }
 
 function closeBellDrop() {
   const drop = document.getElementById('bell-dropdown');
   if(!drop) return;
   _bellDropOpen = false;
+  _bellLoading = false;
   drop.style.opacity = '0';
   drop.style.transform = 'translateY(-8px)';
   setTimeout(()=>{ drop.style.display='none'; }, 200);
@@ -93,8 +109,7 @@ function parseNotifColors(text) {
   };
   let html = text
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/
-/g,'<br>');
+    .replace(/\n/g,'<br>');
   // Color tags
   Object.entries(COLOR_MAP).forEach(([tag, color]) => {
     const re = new RegExp('\\['+tag+'\\]([\\s\\S]*?)\\[/'+tag+'\\]','gi');
@@ -130,13 +145,19 @@ function openMainNotifModal() {
 }
 
 // ── ADMIN: NOTIFICATIONS ──────────────────────────────────
-function openAdminNotifModal() {
+async function openAdminNotifModal() {
+  openModal('admin-notif-modal');
+  // Load fresh data trước khi render
+  try {
+    const r = await fetch('/api/notifications',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+    _notifData = await r.json();
+  } catch(e){}
   const el = document.getElementById('anotif-main-text');
   if(el && _notifData.main) el.value = _notifData.main.text||'';
   const imgEl = document.getElementById('anotif-main-img');
   if(imgEl && _notifData.main) imgEl.value = _notifData.main.image||'';
   renderAdminSubList();
-  openModal('admin-notif-modal');
+  updateBellBadge();
 }
 
 async function adminSaveMainNotif() {
@@ -151,7 +172,8 @@ async function adminSaveMainNotif() {
     });
     const d = await r.json();
     if(d.ok){ showToast('✅ Đã cập nhật thông báo!','#00c882'); await loadNotifications(); }
-  } catch(e){ showToast('❌ Lỗi','#ff5050'); }
+    else { showToast('❌ Lỗi: ' + (d.detail || 'Không lưu được'), '#ff5050'); }
+  } catch(e){ showToast('❌ Lỗi kết nối','#ff5050'); }
   finally{ btn.disabled=false; btn.textContent='💾 Lưu thông báo'; }
 }
 
@@ -176,8 +198,8 @@ async function adminSendSubNotif() {
         el.style.animation='bellRing 0.5s ease';
         setTimeout(()=>{ el.style.animation=''; }, 600);
       });
-    }
-  } catch(e){ showToast('❌ Lỗi','#ff5050'); }
+    } else { showToast('❌ Lỗi: ' + (d.detail || 'Không gửi được'), '#ff5050'); }
+  } catch(e){ showToast('❌ Lỗi kết nối','#ff5050'); }
   finally{ btn.disabled=false; btn.textContent='🔔 Gửi thông báo'; }
 }
 
