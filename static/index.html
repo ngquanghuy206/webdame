@@ -21,16 +21,29 @@
 <meta name="author" content="Nguyễn Hoàng Khánh Nam (Dzi Meo Meo)">
 <link rel="icon" href="https://i.imgur.com/1qYFul7.jpeg" type="image/jpeg">
 <link rel="stylesheet" href="/static/style.css?v=20">
+<!-- hCaptcha -->
+<script src="https://js.hcaptcha.com/1/api.js?onload=hcaptchaOnLoad&render=explicit" async defer></script>
 <script>
-// Anti-flash: ẩn auth ngay nếu có token
+  window._hcapLoginId = null;
+  window._hcapRegId   = null;
+  window.hcaptchaOnLoad = function(){
+    window._hcapLoginId = hcaptcha.render('hcap-login', {
+      sitekey: '91fc5d1c-75a6-4564-abc4-43a63ee2a464',
+      theme: 'dark'
+    });
+    window._hcapRegId = hcaptcha.render('hcap-reg', {
+      sitekey: '91fc5d1c-75a6-4564-abc4-43a63ee2a464',
+      theme: 'dark'
+    });
+  };
+</script>
+<script>
+// Anti-flash: ẩn auth ngay nếu có token — chạy trước khi render body
 (function(){
   var rm = localStorage.getItem('zct_remember')==='1';
   var tok = rm ? localStorage.getItem('zct_token') : sessionStorage.getItem('zct_token');
   if(tok){
-    document.addEventListener('DOMContentLoaded',function(){
-      var a=document.getElementById('auth-screen');
-      if(a) a.style.display='none';
-    });
+    document.write('<style>#auth-screen{display:none!important}</style>');
   }
 })();
 </script>
@@ -44,114 +57,138 @@
 <!-- ═══════════════════════════════════════════════════════
      AUTH SCREEN
 ════════════════════════════════════════════════════════ -->
-<div id="auth-screen">
-  <div class="auth-card-new">
+<div id="auth-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;position:fixed;inset:0;z-index:9999;background:#111">
 
-    <!-- ── LOGO ── -->
+
+  <div class="dzi-auth-card">
+    <!-- Logo -->
     <div style="text-align:center;margin-bottom:28px">
-      <div class="rainbow-logo-wrap" style="display:inline-block;margin-bottom:14px">
-        <img src="https://i.imgur.com/vIkYA9e.jpeg" class="rainbow-logo-img" alt="FB Dame Tool" style="width:72px;height:72px;border-radius:18px;object-fit:cover">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:18px;overflow:hidden;margin-bottom:14px;box-shadow:0 8px 32px rgba(79,124,255,.4);border:2px solid rgba(79,124,255,.4)">
+        <img src="https://i.imgur.com/vIkYA9e.jpeg" alt="FB Dame Tool" style="width:100%;height:100%;object-fit:cover">
       </div>
-      <div id="auth-title-login" style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px">Chào mừng trở lại</div>
-      <div id="auth-title-register" style="font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px;display:none">Tạo tài khoản</div>
-      <div id="auth-sub-login" style="font-size:14px;color:rgba(255,255,255,.45);margin-top:4px">Đăng nhập vào tài khoản của bạn</div>
-      <div id="auth-sub-register" style="font-size:14px;color:rgba(255,255,255,.45);margin-top:4px;display:none">Điền thông tin để đăng ký</div>
+      <div id="auth-title-login" style="font-size:26px;font-weight:800;color:#e8eeff;letter-spacing:-.5px">Chào mừng trở lại</div>
+      <div id="auth-title-register" style="font-size:26px;font-weight:800;color:#e8eeff;letter-spacing:-.5px;display:none">Tạo tài khoản</div>
+      <div id="auth-sub-login" style="font-size:14px;color:rgba(232,238,255,.45);margin-top:4px">Đăng nhập vào FB Dame Tool</div>
+      <div id="auth-sub-register" style="font-size:14px;color:rgba(232,238,255,.45);margin-top:4px;display:none">Điền thông tin để đăng ký</div>
     </div>
-    <!-- tabs ẩn, giữ để switchAuthTab không lỗi -->
-    <div style="display:none">
-      <div id="tab-login-btn"></div>
-      <div id="tab-reg-btn"></div>
-    </div>
+    <!-- hidden tab stubs for switchAuthTab() compat -->
+    <div style="display:none"><div id="tab-login-btn"></div><div id="tab-reg-btn"></div></div>
 
     <!-- ══ LOGIN FORM ══ -->
     <div id="auth-login-form" style="display:flex;flex-direction:column;gap:14px">
-      <!-- Username -->
-      <div>
-        <div class="auth-field-label-new">Tên đăng nhập</div>
-        <input class="auth-input-new" id="login-user" type="text" placeholder="Nhập tên đăng nhập" autocomplete="username"
-          onkeydown="if(event.key==='Enter'){document.getElementById('login-pass').focus()}">
-      </div>
-      <!-- Password -->
-      <div>
-        <div class="auth-field-label-new">Mật khẩu</div>
-        <div style="position:relative">
-          <input class="auth-input-new" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password"
-            style="padding-right:48px"
-            onkeydown="if(event.key==='Enter')doLogin()">
-          <button type="button" class="pw-eye-btn" onclick="togglePw('login-pass',this)" title="Hiện/ẩn mật khẩu" aria-label="Hiện/ẩn mật khẩu">
-            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-          </button>
+      <!-- Step 1: user/pass/hcaptcha -->
+      <div id="login-step1">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div class="dzi-field-label">Tên đăng nhập</div>
+            <input class="dzi-input" id="login-user" type="text" placeholder="Nhập tên đăng nhập" autocomplete="username"
+              onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+          </div>
+          <div>
+            <div class="dzi-field-label">Mật khẩu</div>
+            <div style="position:relative">
+              <input class="dzi-input" id="login-pass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password"
+                style="padding-right:48px" onkeydown="if(event.key==='Enter')doLoginSendOtp()">
+              <button type="button" class="dzi-pw-eye" onclick="togglePw('login-pass',this)">
+                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-off-icon" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none" onclick="toggleRemember()">
+              <div class="dzi-remember-check" id="remember-check"></div>
+              <span style="font-size:13px;color:rgba(232,238,255,.55)">Ghi nhớ đăng nhập</span>
+            </div>
+            <span onclick="openForgotModal()" style="font-size:13px;font-weight:700;color:rgba(255,255,255,.55);cursor:pointer">Quên mật khẩu?</span>
+          </div>
+          <div class="dzi-auth-err" id="login-err"></div>
+          <!-- hCaptcha widget for login -->
+          <div id="hcap-login" style="margin-bottom:4px"></div>
+          <button class="dzi-auth-btn" id="login-btn" type="button" onclick="doLoginSendOtp()">🔐 Đăng nhập</button>
         </div>
       </div>
-      <!-- Remember + Forgot -->
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div class="remember-row" id="remember-row" onclick="toggleRemember()" style="user-select:none;margin:0">
-          <div class="remember-check-new" id="remember-check"></div>
-          <span style="font-size:13px;color:rgba(255,255,255,.55)">Ghi nhớ đăng nhập</span>
-        </div>
-        <span onclick="openForgotModal()" style="font-size:13px;font-weight:700;color:rgba(255,255,255,.55);cursor:pointer">Quên mật khẩu?</span>
-      </div>
-      <!-- Error -->
-      <div class="auth-err" id="login-err"></div>
 
-      <!-- Login button -->
-      <button class="auth-btn-new" id="login-btn" type="button" onclick="doLogin()">Đăng nhập</button>
+      <!-- Step 2: OTP (user thường) -->
+      <div id="login-step2" style="display:none;flex-direction:column;gap:10px">
+        <p id="login-otp-hint" style="font-size:13px;color:rgba(232,238,255,.55);text-align:center;margin:0;line-height:1.5">📨 Xin vui lòng kiểm tra thư của <b id="login-otp-email-hint" style="color:#fff"></b> để lấy mã</p>
+        <div class="dzi-otp-timer">
+          ⏱ Còn lại: <span class="dzi-otp-timer-val" id="login-otp-timer-val">5:00</span>
+          <span class="dzi-otp-bar"><span class="dzi-otp-fill" id="login-otp-bar-fill" style="width:100%"></span></span>
+        </div>
+        <input class="dzi-input" id="login-otp" type="text" maxlength="6" placeholder="Nhập OTP 6 số"
+          style="letter-spacing:8px;font-size:20px;text-align:center" onkeydown="if(event.key==='Enter')doLoginVerifyOtp()">
+        <div class="dzi-auth-err" id="login-otp-err"></div>
+        <button class="dzi-auth-btn" id="login-otp-btn" onclick="doLoginVerifyOtp()">✅ Xác minh & Đăng nhập</button>
+        <div style="text-align:center">
+          <span onclick="doLoginSendOtp(true)" style="color:rgba(255,255,255,.5);font-size:12px;cursor:pointer">🔄 Gửi lại OTP</span>
+          &nbsp;·&nbsp;
+          <span onclick="loginBackToStep1()" style="color:rgba(232,238,255,.4);font-size:12px;cursor:pointer">← Quay lại</span>
+        </div>
+      </div>
+
       <!-- Divider -->
       <div style="display:flex;align-items:center;gap:10px;margin:2px 0">
-        <div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
-        <div style="font-size:12px;color:rgba(255,255,255,.3)">hoặc</div>
-        <div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
+        <div style="flex:1;height:1px;background:rgba(232,238,255,.08)"></div>
+        <div style="font-size:12px;color:rgba(232,238,255,.25)">hoặc</div>
+        <div style="flex:1;height:1px;background:rgba(232,238,255,.08)"></div>
       </div>
-      <!-- Switch to register -->
-      <div style="text-align:center;font-size:14px;color:rgba(255,255,255,.45)">
+      <div style="text-align:center;font-size:14px;color:rgba(232,238,255,.45)">
         Chưa có tài khoản? <span onclick="switchAuthTab('register')" style="color:#fff;font-weight:700;cursor:pointer">Tạo ngay</span>
       </div>
     </div>
 
     <!-- ══ REGISTER FORM ══ -->
     <div id="auth-register-form" style="display:none;flex-direction:column;gap:14px">
-      <div>
-        <div class="auth-field-label-new">Tên đăng nhập</div>
-        <input class="auth-input-new" id="reg-user" type="text" placeholder="Tối thiểu 6 ký tự" autocomplete="username">
-      </div>
-      <div>
-        <div class="auth-field-label-new">Mật khẩu</div>
-        <input class="auth-input-new" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
-      </div>
-      <div>
-        <div class="auth-field-label-new">Gmail</div>
-        <input class="auth-input-new" id="reg-email" type="email" placeholder="example@gmail.com" onkeydown="if(event.key==='Enter')doRegisterSendOtp()">
-      </div>
-      <!-- CAPTCHA -->
-      <div>
-
-      </div>
-      <div class="auth-err" id="reg-err"></div>
-      <!-- Step 1 -->
+      <!-- Step 1: thông tin + hcaptcha -->
       <div id="reg-step1">
-        <button class="auth-btn-new" id="reg-btn" onclick="doRegisterSendOtp()">Gửi mã OTP xác minh</button>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div class="dzi-field-label">Tên đăng nhập</div>
+            <input class="dzi-input" id="reg-user" type="text" placeholder="Tối thiểu 6 ký tự" autocomplete="username">
+          </div>
+          <div>
+            <div class="dzi-field-label">Mật khẩu</div>
+            <div style="position:relative">
+              <input class="dzi-input" id="reg-pass" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" style="padding-right:48px">
+              <button type="button" class="dzi-pw-eye" onclick="togglePw('reg-pass',this)">
+                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-off-icon" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+          </div>
+          <div>
+            <div class="dzi-field-label">Gmail</div>
+            <input class="dzi-input" id="reg-email" type="email" placeholder="example@gmail.com"
+              onkeydown="if(event.key==='Enter')doRegisterSendOtp()">
+          </div>
+          <div class="dzi-auth-err" id="reg-err"></div>
+          <!-- hCaptcha widget for register -->
+          <div id="hcap-reg" style="margin-bottom:4px"></div>
+          <button class="dzi-auth-btn" id="reg-btn" onclick="doRegisterSendOtp()">📧 Gửi mã OTP xác minh</button>
+        </div>
       </div>
       <!-- Step 2: OTP -->
       <div id="reg-step2" style="display:none;flex-direction:column;gap:10px">
-        <p style="font-size:12px;color:rgba(255,255,255,.45);text-align:center;margin:0">📨 Mã OTP đã gửi về Gmail của bạn</p>
-        <div class="otp-timer" id="reg-otp-timer-wrap">
-          ⏱ Còn lại: <span class="otp-timer-val" id="reg-otp-timer-val">5:00</span>
-          <span class="otp-timer-bar"><span class="otp-timer-fill" id="reg-otp-bar-fill" style="width:100%"></span></span>
+        <p style="font-size:12px;color:rgba(232,238,255,.45);text-align:center;margin:0">📨 Mã OTP đã gửi về Gmail của bạn</p>
+        <div class="dzi-otp-timer">
+          ⏱ Còn lại: <span class="dzi-otp-timer-val" id="reg-otp-timer-val">5:00</span>
+          <span class="dzi-otp-bar"><span class="dzi-otp-fill" id="reg-otp-bar-fill" style="width:100%"></span></span>
         </div>
-        <input class="auth-input-new" id="reg-otp" type="text" maxlength="6" placeholder="Nhập OTP 6 số" style="letter-spacing:8px;font-size:20px;text-align:center">
-        <button class="auth-btn-new" id="reg-otp-btn" onclick="doRegisterVerify()">✅ Xác minh & Đăng ký</button>
+        <input class="dzi-input" id="reg-otp" type="text" maxlength="6" placeholder="Nhập OTP 6 số"
+          style="letter-spacing:8px;font-size:20px;text-align:center">
+        <button class="dzi-auth-btn" id="reg-otp-btn" onclick="doRegisterVerify()">✅ Xác minh & Đăng ký</button>
         <div style="text-align:center">
           <span onclick="doRegisterSendOtp()" style="color:rgba(255,255,255,.5);font-size:12px;cursor:pointer">🔄 Gửi lại OTP</span>
         </div>
       </div>
       <!-- Switch to login -->
       <div style="display:flex;align-items:center;gap:10px;margin:2px 0">
-        <div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
-        <div style="font-size:12px;color:rgba(255,255,255,.3)">hoặc</div>
-        <div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
+        <div style="flex:1;height:1px;background:rgba(232,238,255,.08)"></div>
+        <div style="font-size:12px;color:rgba(232,238,255,.25)">hoặc</div>
+        <div style="flex:1;height:1px;background:rgba(232,238,255,.08)"></div>
       </div>
-      <div style="text-align:center;font-size:14px;color:rgba(255,255,255,.45)">
+      <div style="text-align:center;font-size:14px;color:rgba(232,238,255,.45)">
         Đã có tài khoản? <span onclick="switchAuthTab('login')" style="color:#fff;font-weight:700;cursor:pointer">Đăng nhập</span>
       </div>
     </div>
@@ -241,7 +278,7 @@
       <span class="sb-item-icon" style="background:rgba(255,100,0,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#ff6d00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
       🔥 Tạo Hot Deal
     </div>
-    <div class="sb-item" id="sb-admin-notif-item" onclick="closeMenu();setTimeout(openAdminNotifModal,300)" style="background:linear-gradient(135deg,rgba(255,152,0,.06),transparent);border-left:2px solid rgba(255,152,0,.4)">
+    <div class="sb-item" id="sb-admin-notif-item" onclick="event.stopPropagation();closeMenu();setTimeout(openAdminNotifModal,150)" style="background:linear-gradient(135deg,rgba(255,152,0,.06),transparent);border-left:2px solid rgba(255,152,0,.4)">
       <span class="sb-item-icon" style="background:rgba(255,152,0,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
       📢 Tạo thông báo
     </div>
@@ -1428,21 +1465,23 @@
   </div>
 </div>
 
-<script src="/static/globals.js?v=20"></script>
-<script src="/static/captcha.js?v=20"></script>
-<script src="/static/auth.js?v=20"></script>
-<script src="/static/dame.js?v=20"></script>
-<script src="/static/history.js?v=20"></script>
-<script src="/static/balance.js?v=20"></script>
-<script src="/static/admin.js?v=20"></script>
-<script src="/static/deposit.js?v=20"></script>
-<script src="/static/vps.js?v=20"></script>
-<script src="/static/utils.js?v=20"></script>
-<script src="/static/wizard.js?v=20"></script>
-<script src="/static/server_list.js?v=20"></script>
-<script src="/static/server_detail.js?v=20"></script>
-<script src="/static/init.js?v=20"></script>
-<script src="/static/screenshot.js?v=20"></script>
+<script src="/static/globals.js?v=24"></script>
+<script src="/static/app.js?v=24"></script>
+<script src="/static/captcha.js?v=24"></script>
+<script src="/static/auth.js?v=24"></script>
+<script src="/static/dame.js?v=24"></script>
+<script src="/static/history.js?v=24"></script>
+<script src="/static/balance.js?v=24"></script>
+<script src="/static/admin.js?v=24"></script>
+<script src="/static/deposit.js?v=24"></script>
+<script src="/static/vps.js?v=24"></script>
+<script src="/static/utils.js?v=24"></script>
+<script src="/static/wizard.js?v=24"></script>
+<script src="/static/server_list.js?v=24"></script>
+<script src="/static/server_detail.js?v=24"></script>
+<script src="/static/notifications.js?v=24"></script>
+<script src="/static/init.js?v=24"></script>
+<script src="/static/screenshot.js?v=24"></script>
 
 <!-- DEPOSIT HISTORY STANDALONE MODAL -->
 <div class="modal-overlay" id="deposit-hist-standalone-modal" onclick="if(event.target===this)closeModal('deposit-hist-standalone-modal')">
@@ -1560,7 +1599,7 @@
   </div>
 </div>
 
-<script src="/static/chat.js?v=20"></script>
+<script src="/static/chat.js?v=24"></script>
 <!-- ══════════════════════════════════════════════════════
      POSTS FEED MODAL
 ══════════════════════════════════════════════════════ -->
@@ -1653,9 +1692,8 @@
   </div>
 </div>
 
-<script src="/static/posts.js?v=20"></script>
-<script src="/static/hotdeal.js?v=20"></script>
-<script src="/static/notifications.js?v=20"></script>
+<script src="/static/posts.js?v=24"></script>
+<script src="/static/hotdeal.js?v=24"></script>
 
 <!-- LIGHTBOX VIEWER -->
 <div id="lightbox-overlay" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;z-index:99000;background:rgba(0,0,0,.92);align-items:center;justify-content:center;flex-direction:column">

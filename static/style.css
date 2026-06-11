@@ -515,3 +515,25 @@ body{background:var(--bg1);color:var(--text);font-family:-apple-system,BlinkMacS
 .dep-amt-btn:hover,.dep-amt-btn.selected{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.1);color:#fff}
 /* Support btn */
 .support-btn:hover{border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.06)}
+
+/* ── Auth UI (layout webphim, màu trắng đen web gốc) ── */
+.dzi-auth-card{width:100%;max-width:400px;background:#1a1a1a;border-radius:28px;padding:32px 28px;box-shadow:0 32px 80px rgba(0,0,0,.6);position:relative;z-index:1}
+.dzi-field-label{font-size:13px;font-weight:700;color:#fff;margin-bottom:7px}
+.dzi-input{width:100%;padding:15px 16px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;font-size:15px;color:#fff;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .2s,background .2s}
+.dzi-input:focus{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.1)}
+.dzi-input::placeholder{color:rgba(255,255,255,.25)}
+.dzi-input:-webkit-autofill,.dzi-input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 1000px #252525 inset!important;-webkit-text-fill-color:#fff!important;border-color:rgba(255,255,255,.2)!important;caret-color:#fff}
+.dzi-auth-btn{width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;background:#fff;color:#111;box-shadow:0 4px 20px rgba(255,255,255,.15);transition:opacity .15s,transform .15s;font-family:inherit;letter-spacing:.2px}
+.dzi-auth-btn:hover{opacity:.92;transform:translateY(-1px)}
+.dzi-auth-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.dzi-auth-err{background:rgba(255,82,82,.12);border:1px solid rgba(255,82,82,.3);border-radius:10px;padding:10px 14px;font-size:13px;color:#ff5252;display:none}
+.dzi-pw-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.45);transition:all .18s;padding:0}
+.dzi-pw-eye svg{width:16px;height:16px}
+.dzi-pw-eye:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.4);color:#fff}
+.dzi-pw-eye.active{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.5);color:#fff}
+.dzi-remember-check{width:20px;height:20px;border-radius:6px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:12px}
+.dzi-remember-check.checked{background:#fff;border-color:#fff;color:#111}
+.dzi-otp-timer{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:rgba(255,255,255,.45);margin-bottom:8px}
+.dzi-otp-timer-val{font-weight:800;font-variant-numeric:tabular-nums;color:#fff}
+.dzi-otp-bar{width:100px;height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;display:inline-block}
+.dzi-otp-fill{height:100%;border-radius:2px;background:rgba(255,255,255,.7);transition:width 1s linear}

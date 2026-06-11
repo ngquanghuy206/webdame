@@ -69,31 +69,113 @@ async function doResetPassword(){
   finally{btn.disabled=false;btn.textContent='🔐 Đặt lại mật khẩu';}
 }
 
-async function doLogin(){
+let _loginOtpTimer = null;
+function _stopLoginOtpTimer(){ if(_loginOtpTimer){ clearInterval(_loginOtpTimer); _loginOtpTimer=null; } }
+function _startLoginOtpTimer(){
+  _stopLoginOtpTimer();
+  const total=300; let remaining=total;
+  const label=document.getElementById('login-otp-timer-val');
+  const bar=document.getElementById('login-otp-bar-fill');
+  function tick(){
+    const m=Math.floor(remaining/60), s=remaining%60;
+    if(label) label.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    if(bar) bar.style.width=(remaining/total*100)+'%';
+    if(remaining<=0){ _stopLoginOtpTimer(); if(label) label.textContent='Hết giờ'; }
+    remaining--;
+  }
+  tick(); _loginOtpTimer=setInterval(tick,1000);
+}
+
+function loginBackToStep1(){
+  _stopLoginOtpTimer();
+  document.getElementById('login-step1').style.display='';
+  document.getElementById('login-step2').style.display='none';
+  document.getElementById('login-otp').value='';
+  document.getElementById('login-otp-err').style.display='none';
+}
+
+async function doLoginSendOtp(resend){
   const u=document.getElementById('login-user').value.trim();
   const p=document.getElementById('login-pass').value.trim();
-  const err=document.getElementById('login-err');const btn=document.getElementById('login-btn');
+  const err=document.getElementById('login-err');
+  const btn=document.getElementById('login-btn');
   if(!u||!p){err.style.display='block';err.textContent='Vui lòng nhập đầy đủ';return;}
-  btn.disabled=true;btn.textContent='⏳ Đang kết nối server...';err.style.display='none';
-  const _loginAc=new AbortController();
-  const _loginTid=setTimeout(()=>{_loginAc.abort();},20000);
+  // Lấy hcaptcha token
+  const capToken = window.hcaptcha ? hcaptcha.getResponse(window._hcapLoginId) : '';
+  if(!capToken){err.style.display='block';err.textContent='Vui lòng xác minh captcha';return;}
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Đang xử lý...'; }
+  err.style.display='none';
   try{
-    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p}),signal:_loginAc.signal});
-    clearTimeout(_loginTid);
-    const d=await r.json();if(!r.ok)throw new Error(d.detail||'Sai thông tin');
-    SESSION_TOKEN=d.token;CURRENT_USER=d.username;IS_ADMIN=d.is_admin||false;
+    const r=await fetch('/api/login/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,hcaptcha_token:capToken})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Lỗi đăng nhập');
+    if(d.skip_otp){
+      // Admin: nhận token luôn, không cần OTP
+      SESSION_TOKEN=d.token; CURRENT_USER=d.username; IS_ADMIN=d.is_admin||false;
+      const store=rememberMe?localStorage:sessionStorage;
+      store.setItem('zct_token',SESSION_TOKEN); store.setItem('zct_user',CURRENT_USER); store.setItem('zct_admin',IS_ADMIN?'1':'0');
+      const maxAge=rememberMe?60*60*24*30:60*60*8;
+      document.cookie=`session_token=${SESSION_TOKEN};path=/;SameSite=Lax;max-age=${maxAge}`;
+      playSfx('success'); showApp(); return;
+    }
+    // User thường: chuyển sang step OTP, hiện email hint che bớt
+    const rawHint = d.email_hint || '';
+    const maskedHint = maskEmail(rawHint);
+    const hintEl=document.getElementById('login-otp-email-hint');
+    if(hintEl) hintEl.textContent = maskedHint || 'Gmail của bạn';
+    document.getElementById('login-step1').style.display='none';
+    document.getElementById('login-step2').style.display='flex';
+    document.getElementById('login-otp').value='';
+    setTimeout(()=>document.getElementById('login-otp').focus(),100);
+    _startLoginOtpTimer();
+    if(resend) showToast('✅ Đã gửi lại OTP','#00c882');
+  }catch(e){
+    err.style.display='block'; err.textContent=e.message; playSfx('error');
+    if(window.hcaptcha) hcaptcha.reset(window._hcapLoginId);
+  }
+  finally{ if(btn){ btn.disabled=false; btn.textContent='🔐 Đăng nhập'; } }
+}
+
+// Mask email: hiện 2 đầu 2 cuối trước @, phần còn lại *
+function maskEmail(email){
+  if(!email) return '';
+  const at = email.indexOf('@');
+  if(at < 0) return email;
+  const local = email.substring(0, at);
+  const domain = email.substring(at);
+  if(local.length <= 4){
+    return local[0] + '*'.repeat(Math.max(local.length-1,0)) + domain;
+  }
+  return local[0] + local[1] + '*'.repeat(local.length-4) + local[local.length-2] + local[local.length-1] + domain;
+}
+
+async function doLoginVerifyOtp(){
+  const u=document.getElementById('login-user').value.trim();
+  const otp=document.getElementById('login-otp').value.trim();
+  const err=document.getElementById('login-otp-err');
+  const btn=document.getElementById('login-otp-btn');
+  if(!otp||otp.length!==6){err.style.display='block';err.textContent='Nhập đủ 6 số OTP';return;}
+  btn.disabled=true; btn.textContent='⏳ Đang xác minh...'; err.style.display='none';
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,otp})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'OTP không đúng');
+    _stopLoginOtpTimer();
+    SESSION_TOKEN=d.token; CURRENT_USER=d.username; IS_ADMIN=d.is_admin||false;
     if(d.balance!==undefined) updateBalanceDisplay(d.balance);
     const store=rememberMe?localStorage:sessionStorage;
-    store.setItem('zct_token',SESSION_TOKEN);store.setItem('zct_user',CURRENT_USER);
-    store.setItem('zct_admin',IS_ADMIN?'1':'0');
+    store.setItem('zct_token',SESSION_TOKEN); store.setItem('zct_user',CURRENT_USER); store.setItem('zct_admin',IS_ADMIN?'1':'0');
     const maxAge=rememberMe?60*60*24*30:60*60*8;
     document.cookie=`session_token=${SESSION_TOKEN};path=/;SameSite=Lax;max-age=${maxAge}`;
-    playSfx('success');showApp();
+    playSfx('success'); showApp();
   }catch(e){
-    err.style.display='block';err.textContent=e.message;playSfx('error');
+    err.style.display='block'; err.textContent=e.message; playSfx('error');
   }
-  finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
+  finally{ btn.disabled=false; btn.textContent='✅ Xác minh & Đăng nhập'; }
 }
+
+// Legacy alias
+async function doLogin(){ await doLoginSendOtp(); }
 
 let _regOtpTimer=null;
 function _stopRegOtpTimer(){if(_regOtpTimer)clearInterval(_regOtpTimer);}
@@ -120,16 +202,21 @@ async function doRegisterSendOtp(){
   if(!u||!p||!em){err.style.display='block';err.textContent='Vui lòng nhập đầy đủ';return;}
   if(u.length<6||p.length<6){err.style.display='block';err.textContent='Username & mật khẩu tối thiểu 6 ký tự';return;}
   if(!em.toLowerCase().endsWith('@gmail.com')){err.style.display='block';err.textContent='Chỉ chấp nhận @gmail.com';return;}
-  if(!verifyCaptcha()){err.style.display='block';err.textContent='❌ CAPTCHA sai! Thử lại.';generateCaptcha();return;}
+  // hCaptcha thay cho custom captcha cũ
+  const capToken = window.hcaptcha ? hcaptcha.getResponse(window._hcapRegId) : '';
+  if(!capToken){err.style.display='block';err.textContent='Vui lòng xác minh captcha';return;}
   btn.disabled=true;btn.textContent='⏳ Đang gửi OTP...';err.style.display='none';
   try{
-    const r=await fetch('/api/register/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,email:em})});
+    const r=await fetch('/api/register/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,email:em,hcaptcha_token:capToken})});
     const d=await r.json();if(!r.ok)throw new Error(d.detail||'Lỗi gửi OTP');
     document.getElementById('reg-step1').style.display='none';
-    document.getElementById('reg-step2').style.display='block';
+    document.getElementById('reg-step2').style.display='flex';
     _startRegOtpTimer();
     showToast('📨 OTP đã gửi về Gmail!','#4f9eff');
-  }catch(e){err.style.display='block';err.textContent=e.message;}
+  }catch(e){
+    err.style.display='block';err.textContent=e.message;
+    if(window.hcaptcha) hcaptcha.reset(window._hcapRegId);
+  }
   finally{btn.disabled=false;btn.textContent='📧 Gửi mã OTP xác minh';}
 }
 
@@ -337,10 +424,8 @@ function doLogout(){
   ['zct_token','zct_user','zct_admin'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});
   document.cookie='session_token=;path=/;max-age=0';
   stopDame();
-  document.getElementById('app-screen').style.display='none';
-  document.getElementById('welcome-screen').style.display='none';
-  document.getElementById('auth-screen').style.display='flex';
   if(_tok) fetch('/api/logout',{method:'POST',headers:{'Authorization':'Bearer '+_tok}}).catch(()=>{});
+  location.reload();
 }
 
 
