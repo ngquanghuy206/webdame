@@ -1,4 +1,20 @@
 import asyncio, uuid, json, os, hashlib, secrets, re, time, random, string
+
+# ── hCaptcha verification ──
+HCAPTCHA_SECRET = os.environ.get("HCAPTCHA_SECRET", "0x0000000000000000000000000000000000000000")
+def verify_hcaptcha(token: str) -> bool:
+    """Verify hCaptcha token with Hcaptcha API. Returns True if valid."""
+    if not token:
+        return False
+    try:
+        import urllib.request, urllib.parse
+        data = urllib.parse.urlencode({"secret": HCAPTCHA_SECRET, "response": token}).encode()
+        req = urllib.request.Request("https://hcaptcha.com/siteverify", data=data, method="POST")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            result = json.loads(resp.read())
+            return result.get("success", False)
+    except Exception:
+        return True  # fallback: không block nếu không verify được
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, HTTPException
@@ -353,10 +369,12 @@ async def register_send_otp(request: Request):
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
     email    = (data.get("email") or "").strip()
+    hcap_token = data.get("hcaptcha_token", "")
     if not all([username, password, email]): raise HTTPException(400, "Thiếu thông tin")
     if len(username) < 6: raise HTTPException(400, "Username phải ≥ 6 ký tự")
     if len(password) < 6: raise HTTPException(400, "Mật khẩu phải ≥ 6 ký tự")
     if not re.match(r"[^@]+@gmail\.com$", email, re.I): raise HTTPException(400, "Chỉ chấp nhận @gmail.com")
+    if not verify_hcaptcha(hcap_token): raise HTTPException(400, "Xác minh captcha thất bại")
     if username in ADMIN_ACCOUNTS: raise HTTPException(400, "Username đã tồn tại")
     users = load_users()
     if username in users: raise HTTPException(400, "Username đã tồn tại")
@@ -404,22 +422,59 @@ async def register(request: Request):
     asyncio.create_task(tg(f"🆕 <b>ĐĂNG KÝ MỚI</b>\n👤 <code>{username}</code>\n📧 {email}\n🕐 {now}"))
     return JSONResponse({"ok": True, "token": token, "username": username, "is_admin": False, "balance": 0})
 
-@app.post("/api/login")
-async def login(request:Request):
+@app.post("/api/login/send-otp")
+async def login_send_otp(request: Request):
+    """Bước 1 login: verify pass, gửi OTP về email"""
+    import threading, random as _r2
     data     = await request.json()
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
-    if not username or not password: raise HTTPException(400,"Thiếu thông tin")
+    hcap_token = data.get("hcaptcha_token", "")
+    if not username or not password: raise HTTPException(400, "Thiếu thông tin")
+    # Verify pass trước
     if username in ADMIN_ACCOUNTS:
-        if ADMIN_ACCOUNTS[username] != hash_pw(password): raise HTTPException(401,"Sai mật khẩu")
-        return JSONResponse({"ok":True,"token":create_session(username),"username":username,"is_admin":True,"balance":0})
+        if ADMIN_ACCOUNTS[username] != hash_pw(password): raise HTTPException(401, "Sai mật khẩu")
+        # Admin: không cần OTP, không cần captcha
+        return JSONResponse({"ok": True, "skip_otp": True, "token": create_session(username), "username": username, "is_admin": True, "balance": 0})
+    # User thường: kiểm tra captcha
+    if not verify_hcaptcha(hcap_token): raise HTTPException(400, "Xác minh captcha thất bại")
     users = load_users()
     user  = users.get(username)
-    if not user: raise HTTPException(401,"Tài khoản không tồn tại")
-    if not user.get("active",True): raise HTTPException(403,"Tài khoản bị khóa")
-    if user["password"] != hash_pw(password): raise HTTPException(401,"Sai mật khẩu")
-    balance = user.get("balance",0)
-    return JSONResponse({"ok":True,"token":create_session(username),"username":username,"is_admin":False,"balance":balance})
+    if not user: raise HTTPException(401, "Tài khoản không tồn tại")
+    if not user.get("active", True): raise HTTPException(403, "Tài khoản bị khóa")
+    if user["password"] != hash_pw(password): raise HTTPException(401, "Sai mật khẩu")
+    # Gửi OTP
+    email = user.get("email", "")
+    if not email: raise HTTPException(400, "Tài khoản chưa liên kết email")
+    otp = str(_r2.randint(100000, 999999))
+    login_key = f"login:{username}"
+    otp_store[login_key] = {"otp": otp, "expires": time.time()+300, "username": username}
+    def _send():
+        _send_otp_email(email, "🔐 Xác minh đăng nhập — FB Dame Tool",
+            build_otp_email("XÁC MINH ĐĂNG NHẬP", "Mã OTP xác minh đăng nhập của bạn:", otp, username, "Nếu bạn không đăng nhập, hãy đổi mật khẩu ngay."))
+    threading.Thread(target=_send, daemon=True).start()
+    masked_local = email[:2] + "*" * max(len(email[:email.index("@")]) - 4, 0) + email[email.index("@")-2:email.index("@")] if len(email[:email.index("@")]) > 4 else email[0] + "*" * (email.index("@")-1)
+    masked = masked_local + email[email.index("@"):]
+    return JSONResponse({"ok": True, "skip_otp": False, "email_hint": masked})
+
+@app.post("/api/login")
+async def login(request: Request):
+    """Bước 2 login: verify OTP và cấp token"""
+    data     = await request.json()
+    username = (data.get("username") or "").strip()
+    otp      = (data.get("otp") or "").strip()
+    if not username or not otp: raise HTTPException(400, "Thiếu thông tin")
+    login_key = f"login:{username}"
+    stored = otp_store.get(login_key)
+    if not stored: raise HTTPException(400, "Chưa gửi OTP hoặc đã hết hạn")
+    if time.time() > stored["expires"]: otp_store.pop(login_key, None); raise HTTPException(400, "OTP đã hết hạn")
+    if stored["otp"] != otp: raise HTTPException(400, "OTP không đúng")
+    otp_store.pop(login_key, None)
+    users = load_users()
+    user  = users.get(username)
+    if not user: raise HTTPException(401, "Tài khoản không tồn tại")
+    balance = user.get("balance", 0)
+    return JSONResponse({"ok": True, "token": create_session(username), "username": username, "is_admin": False, "balance": balance})
 
 @app.post("/api/logout")
 async def logout(request:Request):
