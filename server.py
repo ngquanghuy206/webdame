@@ -159,17 +159,18 @@ import uuid as _uuid
 otp_store   = {}
 login_jobs  = {}
 
-HISTORY_FILE      = "history.json"
-USERS_FILE        = "users.json"
-SESSIONS_FILE     = "sessions.json"
-SERVERS_FILE      = "servers.json"
-DEPOSIT_FILE      = "deposits.json"       # lịch sử nạp tiền
-PURCHASE_FILE     = "purchases.json"      # lịch sử mua máy chủ
-SLOTS_FILE        = "slots.json"          # user -> số slot dame (luồng dame)
-POSTS_FILE        = "posts.json"          # bài đăng cộng đồng
-HOT_DEALS_FILE    = "hot_deals.json"      # hot deals admin tạo
-NOTIFICATIONS_FILE= "notifications.json"  # thông báo toàn site
-TOP_NAP_FILE      = "top_nap.json"        # bảng xếp hạng nạp tiền
+HISTORY_COL       = "history"
+USERS_COL         = "users"
+SESSIONS_COL      = "sessions"
+SERVERS_COL       = "servers"
+DEPOSIT_COL       = "deposits"
+PURCHASE_COL      = "purchases"
+SLOTS_COL         = "slots"
+POSTS_COL         = "posts"
+HOT_DEALS_COL     = "hot_deals"
+NOTIFICATIONS_COL = "notifications"
+TOP_NAP_COL       = "top_nap"
+CHAT_COL          = "chat_messages"
 
 ADMIN_ACCOUNTS = {
     "knammelbel206": hashlib.sha256("nqh300506".encode()).hexdigest()
@@ -229,37 +230,56 @@ DAME_SLOT_PLANS = [
     {"id":"sl_free",  "name":"🎁 Free · 1 Máy · 30 phút",  "slots":1,  "days":0,   "price":0,       "popular":False,"trial":True,"minutes":30},
 ]
 
-# ────────────────────────────────────────────────────────
-def _load(path, default):
-    if not os.path.exists(path): return default
+# ── MongoDB Atlas ─────────────────────────────────────────────────────
+from pymongo import MongoClient
+
+_MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://nqh300506:dzimeomeo@cluster0.h5an0cb.mongodb.net/?appName=Cluster0")
+_mongo_client = None
+_mongo_db = None
+
+def _get_db():
+    global _mongo_client, _mongo_db
+    if _mongo_db is None:
+        if not _MONGO_URI:
+            raise RuntimeError("MONGO_URI chưa được set trong environment variables!")
+        _mongo_client = MongoClient(_MONGO_URI, serverSelectionTimeoutMS=5000)
+        _mongo_db = _mongo_client["webdame"]
+    return _mongo_db
+
+def _load(col: str, default):
     try:
-        with open(path,"r",encoding="utf-8") as f: return json.load(f)
-    except: return default
+        doc = _get_db()[col].find_one({"_id": "data"}, {"_id": 0, "value": 1})
+        return doc["value"] if doc else default
+    except Exception as e:
+        print(f"[MongoDB] load {col} error: {e}")
+        return default
 
-def _save(path, data):
-    with open(path,"w",encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+def _save(col: str, data):
+    try:
+        _get_db()[col].replace_one({"_id": "data"}, {"_id": "data", "value": data}, upsert=True)
+    except Exception as e:
+        print(f"[MongoDB] save {col} error: {e}")
 
-def load_history():   return _load(HISTORY_FILE, [])
-def save_history(r):  _save(HISTORY_FILE, r)
-def load_users():     return _load(USERS_FILE, {})
-def save_users(u):    _save(USERS_FILE, u)
-def load_sessions():  return _load(SESSIONS_FILE, {})
-def save_sessions(s): _save(SESSIONS_FILE, s)
-def load_servers():   return _load(SERVERS_FILE, [])
-def save_servers(s):  _save(SERVERS_FILE, s)
-def load_deposits():  return _load(DEPOSIT_FILE, [])
-def save_deposits(d): _save(DEPOSIT_FILE, d)
-def load_purchases(): return _load(PURCHASE_FILE, [])
-def save_purchases(p):_save(PURCHASE_FILE, p)
-def load_slots():     return _load(SLOTS_FILE, {})
-def save_slots(s):    _save(SLOTS_FILE, s)
-def load_hot_deals(): return _load(HOT_DEALS_FILE, [])
-def save_hot_deals(d):_save(HOT_DEALS_FILE, d)
-def load_notifications(): return _load(NOTIFICATIONS_FILE, {"main": {"text":"","image":"","updated":""}, "sub":[]})
-def save_notifications(n):_save(NOTIFICATIONS_FILE, n)
-def load_top_nap():   return _load(TOP_NAP_FILE, {"month":"","entries":[]})
-def save_top_nap(t):  _save(TOP_NAP_FILE, t)
+def load_history():   return _load(HISTORY_COL, [])
+def save_history(r):  _save(HISTORY_COL, r)
+def load_users():     return _load(USERS_COL, {})
+def save_users(u):    _save(USERS_COL, u)
+def load_sessions():  return _load(SESSIONS_COL, {})
+def save_sessions(s): _save(SESSIONS_COL, s)
+def load_servers():   return _load(SERVERS_COL, [])
+def save_servers(s):  _save(SERVERS_COL, s)
+def load_deposits():  return _load(DEPOSIT_COL, [])
+def save_deposits(d): _save(DEPOSIT_COL, d)
+def load_purchases(): return _load(PURCHASE_COL, [])
+def save_purchases(p):_save(PURCHASE_COL, p)
+def load_slots():     return _load(SLOTS_COL, {})
+def save_slots(s):    _save(SLOTS_COL, s)
+def load_hot_deals(): return _load(HOT_DEALS_COL, [])
+def save_hot_deals(d):_save(HOT_DEALS_COL, d)
+def load_notifications(): return _load(NOTIFICATIONS_COL, {"main": {"text":"","image":"","updated":""}, "sub":[]})
+def save_notifications(n):_save(NOTIFICATIONS_COL, n)
+def load_top_nap():   return _load(TOP_NAP_COL, {"month":"","entries":[]})
+def save_top_nap(t):  _save(TOP_NAP_COL, t)
 
 def add_history(record):
     records = load_history(); records.insert(0,record); save_history(records[:500])
@@ -1273,18 +1293,11 @@ async def api_fb_login_pass(request:Request):
 # ════════════════════════════════════════════════════════
 # CHAT WITH ADMIN — 2-WAY REAL-TIME
 # ════════════════════════════════════════════════════════
-CHAT_FILE = "chat_messages.json"
-
 def load_chats() -> dict:
-    try:
-        with open(CHAT_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except:
-        return {}
+    return _load(CHAT_COL, {})
 
 def save_chats(data: dict):
-    with open(CHAT_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False)
+    _save(CHAT_COL, data)
 
 def get_chat_thread(chats: dict, username: str) -> list:
     return chats.get(username, [])
@@ -1403,15 +1416,10 @@ async def admin_chat_reply(request: Request):
 REACTIONS = ["❤️","😂","😮","😢","😡","👍"]
 
 def load_posts() -> list:
-    try:
-        with open(POSTS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except:
-        return []
+    return _load(POSTS_COL, [])
 
 def save_posts(data: list):
-    with open(POSTS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False)
+    _save(POSTS_COL, data)
 
 # User tạo bài đăng (chờ duyệt)
 @app.post("/api/posts/create")
@@ -1752,7 +1760,9 @@ async def get_notifications(request: Request):
 
 @app.post("/api/admin/notifications/main")
 async def set_main_notification(request: Request):
-    username = get_session_user(get_token(request))
+    token = get_token(request)
+    username = get_session_user(token)
+    print(f"[notif/main] token={token[:10] if token else 'NONE'}... user={username}")
     if not username or not is_admin(username): raise HTTPException(403, "Khong co quyen")
     data = await request.json(); notifs = load_notifications()
     notifs["main"] = {"text": data.get("text",""), "image": data.get("image",""),
