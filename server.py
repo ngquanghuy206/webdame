@@ -1,6 +1,6 @@
 import asyncio, uuid, json, os, hashlib, secrets, re, time, random, string
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -81,9 +81,33 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/static", StaticFiles(directory="static"), name="static")
-RESEND_API_KEY = "re_Tj3Eyk2M_NgQf9E2sKdnmbSmdMsJefXpt"
-FROM_EMAIL     = "onboarding@resend.dev"
+BREVO_API_KEY  = os.environ.get("BREVO_API_KEY", "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")
+FROM_EMAIL     = "viabydzi1@gmail.com"
+FROM_NAME      = "FB Dame Tool"
 LOGO_URL       = "https://i.imgur.com/1qYFul7.jpeg"
+
+import requests as _requests
+
+def _send_otp_email(to_email: str, subject: str, html: str) -> bool:
+    try:
+        r = _requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            json={
+                "sender": {"name": FROM_NAME, "email": FROM_EMAIL},
+                "to": [{"email": to_email}],
+                "subject": subject,
+                "htmlContent": html
+            },
+            headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
+            timeout=15
+        )
+        if r.status_code not in (200, 201):
+            print(f"[Brevo] error: {r.status_code} {r.text}")
+            return False
+        return True
+    except Exception as e:
+        print(f"[Brevo] exception: {e}")
+        return False
 
 def build_otp_email(title: str, subtitle: str, otp: str, username: str = "", note: str = "") -> str:
     user_line = f"<div style='font-size:14px;color:rgba(255,255,255,.6);margin-bottom:20px'>Xin chào <b style=\"color:#4f9eff\">{username}</b> 👋</div>" if username else ""
@@ -322,12 +346,8 @@ async def register_send_otp(request: Request):
     reg_key = f"reg:{email}"
     otp_store[reg_key] = {"otp": otp, "expires": time.time()+300, "username": username, "password": password, "email": email}
     def _send():
-        try:
-            import resend; resend.api_key = RESEND_API_KEY
-            resend.Emails.send({"from": FROM_EMAIL, "to": email,
-                "subject": "🔑 Xác minh OTP đăng ký — FB Dame Tool",
-                "html": build_otp_email("XÁC MINH ĐĂNG KÝ","Mã OTP để xác minh tài khoản của bạn:",otp,username,"Nếu bạn không yêu cầu đăng ký, hãy bỏ qua email này.")})
-        except: pass
+        _send_otp_email(email, "🔑 Xác minh OTP đăng ký — FB Dame Tool",
+            build_otp_email("XÁC MINH ĐĂNG KÝ", "Mã OTP để xác minh tài khoản của bạn:", otp, username, "Nếu bạn không yêu cầu đăng ký, hãy bỏ qua email này."))
     threading.Thread(target=_send, daemon=True).start()
     return JSONResponse({"ok": True, "message": "Mã OTP đã gửi về Gmail của bạn"})
 
@@ -464,12 +484,8 @@ async def forgot_password(request:Request):
     otp = str(_r2.randint(100000,999999))
     otp_store[email] = {"otp":otp,"expires":time.time()+300,"username":user}
     def _send():
-        try:
-            import resend; resend.api_key = RESEND_API_KEY
-            resend.Emails.send({"from":FROM_EMAIL,"to":email,
-                "subject":"🔐 Đặt lại mật khẩu — FB Dame Tool",
-                "html":build_otp_email("ĐẶT LẠI MẬT KHẨU","Mã OTP để đặt lại mật khẩu của bạn:",otp,"","Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.")})
-        except: pass
+        _send_otp_email(email, "🔐 Đặt lại mật khẩu — FB Dame Tool",
+            build_otp_email("ĐẶT LẠI MẬT KHẨU", "Mã OTP để đặt lại mật khẩu của bạn:", otp, user, "Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này."))
     threading.Thread(target=_send, daemon=True).start()
     return JSONResponse({"ok":True})
 
@@ -1695,12 +1711,27 @@ async def buy_hot_deal(deal_id: str, request: Request):
     if not user: raise HTTPException(404, "User khong ton tai")
     balance = user.get("balance", 0); price = deal.get("price", 0)
     if balance < price: raise HTTPException(400, f"So du khong du. Can {price:,} VND")
-    user["balance"] = balance - price; save_users(users)
-    slots_data = load_slots(); entry = slots_data.get(username, {"count": 0, "slots": []})
-    dur_sec = parse_duration_to_seconds(deal.get("duration","1d")); exp_ts = int(time.time()) + dur_sec
-    for _ in range(deal.get("slots", 1)):
-        entry["slots"].append({"slot_id": str(uuid.uuid4())[:8], "expires_at": exp_ts})
-    entry["count"] = len(entry["slots"]); slots_data[username] = entry; save_slots(slots_data)
+    user["balance"] = balance - price
+    dur_sec = parse_duration_to_seconds(deal.get("duration","1d"))
+    exp_dt = datetime.now() + timedelta(seconds=dur_sec)
+    exp_str = exp_dt.strftime("%d/%m/%Y %H:%M:%S")
+    now_str = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    pack_id = "#hotdeal" + "".join(random.choices(string.digits, k=5))
+    for i in range(deal.get("slots", 1)):
+        slot = {
+            "id": "SL" + "".join(random.choices(string.digits+string.ascii_uppercase, k=8)),
+            "pack_id": pack_id,
+            "plan": "hot_deal",
+            "plan_name": deal.get("title", "Hot Deal"),
+            "slot_index": i+1,
+            "slots_in_pack": deal.get("slots", 1),
+            "expires_at": exp_str,
+            "duration_days": 0,
+            "duration_minutes": 0,
+            "created": now_str,
+        }
+        users[username].setdefault("slots", []).append(slot)
+    save_users(users)
     for d in deals:
         if d["id"] == deal_id: d["qty_left"] = max(0, d["qty_left"] - 1); break
     save_hot_deals(deals)
