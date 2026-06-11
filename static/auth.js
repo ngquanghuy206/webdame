@@ -7,9 +7,15 @@ function switchAuthTab(tab){
   if(tab==='register'){const s1=document.getElementById('reg-step1');const s2=document.getElementById('reg-step2');if(s1)s1.style.display='block';if(s2)s2.style.display='none';}
   document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');
   document.getElementById('tab-reg-btn').classList.toggle('active',tab==='register');
-  if(tab==='register'){selectedOptValue=null;generateCaptcha();}
+  // update titles
+  const tl=document.getElementById('auth-title-login'),tr=document.getElementById('auth-title-register');
+  const sl=document.getElementById('auth-sub-login'),sr=document.getElementById('auth-sub-register');
+  if(tl)tl.style.display=tab==='login'?'':'none';
+  if(tr)tr.style.display=tab==='register'?'':'none';
+  if(sl)sl.style.display=tab==='login'?'':'none';
+  if(sr)sr.style.display=tab==='register'?'':'none';
+  if(tab==='register'){selectedOptValue=null;}
 }
-
 let _forgotEmail='',_forgotOtp='';
 function openForgotModal(){
   _forgotEmail='';_forgotOtp='';
@@ -83,7 +89,9 @@ async function doLogin(){
     const maxAge=rememberMe?60*60*24*30:60*60*8;
     document.cookie=`session_token=${SESSION_TOKEN};path=/;SameSite=Lax;max-age=${maxAge}`;
     playSfx('success');showApp();
-  }catch(e){err.style.display='block';err.textContent=e.message;playSfx('error');}
+  }catch(e){
+    err.style.display='block';err.textContent=e.message;playSfx('error');
+  }
   finally{btn.disabled=false;btn.textContent='🔐 Đăng nhập';}
 }
 
@@ -239,7 +247,9 @@ function toggleRemember(){
   rememberMe=!rememberMe;
   localStorage.setItem('zct_remember',rememberMe?'1':'0');
   const el=document.getElementById('remember-check');
-  el.classList.toggle('checked',rememberMe);el.textContent=rememberMe?'✓':'';
+  el.classList.toggle('checked',rememberMe);
+  el.classList.toggle('remember-check-new',true);
+  el.textContent=rememberMe?'✓':'';
 }
 
 function showApp(){
@@ -248,6 +258,8 @@ function showApp(){
   document.getElementById('welcome-screen').style.display='block';
   const badge=document.getElementById('user-badge-el');
   if(badge)badge.innerHTML=(IS_ADMIN?'👑 ':'👤 ')+CURRENT_USER+' <span style="color:#1877f2;font-size:12px" title="Đã xác minh">✔</span>';
+  const adminSection=document.getElementById('sb-admin-section');
+  if(adminSection)adminSection.style.display=IS_ADMIN?'block':'none';
   const mgmt=document.getElementById('mgmt-menu-item');
   if(mgmt)mgmt.style.display=IS_ADMIN?'flex':'none';
   // Hide deposit/vps items for admin
@@ -278,7 +290,20 @@ function showApp(){
   const titleEl=document.querySelector('#welcome-screen .welcome-title');
   if(titleEl) titleEl.textContent=(IS_ADMIN?'👑 Chào Admin ':'👋 Chào ') + CURRENT_USER + '!';
   startClock();loadHistory();
+  if(typeof loadNotifications==='function') loadNotifications();
+  if(typeof loadHotDeals==='function') setTimeout(loadHotDeals, 300);
   if(!IS_ADMIN) refreshBalance();
+  // Auto-show main notification popup nếu chưa snooze
+  setTimeout(async ()=>{
+    try {
+      const snoozeUntil = parseInt(localStorage.getItem('notif_snooze_until')||'0',10);
+      if(Date.now() < snoozeUntil) return;
+      const rn = await fetch('/api/notifications',{headers:{'Authorization':'Bearer '+SESSION_TOKEN}});
+      const nd = await rn.json();
+      const txt = (nd.main && nd.main.text||'').trim();
+      if(txt && typeof openMainNotifModal==='function') openMainNotifModal();
+    } catch(e){}
+  }, 800);
   // Poll unread chat count for admin badge
   if(IS_ADMIN){
     loadAdminChatThreads();
@@ -317,4 +342,7 @@ function doLogout(){
   document.getElementById('auth-screen').style.display='flex';
   if(_tok) fetch('/api/logout',{method:'POST',headers:{'Authorization':'Bearer '+_tok}}).catch(()=>{});
 }
+
+
+
 

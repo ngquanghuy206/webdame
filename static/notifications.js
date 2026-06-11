@@ -18,7 +18,7 @@ function updateBellBadge() {
   const badge = document.getElementById('bell-badge');
   const cnt = (_notifData.sub||[]).length;
   if(badge) {
-    badge.style.display = cnt > 0 ? '' : 'none';
+    badge.style.display = cnt > 0 ? 'flex' : 'none';
     badge.textContent = cnt > 9 ? '9+' : cnt;
   }
 }
@@ -32,7 +32,7 @@ function toggleBellDrop() {
     renderBellDrop();
     drop.style.display = '';
     requestAnimationFrame(()=>{ drop.style.opacity='1'; drop.style.transform='translateY(0)'; });
-    document.addEventListener('click', closeBellOnOutside, {once:true});
+    setTimeout(()=>{ document.addEventListener('click', closeBellOnOutside, {once:true}); }, 0);
   } else {
     closeBellDrop();
   }
